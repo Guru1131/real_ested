@@ -1,57 +1,47 @@
 name: Auto Deploy to Hostycare
+
 on:
   push:
-    branches:
-      - main
-      - master
-      - deployment/hostycare
+    branches: [ deployment/hostycare ]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Deploy to Hostycare Server
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.HOSTYCARE_IP }}
-          username: ${{ secrets.HOSTYCARE_USERNAME }}
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.HOSTYCARE_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
           script: |
-            echo "=== Entering project directory ==="
-            cd ~/public_html/real_ested || mkdir -p ~/public_html/real_ested && cd ~/public_html/real_ested
+            echo "=== Starting deployment ==="
+            cd /home/appteche/real_ested/backend
 
-            echo "=== Sync code from GitHub deployment/hostycare branch ==="
-            git init
-            git remote add origin https://github.com/Guru1131/real_ested.git || true
-            git fetch origin deployment/hostycare:deployment/hostycare
+            if [ ! -d ".git" ]; then
+              echo "First‑time: cloning repository"
+              git clone https://github.com/Guru1131/realestate.git .
+            fi
+
+            echo "Fetch latest code from deployment/hostycare"
+            git fetch origin
             git checkout deployment/hostycare
-            git pull origin deployment/hostycare
+            git reset --hard origin/deployment/hostycare
 
-            echo "=== Verify backend package.json exists ==="
-            ls -la backend/package.json
+            echo "Activate cPanel Node.js virtual env"
+            source /home/appteche/nodevenv/real_ested/backend/22/bin/activate
 
-            echo "=== Installing Backend Dependencies ==="
-            cd backend
-            npm install --production
-
-            echo "=== Verify frontend package.json exists ==="
-            ls -la ../frontend/package.json
-
-            echo "=== Installing Frontend Dependencies ==="
-            cd ../frontend
+            echo "Run npm install"
             npm install
 
-            echo "=== Building Frontend ==="
+            echo "Run npm build"
             npm run build
 
-            echo "=== Copying Frontend dist assets to web root ==="
-            cp -r dist/* ~/public_html/
+            echo "Restart cPanel NodeJS application"
+            /usr/local/cpanel/bin/restart_nodejs_app --user=appteche --app=real_ested
 
-            echo "=== Restarting Backend PM2 service ==="
-            cd ../backend
-            pm2 restart real_ested || pm2 start server.js --name real_ested --watch
-
-            echo "✅ Deployment Complete!"
+            echo "=== Deployment finished ==="
