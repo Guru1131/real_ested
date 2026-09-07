@@ -6,12 +6,9 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu‑latest
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Deploy to Hostycare Server
+      - name: Deploy via SSH
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.HOSTYCARE_IP }}
@@ -20,28 +17,24 @@ jobs:
           port: 22
           script: |
             echo "=== Starting deployment ==="
-            cd /home/appteche/real_ested/backend
+            cd /home/***/real_ested/backend
 
-            if [ ! -d ".git" ]; then
-              echo "First‑time: cloning repository"
-              git clone https://github.com/Guru1131/realestate.git .
-            fi
+            # Clean everything before fresh clone
+            rm -rf ./* .git*
 
-            echo "Fetch latest code from deployment/hostycare"
-            git fetch origin
-            git checkout deployment/hostycare
-            git reset --hard origin/deployment/hostycare
+            echo "Cloning deployment/hostycare branch"
+            git clone --branch deployment/hostycare https://github.com/Guru1131/realestate.git .
 
-            echo "Activate cPanel Node.js virtual env"
-            source /home/appteche/nodevenv/real_ested/backend/22/bin/activate
+            echo "Activate cPanel node venv"
+            source /home/***/nodevenv/real_ested/22/bin/activate
 
-            echo "Run npm install"
+            echo "Install dependencies"
             npm install
 
-            echo "Run npm build"
+            echo "Run build"
             npm run build
 
-            echo "Restart cPanel NodeJS application"
-            /usr/local/cpanel/bin/restart_nodejs_app --user=appteche --app=real_ested
+            echo "Restart node process"
+            pkill -f "node.*real_ested"
 
             echo "=== Deployment finished ==="
