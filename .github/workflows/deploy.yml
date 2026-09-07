@@ -1,10 +1,10 @@
 name: Auto Deploy to Hostycare
-
 on:
   push:
     branches:
       - main
       - master
+      - deployment/hostycare
 
 jobs:
   deploy:
@@ -20,29 +20,38 @@ jobs:
           username: ${{ secrets.HOSTYCARE_USERNAME }}
           key: ${{ secrets.HOSTYCARE_PRIVATE_KEY }}
           script: |
+            echo "=== Entering project directory ==="
             cd ~/public_html/real_ested || mkdir -p ~/public_html/real_ested && cd ~/public_html/real_ested
+
+            echo "=== Sync code from GitHub deployment/hostycare branch ==="
             git init
             git remote add origin https://github.com/Guru1131/real_ested.git || true
-            git fetch origin main:main || git fetch origin master:master
-            git checkout main || git checkout master
-            git pull origin main || git pull origin master
-            
+            git fetch origin deployment/hostycare:deployment/hostycare
+            git checkout deployment/hostycare
+            git pull origin deployment/hostycare
+
+            echo "=== Verify backend package.json exists ==="
+            ls -la backend/package.json
+
             echo "=== Installing Backend Dependencies ==="
             cd backend
             npm install --production
-            
+
+            echo "=== Verify frontend package.json exists ==="
+            ls -la ../frontend/package.json
+
             echo "=== Installing Frontend Dependencies ==="
             cd ../frontend
             npm install
-            
+
             echo "=== Building Frontend ==="
             npm run build
-            
-            echo "=== Copying Frontend to Web Root ==="
+
+            echo "=== Copying Frontend dist assets to web root ==="
             cp -r dist/* ~/public_html/
-            
-            echo "=== Restarting Backend Service ==="
+
+            echo "=== Restarting Backend PM2 service ==="
             cd ../backend
             pm2 restart real_ested || pm2 start server.js --name real_ested --watch
-            
+
             echo "✅ Deployment Complete!"
