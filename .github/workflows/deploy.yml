@@ -1,0 +1,48 @@
+name: Auto Deploy to Hostycare
+
+on:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Deploy to Hostycare Server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOSTYCARE_IP }}
+          username: ${{ secrets.HOSTYCARE_USERNAME }}
+          key: ${{ secrets.HOSTYCARE_PRIVATE_KEY }}
+          script: |
+            cd ~/public_html/real_ested || mkdir -p ~/public_html/real_ested && cd ~/public_html/real_ested
+            git init
+            git remote add origin https://github.com/Guru1131/real_ested.git || true
+            git fetch origin main:main || git fetch origin master:master
+            git checkout main || git checkout master
+            git pull origin main || git pull origin master
+            
+            echo "=== Installing Backend Dependencies ==="
+            cd backend
+            npm install --production
+            
+            echo "=== Installing Frontend Dependencies ==="
+            cd ../frontend
+            npm install
+            
+            echo "=== Building Frontend ==="
+            npm run build
+            
+            echo "=== Copying Frontend to Web Root ==="
+            cp -r dist/* ~/public_html/
+            
+            echo "=== Restarting Backend Service ==="
+            cd ../backend
+            pm2 restart real_ested || pm2 start server.js --name real_ested --watch
+            
+            echo "✅ Deployment Complete!"
