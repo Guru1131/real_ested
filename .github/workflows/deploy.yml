@@ -12,15 +12,39 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Deploy to Hostycare Server
+      - name: Setup Node.js for Frontend Build
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Frontend Dependencies & Build Static Assets
+        run: |
+          cd frontend
+          npm install
+          npm run build
+
+      - name: Deploy Backend + Upload Frontend Build to Hostycare
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.HOSTYCARE_IP }}
           username: ${{ secrets.HOSTYCARE_USERNAME }}
           key: ${{ secrets.HOSTYCARE_PRIVATE_KEY }}
           script: |
+            # === BACKEND DEPLOY ===
             cd ~/public_html/real_ested
             git pull origin deployment/hostycare
             npm install
-            # Stop old node process, cPanel auto restarts
             pkill -f "node server.js" || true
+
+            # === FRONTEND DEPLOY (clean old files) ===
+            rm -rf ~/public_html/real_ested/frontend/dist
+            mkdir -p ~/public_html/real_ested/frontend
+
+      - name: Copy built frontend dist folder to server via SCP
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.HOSTYCARE_IP }}
+          username: ${{ secrets.HOSTYCARE_USERNAME }}
+          key: ${{ secrets.HOSTYCARE_PRIVATE_KEY }}
+          source: "frontend/dist/*"
+          target: "~/public_html/real_ested/frontend"
