@@ -7,7 +7,7 @@ on:
       - deployment/hostycare
 
 jobs:
-  build_and_deploy:
+  deploy:
     runs-on: ubuntu-latest
     env:
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
@@ -15,20 +15,17 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v4
 
-      - name: List repo files (debug - safe to keep)
-        run: ls -la
-
       - name: Setup Node 20
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Install NPM dependencies
+      - name: Install NPM dependencies on runner
         run: |
           cd backend
           npm install
 
-      - name: Sync backend to Hostycare & restart PM2
+      - name: Deploy & Restart Backend via SSH
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.HOSTYCARE_IP }}
@@ -36,8 +33,11 @@ jobs:
           key: ${{ secrets.HOSTYCARE_PRIVATE_KEY }}
           script: |
             set -e
-            mkdir -p ~/real_ested/backend
+            # Go to project folder on cPanel server
             cd ~/real_ested/backend
+            # Pull latest code from github
+            git pull origin deployment/hostycare
+            # Install packages ON SERVER (we tried runner build earlier, switching back to git pull flow)
+            npm install
+            # Restart pm2 service
             pm2 restart backend || pm2 start server.js --name backend
-          rsync: |
-            backend/ appteche@${{ secrets.HOSTYCARE_IP }}:~/real_ested/backend/
