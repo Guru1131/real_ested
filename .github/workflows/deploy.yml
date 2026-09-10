@@ -1,40 +1,26 @@
 name: Auto Deploy to Hostycare
-
 on:
   push:
-    branches: [ deployment/hostycare ]
-
+    branches:
+      - main
+      - master
+      - deployment/hostycare
 jobs:
   deploy:
-    runs-on: ubuntu‑latest
+    runs-on: ubuntu-latest
     steps:
-      - name: Deploy via SSH
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Deploy to Hostycare Server
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.HOSTYCARE_IP }}
           username: ${{ secrets.HOSTYCARE_USERNAME }}
           key: ${{ secrets.HOSTYCARE_PRIVATE_KEY }}
-          port: 22
           script: |
-            echo "=== Starting deployment ==="
-            cd /home/***/real_ested/backend
-
-            # Clean everything before fresh clone
-            rm -rf ./* .git*
-
-            echo "Cloning deployment/hostycare branch"
-            git clone --branch deployment/hostycare https://github.com/Guru1131/realestate.git .
-
-            echo "Activate cPanel node venv"
-            source /home/***/nodevenv/real_ested/22/bin/activate
-
-            echo "Install dependencies"
+            cd ~/public_html/real_ested
+            git pull origin deployment/hostycare
             npm install
-
-            echo "Run build"
-            npm run build
-
-            echo "Restart node process"
-            pkill -f "node.*real_ested"
-
-            echo "=== Deployment finished ==="
+            # Stop old node process, cPanel auto restarts
+            pkill -f "node server.js" || true
