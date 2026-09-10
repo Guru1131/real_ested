@@ -20,12 +20,24 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install NPM dependencies on runner
+      - name: Install dependencies on GitHub runner
         run: |
           cd backend
           npm install
 
-      - name: Deploy & Restart Backend via SSH
+      - name: Zip backend folder
+        run: zip -r backend.zip backend/
+
+      - name: Copy zip file to Hostycare server
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.HOSTYCARE_IP }}
+          username: ${{ secrets.HOSTYCARE_USERNAME }}
+          key: ${{ secrets.HOSTYCARE_PRIVATE_KEY }}
+          source: "backend.zip"
+          target: "~/"
+
+      - name: Deploy & Restart Backend
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.HOSTYCARE_IP }}
@@ -33,11 +45,15 @@ jobs:
           key: ${{ secrets.HOSTYCARE_PRIVATE_KEY }}
           script: |
             set -e
-            # Go to project folder on cPanel server
+            # Remove old backend files
+            rm -rf ~/real_ested/backend
+            # Create fresh folder
+            mkdir -p ~/real_ested/backend
+            # Unzip uploaded archive
+            unzip -o ~/backend.zip -d ~/real_ested/
+            # Go to project directory
             cd ~/real_ested/backend
-            # Pull latest code from github
-            git pull origin deployment/hostycare
-            # Install packages ON SERVER (we tried runner build earlier, switching back to git pull flow)
-            npm install
-            # Restart pm2 service
+            # Clear old pm2 memory
+            pm2 flush
+            # Start/Restart node server
             pm2 restart backend || pm2 start server.js --name backend
