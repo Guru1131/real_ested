@@ -20,12 +20,12 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install Dependencies & Build
+      - name: Install Dependencies
         run: |
+          cd real_ested/backend
           npm install
-          npm run build
 
-      - name: Deploy built files to Hostycare
+      - name: Deploy backend files to Hostycare
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.HOSTYCARE_IP }}
@@ -33,6 +33,6 @@ jobs:
           key: ${{ secrets.HOSTYCARE_PRIVATE_KEY }}
           script: |
             set -e
-            mkdir -p ~/public_html/real_ested
+            mkdir -p ~/real_ested/backend
           rsync: |
-            dist/ apptecheche@${{ secrets.HOSTYCARE_IP }}:~/public_html/real_ested/
+            real_ested/backend/ appteche@${{ secrets.HOSTYCARE_IP }}:~/real_ested/backend/
