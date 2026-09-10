@@ -37,7 +37,7 @@ jobs:
           source: "backend.zip"
           target: "~/"
 
-      - name: Deploy & Restart Backend
+      - name: Deploy files (NO PM2)
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.HOSTYCARE_IP }}
@@ -45,15 +45,8 @@ jobs:
           key: ${{ secrets.HOSTYCARE_PRIVATE_KEY }}
           script: |
             set -e
-            # Remove old backend files
             rm -rf ~/real_ested/backend
-            # Create fresh folder
             mkdir -p ~/real_ested/backend
-            # Unzip uploaded archive
             unzip -o ~/backend.zip -d ~/real_ested/
-            # Go to project directory
-            cd ~/real_ested/backend
-            # Clear old pm2 memory
-            pm2 flush
-            # Start/Restart node server
-            pm2 restart backend || pm2 start server.js --name backend
+            rm -f ~/backend.zip
+            echo "✅ Deployment finished. Login to server and start node manually."
