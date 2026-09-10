@@ -5,46 +5,34 @@ on:
       - main
       - master
       - deployment/hostycare
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Setup Node.js for Frontend Build
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Install Frontend Dependencies & Build Static Assets
-        run: |
-          cd frontend
-          npm install
-          npm run build
-
-      - name: Deploy Backend + Upload Frontend Build to Hostycare
+      - name: Deploy to Hostycare Server
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.HOSTYCARE_IP }}
           username: ${{ secrets.HOSTYCARE_USERNAME }}
           key: ${{ secrets.HOSTYCARE_PRIVATE_KEY }}
           script: |
-            # === BACKEND DEPLOY ===
+            echo "=== Entering project directory ==="
+            mkdir -p ~/public_html/real_ested
             cd ~/public_html/real_ested
+
+            echo "=== Pull latest code from repo ==="
             git pull origin deployment/hostycare
+
+            echo "=== Install dependencies ==="
             npm install
-            pkill -f "node server.js" || true
 
-            # === FRONTEND DEPLOY (clean old files) ===
-            rm -rf ~/public_html/real_ested/frontend/dist
-            mkdir -p ~/public_html/real_ested/frontend
+            echo "=== Build project ==="
+            npm run build
 
-      - name: Copy built frontend dist folder to server via SCP
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.HOSTYCARE_IP }}
-          username: ${{ secrets.HOSTYCARE_USERNAME }}
-          key: ${{ secrets.HOSTYCARE_PRIVATE_KEY }}
-          source: "frontend/dist/*"
-          target: "~/public_html/real_ested/frontend"
+            echo "=== Deployment complete ==="
