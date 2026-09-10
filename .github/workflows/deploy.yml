@@ -12,20 +12,23 @@ jobs:
     env:
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
     steps:
-      - name: Checkout source
+      - name: Checkout source code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: List repo files (debug - safe to keep)
+        run: ls -la
+
+      - name: Setup Node 20
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Install Dependencies
+      - name: Install NPM dependencies
         run: |
-          cd real_ested/backend
+          cd backend
           npm install
 
-      - name: Deploy backend files to Hostycare
+      - name: Sync backend to Hostycare & restart PM2
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.HOSTYCARE_IP }}
@@ -34,5 +37,7 @@ jobs:
           script: |
             set -e
             mkdir -p ~/real_ested/backend
+            cd ~/real_ested/backend
+            pm2 restart backend || pm2 start server.js --name backend
           rsync: |
-            real_ested/backend/ appteche@${{ secrets.HOSTYCARE_IP }}:~/real_ested/backend/
+            backend/ appteche@${{ secrets.HOSTYCARE_IP }}:~/real_ested/backend/
