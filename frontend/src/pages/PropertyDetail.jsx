@@ -117,11 +117,16 @@ const PropertyDetail = () => {
   return (
     <div className="container-fluid py-2">
       
-      {/* Back Button */}
-      <div className="mb-3">
+      {/* Back Button & Edit Action */}
+      <div className="mb-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
         <Link to="/properties" className="btn btn-sm btn-premium-outline px-3 py-1.5">
-          <i className="bi bi-arrow-left"></i> Back to search
+          <i className="bi bi-arrow-left me-1"></i> Back to search
         </Link>
+        {['super_admin', 'assistant_admin', 'branch_admin'].includes(user?.role) && (
+          <Link to={`/properties/edit/${property.id}`} className="btn btn-sm btn-premium px-4 py-1.5">
+            <i className="bi bi-pencil-square me-1"></i> Edit Property Listing
+          </Link>
+        )}
       </div>
 
       {/* Main BeyondWalls Banner layout */}
@@ -152,11 +157,15 @@ const PropertyDetail = () => {
       <div className="glass-panel p-3 mb-4 d-flex justify-content-between align-items-center flex-wrap gap-2 gap-sm-3 animate-fade-in" style={{ animationDelay: '0.1s' }}>
         
         {/* Referral hooks for Broker or Executive */}
-        <div>
+        <div className="d-flex align-items-center gap-2">
           {['external_broker', 'branch_executive'].includes(user.role) ? (
             <button className="btn btn-premium px-3 px-sm-4 py-2" onClick={() => setShowLeadModal(true)}>
               <i className="bi bi-person-plus-fill me-1"></i> Refer Client Lead
             </button>
+          ) : ['super_admin', 'assistant_admin', 'branch_admin'].includes(user?.role) ? (
+            <Link to={`/properties/edit/${property.id}`} className="btn btn-premium px-3 py-2">
+              <i className="bi bi-pencil-square me-1"></i> Edit Property Details
+            </Link>
           ) : (
             <span className="text-muted small fw-500">Log Action Mode: View Only</span>
           )}

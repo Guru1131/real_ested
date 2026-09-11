@@ -1,7 +1,11 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { Link } from 'react-router-dom';
+import { AuthContext } from '../context/AuthContext';
 
 const PropertyCard = ({ property, onStatusSubmit, userRole }) => {
+  const { user } = useContext(AuthContext);
+  const effectiveRole = userRole || user?.role;
+  const canEdit = ['super_admin', 'assistant_admin', 'branch_admin'].includes(effectiveRole);
   // Format price to Indian Rupees (Lakhs / Crores) or standard format
   const formatPrice = (value) => {
     return new Intl.NumberFormat('en-IN', {
@@ -83,9 +87,9 @@ const PropertyCard = ({ property, onStatusSubmit, userRole }) => {
             <i className="bi bi-eye me-1"></i> View Details
           </Link>
           
-          {(userRole === 'branch_admin' || userRole === 'super_admin') && (
+          {canEdit && (
             <Link to={`/properties/edit/${property.id}`} className="btn btn-premium-outline py-2 px-3" style={{ fontSize: '0.85rem' }} title="Edit Property Details">
-              <i className="bi bi-pencil-square"></i> Edit
+              <i className="bi bi-pencil-square me-1"></i> Edit
             </Link>
           )}
 
