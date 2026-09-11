@@ -28,7 +28,16 @@ export const formatImageUrl = (fileUrl) => {
     cleanPath = `uploads/${cleanPath}`;
   }
 
-  return `/${cleanPath}`;
+  // Safely URL-encode each segment of the path (handling spaces, ampersands, special chars)
+  const encodedSegments = cleanPath.split('/').map(segment => {
+    try {
+      return encodeURIComponent(decodeURIComponent(segment));
+    } catch (err) {
+      return encodeURIComponent(segment);
+    }
+  });
+
+  return `/${encodedSegments.join('/')}`;
 };
 
 export const handleImageError = (e, customFallback = FALLBACK_IMAGE) => {
