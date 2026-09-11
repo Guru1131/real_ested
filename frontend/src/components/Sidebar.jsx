@@ -2,60 +2,101 @@ import React, { useContext } from 'react';
 import { NavLink } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 
-const Sidebar = () => {
+const Sidebar = ({ isOpen, onClose }) => {
   const { user } = useContext(AuthContext);
 
   if (!user) return null;
 
+  const handleLinkClick = () => {
+    if (onClose) onClose();
+  };
+
   return (
-    <div className="sidebar d-flex flex-column justify-content-between">
+    <div className={`sidebar d-flex flex-column justify-content-between ${isOpen ? 'show' : ''}`}>
       <div>
         {/* Brand/Header */}
-        <div className="px-3 mb-4 d-flex align-items-center gap-2">
-          <i className="bi bi-building-fill text-primary" style={{ fontSize: '1.75rem' }}></i>
-          <span className="sidebar-brand">PROP-MANAGER</span>
+        <div className="px-3 mb-4 d-flex align-items-center justify-content-between">
+          <div className="d-flex align-items-center gap-2">
+            <i className="bi bi-building-fill text-primary" style={{ fontSize: '1.75rem' }}></i>
+            <span className="sidebar-brand">PROP-MANAGER</span>
+          </div>
+          {/* Close button for mobile drawer */}
+          <button 
+            type="button" 
+            className="btn-close btn-close-white d-lg-none" 
+            aria-label="Close menu"
+            onClick={onClose}
+          ></button>
         </div>
         
         {/* Navigation Links */}
         <div className="nav flex-column">
-          <NavLink to="/dashboard" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
+          <NavLink 
+            to="/dashboard" 
+            className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+            onClick={handleLinkClick}
+          >
             <i className="bi bi-speedometer2"></i> Dashboard
           </NavLink>
 
-          <NavLink to="/properties" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
+          <NavLink 
+            to="/properties" 
+            className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+            onClick={handleLinkClick}
+          >
             <i className="bi bi-search"></i> Search Properties
           </NavLink>
 
           {/* Super Admin only: Approvals */}
           {user.role === 'super_admin' && (
-            <NavLink to="/approvals" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
+            <NavLink 
+              to="/approvals" 
+              className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+              onClick={handleLinkClick}
+            >
               <i className="bi bi-check-circle"></i> Approvals Queue
             </NavLink>
           )}
 
           {/* Super Admin only: Branch CRUD */}
           {user.role === 'super_admin' && (
-            <NavLink to="/branches" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
+            <NavLink 
+              to="/branches" 
+              className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+              onClick={handleLinkClick}
+            >
               <i className="bi bi-diagram-3"></i> Branches
             </NavLink>
           )}
 
           {/* Admin roles: Staff Directory */}
           {['super_admin', 'assistant_admin', 'branch_admin'].includes(user.role) && (
-            <NavLink to="/users" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
+            <NavLink 
+              to="/users" 
+              className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+              onClick={handleLinkClick}
+            >
               <i className="bi bi-people"></i> Staff Directory
             </NavLink>
           )}
 
           {/* Admin roles: Broker Control */}
           {['super_admin', 'assistant_admin', 'branch_admin'].includes(user.role) && (
-            <NavLink to="/brokers" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
+            <NavLink 
+              to="/brokers" 
+              className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+              onClick={handleLinkClick}
+            >
               <i className="bi bi-person-badge"></i> Brokers Control
             </NavLink>
           )}
 
           {/* Leads: All roles (content filtered per role) */}
-          <NavLink to="/leads" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
+          <NavLink 
+            to="/leads" 
+            className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+            onClick={handleLinkClick}
+          >
             <i className="bi bi-funnel"></i> Lead Referral Tracker
           </NavLink>
         </div>
@@ -73,3 +114,4 @@ const Sidebar = () => {
 };
 
 export default Sidebar;
+

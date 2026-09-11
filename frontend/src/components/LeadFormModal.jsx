@@ -55,11 +55,11 @@ const LeadFormModal = ({ propertyId, propertyName, show, onClose, onSuccess }) =
 
   return (
     <div className="modal d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 1050 }}>
-      <div className="modal-dialog modal-dialog-centered">
+      <div className="modal-dialog modal-dialog-centered px-2">
         <div className="modal-content glass-panel text-light" style={{ border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)' }}>
           
           <div className="modal-header border-bottom" style={{ borderColor: 'var(--border-color)' }}>
-            <h5 className="modal-title fw-700">Submit Lead for {propertyName}</h5>
+            <h5 className="modal-title fw-700 fs-6 fs-sm-5">Submit Lead for {propertyName}</h5>
             <button type="button" className="btn-close btn-close-white" onClick={onClose} aria-label="Close"></button>
           </div>
           
@@ -85,7 +85,7 @@ const LeadFormModal = ({ propertyId, propertyName, show, onClose, onSuccess }) =
               </div>
 
               <div className="row">
-                <div className="col-md-6 mb-3">
+                <div className="col-12 col-sm-6 mb-3">
                   <label className="form-label text-muted small fw-600">CLIENT PHONE *</label>
                   <input 
                     type="tel" 
@@ -97,7 +97,7 @@ const LeadFormModal = ({ propertyId, propertyName, show, onClose, onSuccess }) =
                     required
                   />
                 </div>
-                <div className="col-md-6 mb-3">
+                <div className="col-12 col-sm-6 mb-3">
                   <label className="form-label text-muted small fw-600">CLIENT EMAIL</label>
                   <input 
                     type="email" 

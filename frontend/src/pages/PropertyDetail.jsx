@@ -124,12 +124,12 @@ const PropertyDetail = () => {
       </div>
 
       {/* Main BeyondWalls Banner layout */}
-      <div className="position-relative rounded-4 overflow-hidden mb-4 animate-fade-in" style={{ height: '340px', backgroundImage: `linear-gradient(rgba(0,0,0,0.1), rgba(11,15,25,0.95)), url(${mainPhoto})`, backgroundSize: 'cover', backgroundPosition: 'center', border: '1px solid var(--border-color)' }}>
-        <div className="position-absolute bottom-0 left-0 p-4 w-100 d-flex justify-content-between align-items-end flex-wrap g-3">
+      <div className="position-relative rounded-4 overflow-hidden mb-4 animate-fade-in" style={{ minHeight: '260px', backgroundImage: `linear-gradient(rgba(0,0,0,0.2), rgba(11,15,25,0.95)), url(${mainPhoto})`, backgroundSize: 'cover', backgroundPosition: 'center', border: '1px solid var(--border-color)' }}>
+        <div className="position-absolute bottom-0 left-0 p-3 p-md-4 w-100 d-flex justify-content-between align-items-end flex-wrap gap-3">
           <div>
             <span className="text-muted small fw-700 tracking-wide text-uppercase d-block mb-1">{property.property_code}</span>
-            <h1 className="fw-700 text-white mb-2">{property.project_name}</h1>
-            <p className="mb-2 text-light"><i className="bi bi-geo-alt-fill text-primary"></i> {property.location}, {property.address}</p>
+            <h1 className="fw-700 text-white mb-2 fs-3 fs-md-1">{property.project_name}</h1>
+            <p className="mb-2 text-light small fs-md-6"><i className="bi bi-geo-alt-fill text-primary"></i> {property.location}, {property.address}</p>
             {property.rera_id && (
               <span className="badge bg-dark text-light border border-secondary border-opacity-30 rounded px-2.5 py-1 small">
                 RERA ID: {property.rera_id}
@@ -137,9 +137,9 @@ const PropertyDetail = () => {
             )}
           </div>
           
-          <div className="text-md-end text-start mt-3 mt-md-0">
+          <div className="text-md-end text-start mt-2 mt-md-0">
             <span className="text-muted d-block small">PROJECT STAGE</span>
-            <h3 className="text-primary fw-700 mb-1">{statusLabels[property.project_status] || property.project_status}</h3>
+            <h3 className="text-primary fw-700 mb-1 fs-5 fs-md-3">{statusLabels[property.project_status] || property.project_status}</h3>
             <span className={`badge bg-${property.availability_status === 'available' ? 'success' : 'danger'} text-dark fw-600 rounded-pill px-2.5 py-1`}>
               {property.availability_status}
             </span>
@@ -148,12 +148,12 @@ const PropertyDetail = () => {
       </div>
 
       {/* Quick Actions Panel */}
-      <div className="glass-panel p-3 mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3 animate-fade-in" style={{ animationDelay: '0.1s' }}>
+      <div className="glass-panel p-3 mb-4 d-flex justify-content-between align-items-center flex-wrap gap-2 gap-sm-3 animate-fade-in" style={{ animationDelay: '0.1s' }}>
         
         {/* Referral hooks for Broker or Executive */}
         <div>
           {['external_broker', 'branch_executive'].includes(user.role) ? (
-            <button className="btn btn-premium px-4" onClick={() => setShowLeadModal(true)}>
+            <button className="btn btn-premium px-3 px-sm-4 py-2" onClick={() => setShowLeadModal(true)}>
               <i className="bi bi-person-plus-fill me-1"></i> Refer Client Lead
             </button>
           ) : (
@@ -162,9 +162,9 @@ const PropertyDetail = () => {
         </div>
 
         {/* Share buttons hooks */}
-        <div className="d-flex align-items-center gap-2">
+        <div className="d-flex align-items-center gap-2 flex-wrap">
           <button 
-            className="btn btn-outline-success d-flex align-items-center gap-1.5" 
+            className="btn btn-outline-success btn-sm px-3 py-2 d-flex align-items-center gap-1.5" 
             onClick={() => { setShareChannel('whatsapp'); setShowShareMenu(true); }}
             title="Log and share details on WhatsApp"
           >
@@ -172,7 +172,7 @@ const PropertyDetail = () => {
           </button>
           
           <button 
-            className="btn btn-outline-primary d-flex align-items-center gap-1.5"
+            className="btn btn-outline-primary btn-sm px-3 py-2 d-flex align-items-center gap-1.5"
             onClick={() => { setShareChannel('email'); setShowShareMenu(true); }}
             title="Log and share details via email"
           >
@@ -184,13 +184,13 @@ const PropertyDetail = () => {
               href={`/${media.brochures[0].url}`} 
               target="_blank" 
               rel="noreferrer"
-              className="btn btn-premium-outline d-flex align-items-center gap-1.5"
+              className="btn btn-premium-outline btn-sm px-3 py-2 d-flex align-items-center gap-1.5"
               onClick={() => handleShareLog('brochure_download', 'Self Download')}
             >
-              <i className="bi bi-file-earmark-pdf-fill text-danger"></i> Download Brochure
+              <i className="bi bi-file-earmark-pdf-fill text-danger"></i> Brochure
             </a>
           ) : (
-            <button className="btn btn-premium-outline" disabled title="No brochure uploaded for this project">
+            <button className="btn btn-premium-outline btn-sm px-3 py-2" disabled title="No brochure uploaded for this project">
               <i className="bi bi-file-earmark-pdf"></i> No Brochure
             </button>
           )}
@@ -203,10 +203,10 @@ const PropertyDetail = () => {
         <div className="glass-panel p-4 mb-4 animate-fade-in border-primary">
           <h6 className="fw-600 text-white mb-2">Configure Sharing Logging (Recipient Contact)</h6>
           <p className="text-muted small">Enter the email/phone of the buyer you are sharing this property link with to record in activity logs.</p>
-          <div className="d-flex gap-2">
+          <div className="d-flex gap-2 flex-wrap">
             <input 
               type="text" 
-              className="form-control form-premium-control" 
+              className="form-control form-premium-control flex-grow-1" 
               placeholder={shareChannel === 'whatsapp' ? 'e.g. +91 99999 99999' : 'e.g. buyer@gmail.com'}
               value={shareRecipient} 
               onChange={(e) => setShareRecipient(e.target.value)} 
@@ -226,11 +226,11 @@ const PropertyDetail = () => {
       <div className="row g-4 mb-4">
         
         {/* Left Column: Spec Tabs */}
-        <div className="col-lg-8 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+        <div className="col-12 col-lg-8 animate-fade-in" style={{ animationDelay: '0.2s' }}>
           <div className="glass-panel p-4 h-100">
             
             {/* Tab Links */}
-            <ul className="nav nav-tabs border-bottom mb-4" style={{ borderColor: 'var(--border-color)' }}>
+            <ul className="nav nav-tabs border-bottom mb-4 flex-nowrap overflow-auto pb-1" style={{ borderColor: 'var(--border-color)', scrollbarWidth: 'none' }}>
               <li className="nav-item">
                 <button 
                   className={`nav-link bg-transparent text-light border-0 py-2 px-3 fw-600 ${activeTab === 'overview' ? 'active text-primary border-bottom border-primary' : 'text-muted'}`}
@@ -387,7 +387,7 @@ const PropertyDetail = () => {
         </div>
 
         {/* Right Column: Image Gallery Grid */}
-        <div className="col-lg-4 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+        <div className="col-12 col-lg-4 animate-fade-in" style={{ animationDelay: '0.3s' }}>
           <div className="glass-panel p-4 h-100">
             <h5 className="fw-600 text-white mb-4"><i className="bi bi-images text-primary me-2"></i>Project Assets Gallery</h5>
             

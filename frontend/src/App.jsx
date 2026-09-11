@@ -26,6 +26,20 @@ import PropertyDetailPublic from './pages/PropertyDetailPublic';
 const AppLayout = ({ children }) => {
   const { user } = useContext(AuthContext);
   const location = useLocation();
+  const [sidebarOpen, setSidebarOpen] = React.useState(false);
+
+  // Automatically close mobile sidebar drawer on route navigation
+  React.useEffect(() => {
+    setSidebarOpen(false);
+  }, [location.pathname]);
+
+  const toggleSidebar = () => {
+    setSidebarOpen(prev => !prev);
+  };
+
+  const closeSidebar = () => {
+    setSidebarOpen(false);
+  };
 
   // If on login, landing page, or public detail view, do not show sidebar or navbar
   const isPublicRoute = location.pathname === '/' || location.pathname === '/login' || location.pathname.startsWith('/property-public/');
@@ -35,19 +49,25 @@ const AppLayout = ({ children }) => {
 
   return (
     <div className="d-flex" style={{ minHeight: '100vh', backgroundColor: 'var(--bg-primary)' }}>
-      {/* Sidebar (260px width) */}
-      <Sidebar />
+      {/* Mobile Drawer Overlay Backdrop */}
+      {sidebarOpen && (
+        <div className="sidebar-backdrop d-lg-none" onClick={closeSidebar}></div>
+      )}
+
+      {/* Sidebar Drawer */}
+      <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} />
 
       {/* Main Panel Content Wrapper */}
-      <div className="d-flex flex-column flex-grow-1" style={{ marginLeft: '260px', width: 'calc(100% - 260px)' }}>
-        <Navbar />
-        <main className="p-4" style={{ backgroundColor: 'var(--bg-primary)', minHeight: 'calc(100vh - 72px)' }}>
+      <div className="main-content-wrapper">
+        <Navbar onToggleSidebar={toggleSidebar} />
+        <main className="main-content">
           {children}
         </main>
       </div>
     </div>
   );
 };
+
 
 const App = () => {
   return (

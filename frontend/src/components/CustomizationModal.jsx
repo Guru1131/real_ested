@@ -74,11 +74,11 @@ const CustomizationModal = ({ show, onClose }) => {
 
   return (
     <div className="modal d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(15, 23, 42, 0.85)', zIndex: 1060, backdropFilter: 'blur(8px)' }}>
-      <div className="modal-dialog modal-dialog-centered modal-lg">
+      <div className="modal-dialog modal-dialog-centered modal-lg px-2">
         <div className="modal-content border-0 shadow-lg" style={{ borderRadius: '24px', backgroundColor: '#ffffff' }}>
           
           <div className="modal-header border-bottom py-3 px-4 d-flex justify-content-between align-items-center">
-            <h5 className="modal-title fw-800 text-dark d-flex align-items-center gap-2">
+            <h5 className="modal-title fw-800 text-dark d-flex align-items-center gap-2 fs-6 fs-sm-5">
               <i className="bi bi-gear-fill text-warning"></i> Admin Customization Panel
             </h5>
             <button type="button" className="btn-close" onClick={onClose} aria-label="Close"></button>
@@ -279,14 +279,14 @@ const CustomizationModal = ({ show, onClose }) => {
                 </div>
               </div>
 
-              <div className="modal-footer border-top py-3 px-4 d-flex gap-2">
+              <div className="modal-footer border-top py-3 px-4 d-flex justify-content-end gap-2 flex-wrap">
                 <button type="button" className="btn btn-outline-danger me-auto fw-600 py-2.5" onClick={handleReset} style={{ borderRadius: '12px' }}>
                   Reset Defaults
                 </button>
                 <button type="button" className="btn btn-outline-secondary px-4 py-2.5 fw-600" onClick={onClose} style={{ borderRadius: '12px' }}>
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-warning px-5 py-2.5 text-white fw-700" style={{ borderRadius: '12px' }}>
+                <button type="submit" className="btn btn-warning px-4 py-2.5 text-white fw-700" style={{ borderRadius: '12px' }}>
                   Save and Apply Changes
                 </button>
               </div>

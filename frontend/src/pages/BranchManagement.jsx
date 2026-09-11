@@ -112,7 +112,7 @@ const BranchManagement = () => {
       <div className="row g-4">
         
         {/* Left Column: Register Form */}
-        <div className="col-lg-4 animate-fade-in" style={{ animationDelay: '0.1s' }}>
+        <div className="col-12 col-lg-4 animate-fade-in" style={{ animationDelay: '0.1s' }}>
           <div className="glass-panel p-4">
             <h5 className="fw-600 text-white mb-4">
               {editingId ? <><i className="bi bi-pencil-square text-primary me-2"></i>Edit Branch</> : <><i className="bi bi-plus-circle text-primary me-2"></i>Register New Branch</>}
@@ -196,7 +196,7 @@ const BranchManagement = () => {
         </div>
 
         {/* Right Column: Listing Table */}
-        <div className="col-lg-8 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+        <div className="col-12 col-lg-8 animate-fade-in" style={{ animationDelay: '0.2s' }}>
           <div className="glass-panel p-4">
             <h5 className="fw-600 text-white mb-4"><i className="bi bi-list-task text-primary me-2"></i>Active System Branches</h5>
             
@@ -230,20 +230,22 @@ const BranchManagement = () => {
                           {branch.address || 'N/A'}
                         </td>
                         <td className="text-end">
-                          <button 
-                            className="btn btn-sm btn-outline-primary me-2 px-2.5" 
-                            onClick={() => handleEdit(branch)}
-                            title="Edit configurations"
-                          >
-                            <i className="bi bi-pencil"></i>
-                          </button>
-                          <button 
-                            className="btn btn-sm btn-outline-danger px-2.5" 
-                            onClick={() => handleDelete(branch.id)}
-                            title="Soft delete branch"
-                          >
-                            <i className="bi bi-trash"></i>
-                          </button>
+                          <div className="d-flex justify-content-end gap-1 flex-wrap">
+                            <button 
+                              className="btn btn-sm btn-outline-primary px-2.5" 
+                              onClick={() => handleEdit(branch)}
+                              title="Edit configurations"
+                            >
+                              <i className="bi bi-pencil"></i>
+                            </button>
+                            <button 
+                              className="btn btn-sm btn-outline-danger px-2.5" 
+                              onClick={() => handleDelete(branch.id)}
+                              title="Soft delete branch"
+                            >
+                              <i className="bi bi-trash"></i>
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}

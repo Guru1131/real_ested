@@ -110,7 +110,8 @@ strong.text-white {
   background-color: var(--bg-secondary);
   border-right: 1px solid var(--border-color);
   padding: 24px 16px;
-  z-index: 1000;
+  z-index: 1050;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .sidebar-brand {
@@ -141,10 +142,33 @@ strong.text-white {
   border-left: 3px solid var(--accent-primary);
 }
 
-.main-content {
+.main-content-wrapper {
   margin-left: 260px;
-  padding: 40px;
+  width: calc(100% - 260px);
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 1040;
+  animation: fadeIn 0.2s ease-out forwards;
+}
+
+.main-content {
+  margin-left: 0;
+  padding: 24px;
+  min-height: calc(100vh - 72px);
   background-color: var(--bg-primary);
 }
 
@@ -153,6 +177,7 @@ strong.text-white {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0 8px;
+  min-width: 640px; /* Ensures minimum readable width inside table-responsive */
 }
 
 .table-premium th {
@@ -202,6 +227,7 @@ strong.text-white {
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .badge-approved {
@@ -298,19 +324,43 @@ strong.text-white {
   animation: fadeIn 0.4s ease-out forwards;
 }
 
-/* responsive mobile sidebar toggle */
+/* Responsive Breakpoints & Mobile Overrides */
 @media (max-width: 991.98px) {
   .sidebar {
-    width: 0;
-    padding: 0;
-    overflow: hidden;
+    transform: translateX(-100%);
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.2);
+    width: 260px !important;
   }
-  .main-content {
-    margin-left: 0;
-    padding: 20px;
-  }
+  
   .sidebar.show {
-    width: 260px;
-    padding: 24px 16px;
+    transform: translateX(0);
+  }
+
+  .main-content-wrapper {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+
+  .main-content {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .glass-panel {
+    padding: 16px !important;
+    border-radius: 12px;
+  }
+  
+  h2 {
+    font-size: 1.4rem;
+  }
+  
+  h3 {
+    font-size: 1.25rem;
+  }
+  
+  .table-premium td, .table-premium th {
+    padding: 10px 12px;
   }
 }

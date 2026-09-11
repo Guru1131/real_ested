@@ -208,7 +208,7 @@ const BrokerManagement = () => {
       <div className="row g-4">
         
         {/* Left Column: Create Broker */}
-        <div className="col-lg-4 animate-fade-in" style={{ animationDelay: '0.1s' }}>
+        <div className="col-12 col-lg-4 animate-fade-in" style={{ animationDelay: '0.1s' }}>
           <div className="glass-panel p-4">
             <h5 className="fw-600 text-white mb-4"><i className="bi bi-person-plus text-primary me-2"></i>Create Broker Account</h5>
             
@@ -312,7 +312,7 @@ const BrokerManagement = () => {
         </div>
 
         {/* Right Column: Listing Table */}
-        <div className="col-lg-8 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+        <div className="col-12 col-lg-8 animate-fade-in" style={{ animationDelay: '0.2s' }}>
           <div className="glass-panel p-4">
             <h5 className="fw-600 text-white mb-4"><i className="bi bi-people text-primary me-2"></i>Registered External Brokers</h5>
             
@@ -398,7 +398,7 @@ const BrokerManagement = () => {
                         )}</td>
                         <td className="text-end">
                           {editingId === b.id ? (
-                            <div className="d-flex justify-content-end gap-1">
+                            <div className="d-flex justify-content-end gap-1 flex-wrap">
                               <button className="btn btn-sm btn-success px-2" onClick={() => handleUpdate(b.id)} title="Save changes">
                                 <i className="bi bi-check-lg"></i>
                               </button>
@@ -407,7 +407,7 @@ const BrokerManagement = () => {
                               </button>
                             </div>
                           ) : (
-                            <div className="d-flex justify-content-end gap-1">
+                            <div className="d-flex justify-content-end gap-1 flex-wrap">
                               <button className="btn btn-sm btn-outline-info px-2.5" onClick={() => fetchLogs(b.id, b.username)} title="View audit activity logs">
                                 <i className="bi bi-activity"></i>
                               </button>

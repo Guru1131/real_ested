@@ -157,7 +157,7 @@ const UserManagement = () => {
       <div className="row g-4">
         
         {/* Left Column: Register Employee */}
-        <div className="col-lg-4 animate-fade-in" style={{ animationDelay: '0.1s' }}>
+        <div className="col-12 col-lg-4 animate-fade-in" style={{ animationDelay: '0.1s' }}>
           <div className="glass-panel p-4">
             <h5 className="fw-600 text-white mb-4"><i className="bi bi-person-plus text-primary me-2"></i>Register Staff Account</h5>
             
@@ -275,7 +275,7 @@ const UserManagement = () => {
         </div>
 
         {/* Right Column: Listing Table */}
-        <div className="col-lg-8 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+        <div className="col-12 col-lg-8 animate-fade-in" style={{ animationDelay: '0.2s' }}>
           <div className="glass-panel p-4">
             <h5 className="fw-600 text-white mb-4"><i className="bi bi-people text-primary me-2"></i>Active Staff Listing</h5>
             
@@ -335,7 +335,7 @@ const UserManagement = () => {
                         )}</td>
                         <td className="text-end">
                           {editingId === u.id ? (
-                            <div className="d-flex justify-content-end gap-1">
+                            <div className="d-flex justify-content-end gap-1 flex-wrap">
                               <button className="btn btn-sm btn-success px-2" onClick={() => handleUpdate(u.id)} title="Save changes">
                                 <i className="bi bi-check-lg"></i>
                               </button>
@@ -344,7 +344,7 @@ const UserManagement = () => {
                               </button>
                             </div>
                           ) : (
-                            <div className="d-flex justify-content-end gap-1">
+                            <div className="d-flex justify-content-end gap-1 flex-wrap">
                               <button className="btn btn-sm btn-outline-primary px-2.5" onClick={() => handleEditInit(u)} title="Edit user">
                                 <i className="bi bi-pencil"></i>
                               </button>

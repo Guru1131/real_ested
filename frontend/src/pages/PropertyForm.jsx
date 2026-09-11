@@ -385,7 +385,7 @@ const PropertyForm = () => {
           </h6>
 
           <div className="row g-2 mb-3 align-items-end bg-dark bg-opacity-20 p-3 rounded border border-secondary border-opacity-10">
-            <div className="col-md-3">
+            <div className="col-12 col-sm-6 col-md-3">
               <label className="form-label text-muted small fw-600">BHK / UNIT TYPE</label>
               <input 
                 type="text" 
@@ -395,7 +395,7 @@ const PropertyForm = () => {
                 className="form-control form-premium-control"
               />
             </div>
-            <div className="col-md-3">
+            <div className="col-12 col-sm-6 col-md-3">
               <label className="form-label text-muted small fw-600">CARPET AREA (SQ. FT.)</label>
               <input 
                 type="number" 
@@ -405,7 +405,7 @@ const PropertyForm = () => {
                 className="form-control form-premium-control"
               />
             </div>
-            <div className="col-md-3">
+            <div className="col-12 col-sm-6 col-md-3">
               <label className="form-label text-muted small fw-600">TOTAL PRICE (INR)</label>
               <input 
                 type="number" 
@@ -415,7 +415,7 @@ const PropertyForm = () => {
                 className="form-control form-premium-control"
               />
             </div>
-            <div className="col-md-2">
+            <div className="col-12 col-sm-6 col-md-2">
               <label className="form-label text-muted small fw-600">ESTIMATED EMI (/MO)</label>
               <input 
                 type="number" 
@@ -425,7 +425,7 @@ const PropertyForm = () => {
                 className="form-control form-premium-control"
               />
             </div>
-            <div className="col-md-1">
+            <div className="col-12 col-md-1 mt-2 mt-md-0">
               <button type="button" onClick={addConfiguration} className="btn btn-premium w-100 py-2">Add</button>
             </div>
           </div>
@@ -466,7 +466,7 @@ const PropertyForm = () => {
           </h6>
 
           <div className="row g-2 mb-3 align-items-end bg-dark bg-opacity-20 p-3 rounded border border-secondary border-opacity-10">
-            <div className="col-md-4">
+            <div className="col-12 col-sm-5 col-md-4">
               <label className="form-label text-muted small fw-600">SPECIFICATION TITLE</label>
               <input 
                 type="text" 
@@ -476,7 +476,7 @@ const PropertyForm = () => {
                 className="form-control form-premium-control"
               />
             </div>
-            <div className="col-md-7">
+            <div className="col-12 col-sm-7 col-md-7">
               <label className="form-label text-muted small fw-600">SPECIFICATION DETAILS</label>
               <input 
                 type="text" 
@@ -486,7 +486,7 @@ const PropertyForm = () => {
                 className="form-control form-premium-control"
               />
             </div>
-            <div className="col-md-1">
+            <div className="col-12 col-md-1 mt-2 mt-md-0">
               <button type="button" onClick={addSpecification} className="btn btn-premium w-100 py-2">Add</button>
             </div>
           </div>

@@ -113,7 +113,7 @@ const PropertySearch = () => {
         <h5 className="fw-600 text-white mb-3"><i className="bi bi-funnel-fill text-primary me-2"></i>Filter Property Parameters</h5>
         
         <form onSubmit={handleApplyFilters} className="row g-3">
-          <div className="col-md-3">
+          <div className="col-12 col-sm-6 col-md-3">
             <label className="form-label text-muted small fw-600">PROJECT / KEYWORD</label>
             <input 
               type="text" 
@@ -125,7 +125,7 @@ const PropertySearch = () => {
             />
           </div>
 
-          <div className="col-md-2">
+          <div className="col-12 col-sm-6 col-md-2">
             <label className="form-label text-muted small fw-600">PROPERTY TYPE</label>
             <select 
               name="type" 
@@ -143,7 +143,7 @@ const PropertySearch = () => {
             </select>
           </div>
 
-          <div className="col-md-2">
+          <div className="col-12 col-sm-6 col-md-2">
             <label className="form-label text-muted small fw-600">CITY</label>
             <input 
               type="text" 
@@ -155,7 +155,7 @@ const PropertySearch = () => {
             />
           </div>
 
-          <div className="col-md-2">
+          <div className="col-12 col-sm-6 col-md-2">
             <label className="form-label text-muted small fw-600">LOCATION / SUBURB</label>
             <input 
               type="text" 
@@ -167,7 +167,7 @@ const PropertySearch = () => {
             />
           </div>
 
-          <div className="col-md-3">
+          <div className="col-12 col-sm-6 col-md-3">
             <label className="form-label text-muted small fw-600">BHK / UNIT CONFIG</label>
             <input 
               type="text" 
@@ -179,7 +179,7 @@ const PropertySearch = () => {
             />
           </div>
 
-          <div className="col-md-3">
+          <div className="col-12 col-sm-6 col-md-3">
             <label className="form-label text-muted small fw-600">MIN PRICE (INR)</label>
             <input 
               type="number" 
@@ -191,7 +191,7 @@ const PropertySearch = () => {
             />
           </div>
 
-          <div className="col-md-3">
+          <div className="col-12 col-sm-6 col-md-3">
             <label className="form-label text-muted small fw-600">MAX PRICE (INR)</label>
             <input 
               type="number" 
@@ -203,7 +203,7 @@ const PropertySearch = () => {
             />
           </div>
 
-          <div className="col-md-3">
+          <div className="col-12 col-sm-6 col-md-3">
             <label className="form-label text-muted small fw-600">AVAILABILITY</label>
             <select 
               name="availability" 
@@ -218,7 +218,7 @@ const PropertySearch = () => {
             </select>
           </div>
 
-          <div className="col-md-3">
+          <div className="col-12 col-sm-6 col-md-3">
             <label className="form-label text-muted small fw-600">PROJECT STAGE / STATUS</label>
             <select 
               name="status" 
@@ -235,7 +235,7 @@ const PropertySearch = () => {
 
           {/* Show review queue filters only for admins */}
           {['super_admin', 'assistant_admin', 'branch_admin'].includes(user.role) && (
-            <div className="col-md-4">
+            <div className="col-12 col-sm-6 col-md-4">
               <label className="form-label text-muted small fw-600">APPROVAL STATUS</label>
               <select 
                 name="approvalStatus" 
@@ -252,7 +252,7 @@ const PropertySearch = () => {
             </div>
           )}
 
-          <div className="col d-flex align-items-end gap-2 justify-content-end">
+          <div className="col-12 d-flex align-items-end gap-2 justify-content-end flex-wrap mt-3">
             <button type="button" className="btn btn-premium-outline px-4 py-2" onClick={handleResetFilters}>
               Reset
             </button>

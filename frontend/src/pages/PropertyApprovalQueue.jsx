@@ -105,7 +105,7 @@ const PropertyApprovalQueue = () => {
                     <td className="small">{item.location}</td>
                     <td className="fw-600 text-success small">{item.min_price ? formatPrice(item.min_price) : 'On Request'}</td>
                     <td>
-                      <div className="d-flex gap-2 justify-content-end">
+                      <div className="d-flex gap-1 justify-content-end flex-wrap">
                         <Link to={`/property/${item.property_slug}`} className="btn btn-sm btn-outline-info px-2.5" title="View files and details">
                           <i className="bi bi-eye"></i> Audit Details
                         </Link>

@@ -166,16 +166,16 @@ const Dashboard = () => {
     return (
       <div className="container-fluid py-2">
         {/* Header Hero */}
-        <div className="glass-panel p-5 mb-4 animate-fade-in text-center text-md-start d-md-flex align-items-center justify-content-between" style={{ background: 'linear-gradient(135deg, rgba(17, 24, 39, 0.9) 0%, rgba(59, 130, 246, 0.1) 100%)' }}>
+        <div className="glass-panel p-4 p-md-5 mb-4 animate-fade-in text-center text-md-start d-md-flex align-items-center justify-content-between" style={{ background: 'linear-gradient(135deg, rgba(17, 24, 39, 0.9) 0%, rgba(59, 130, 246, 0.1) 100%)' }}>
           <div>
             <h2 className="fw-700 text-white mb-2">Welcome to BeyondWalls Broker Portal</h2>
             <p className="text-muted mb-0">Search premium projects, download PDF brochures, share listings, and submit leads directly to developers.</p>
-            <div className="mt-3 d-flex flex-wrap gap-3">
+            <div className="mt-3 d-flex flex-wrap gap-2 gap-sm-3 justify-content-center justify-content-md-start">
               <span className="badge bg-secondary text-light rounded-pill px-3 py-1.5 small"><i className="bi bi-person-circle"></i> Broker: {user.username}</span>
               <span className="badge bg-success text-dark rounded-pill px-3 py-1.5 small"><i className="bi bi-check-circle-fill"></i> Status: Active Partner</span>
             </div>
           </div>
-          <div className="mt-4 mt-md-0 d-flex gap-3">
+          <div className="mt-4 mt-md-0 d-flex flex-wrap gap-2 justify-content-center justify-content-md-end">
             <Link to="/properties" className="btn btn-premium px-4 py-2.5"><i className="bi bi-search"></i> Search Catalog</Link>
             <Link to="/leads" className="btn btn-premium-outline px-4 py-2.5"><i className="bi bi-funnel"></i> My Referrals ({stats.leadsCount})</Link>
           </div>
@@ -186,13 +186,13 @@ const Dashboard = () => {
         {/* Category 1: Residential Launches */}
         <div className="mb-5">
           <div className="d-flex justify-content-between align-items-center mb-3">
-            <h4 className="fw-700 text-white mb-0"><i className="bi bi-house-door text-primary me-2"></i>Premium Residential Launches</h4>
-            <span className="text-muted small">{residential.length} Projects Available</span>
+            <h4 className="fw-700 text-white mb-0 fs-5 fs-md-4"><i className="bi bi-house-door text-primary me-2"></i>Premium Residential Launches</h4>
+            <span className="text-muted small">{residential.length} Projects</span>
           </div>
           {residential.length === 0 ? (
             <div className="text-muted small p-4 bg-dark bg-opacity-20 rounded border border-secondary border-opacity-10">No residential projects available in your assigned branch scope.</div>
           ) : (
-            <div className="row row-cols-1 row-cols-md-3 g-4">
+            <div className="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-4">
               {residential.map(p => (
                 <div key={p.id} className="col">
                   <PropertyCard property={p} userRole={user.role} />
@@ -205,13 +205,13 @@ const Dashboard = () => {
         {/* Category 2: Commercial Projects */}
         <div className="mb-5">
           <div className="d-flex justify-content-between align-items-center mb-3">
-            <h4 className="fw-700 text-white mb-0"><i className="bi bi-briefcase text-info me-2"></i>Commercial complex & Retail Shops</h4>
-            <span className="text-muted small">{commercial.length} Projects Available</span>
+            <h4 className="fw-700 text-white mb-0 fs-5 fs-md-4"><i className="bi bi-briefcase text-info me-2"></i>Commercial complex & Retail Shops</h4>
+            <span className="text-muted small">{commercial.length} Projects</span>
           </div>
           {commercial.length === 0 ? (
             <div className="text-muted small p-4 bg-dark bg-opacity-20 rounded border border-secondary border-opacity-10">No commercial properties listed yet.</div>
           ) : (
-            <div className="row row-cols-1 row-cols-md-3 g-4">
+            <div className="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-4">
               {commercial.map(p => (
                 <div key={p.id} className="col">
                   <PropertyCard property={p} userRole={user.role} />
@@ -274,7 +274,7 @@ const Dashboard = () => {
   return (
     <div className="container-fluid py-2">
       {/* Header Banner */}
-      <div className="glass-panel p-4 mb-4 animate-fade-in d-flex justify-content-between align-items-center">
+      <div className="glass-panel p-4 mb-4 animate-fade-in d-flex justify-content-between align-items-center flex-wrap gap-2">
         <div>
           <h2 className="fw-700 text-white mb-1">Workspace Dashboard</h2>
           <p className="text-muted mb-0">Welcome back, <strong>{user.username}</strong>. You are logged in as a <strong>{roleLabels[user.role]}</strong>.</p>
@@ -288,7 +288,7 @@ const Dashboard = () => {
         {/* Render for Super Admins / Assistant Admins */}
         {['super_admin', 'assistant_admin'].includes(user.role) && (
           <>
-            <div className="col-md-3 col-sm-6 animate-fade-in" style={{ animationDelay: '0.1s' }}>
+            <div className="col-12 col-sm-6 col-lg-3 animate-fade-in" style={{ animationDelay: '0.1s' }}>
               <div className="glass-panel p-4 d-flex align-items-center justify-content-between">
                 <div>
                   <h6 className="text-muted small fw-600 mb-1">TOTAL BRANCHES</h6>
@@ -299,7 +299,7 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="col-md-3 col-sm-6 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+            <div className="col-12 col-sm-6 col-lg-3 animate-fade-in" style={{ animationDelay: '0.2s' }}>
               <div className="glass-panel p-4 d-flex align-items-center justify-content-between">
                 <div>
                   <h6 className="text-muted small fw-600 mb-1">PENDING APPROVALS</h6>
@@ -310,7 +310,7 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="col-md-3 col-sm-6 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+            <div className="col-12 col-sm-6 col-lg-3 animate-fade-in" style={{ animationDelay: '0.3s' }}>
               <div className="glass-panel p-4 d-flex align-items-center justify-content-between">
                 <div>
                   <h6 className="text-muted small fw-600 mb-1">ACTIVE BROKERS</h6>
@@ -321,10 +321,10 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="col-md-3 col-sm-6 animate-fade-in" style={{ animationDelay: '0.4s' }}>
+            <div className="col-12 col-sm-6 col-lg-3 animate-fade-in" style={{ animationDelay: '0.4s' }}>
               <div className="glass-panel p-4 d-flex align-items-center justify-content-between">
                 <div>
-                  <h6 className="text-muted small fw-600 mb-1">TOTAL SYSTEM LEADS</h6>
+                  <h6 className="text-muted small fw-600 mb-1">TOTAL LEADS</h6>
                   <h3 className="fw-700 text-success mb-0">{stats.leadsCount}</h3>
                   <Link to="/leads" className="small text-success text-decoration-none mt-2 d-block">View tracking board <i className="bi bi-arrow-right"></i></Link>
                 </div>
@@ -337,7 +337,7 @@ const Dashboard = () => {
         {/* Render for Branch Admins */}
         {user.role === 'branch_admin' && (
           <>
-            <div className="col-md-4 col-sm-6 animate-fade-in">
+            <div className="col-12 col-sm-6 col-md-4 animate-fade-in">
               <div className="glass-panel p-4 d-flex align-items-center justify-content-between">
                 <div>
                   <h6 className="text-muted small fw-600 mb-1">BRANCH PROPERTIES</h6>
@@ -348,7 +348,7 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="col-md-4 col-sm-6 animate-fade-in">
+            <div className="col-12 col-sm-6 col-md-4 animate-fade-in">
               <div className="glass-panel p-4 d-flex align-items-center justify-content-between">
                 <div>
                   <h6 className="text-muted small fw-600 mb-1">DRAFT / REVIEW LISTINGS</h6>
@@ -359,7 +359,7 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="col-md-4 col-sm-6 animate-fade-in">
+            <div className="col-12 col-sm-6 col-md-4 animate-fade-in">
               <div className="glass-panel p-4 d-flex align-items-center justify-content-between">
                 <div>
                   <h6 className="text-muted small fw-600 mb-1">BRANCH LEADS</h6>
@@ -375,7 +375,7 @@ const Dashboard = () => {
         {/* Render for Sales Executives */}
         {user.role === 'branch_executive' && (
           <>
-            <div className="col-md-6 animate-fade-in">
+            <div className="col-12 col-md-6 animate-fade-in">
               <div className="glass-panel p-4 d-flex align-items-center justify-content-between">
                 <div>
                   <h6 className="text-muted small fw-600 mb-1">AVAILABLE PROPERTIES</h6>
@@ -389,7 +389,7 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="col-md-6 animate-fade-in">
+            <div className="col-12 col-md-6 animate-fade-in">
               <div className="glass-panel p-4 d-flex align-items-center justify-content-between">
                 <div>
                   <h6 className="text-muted small fw-600 mb-1">MY ASSIGNED LEADS</h6>
@@ -420,17 +420,17 @@ const Dashboard = () => {
               ) : (
                 <div className="list-group list-group-flush bg-transparent">
                   {recentLogs.map((log) => (
-                    <div key={log.id} className="list-group-item bg-transparent text-light border-bottom border-secondary d-flex justify-content-between align-items-center py-3 px-1">
+                    <div key={log.id} className="list-group-item bg-transparent text-light border-bottom border-secondary d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center py-3 px-1 gap-2">
                       <div className="d-flex align-items-center gap-3">
-                        <div className="p-2 bg-dark bg-opacity-40 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
+                        <div className="p-2 bg-dark bg-opacity-40 rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style={{ width: '40px', height: '40px' }}>
                           <i className={`bi ${getLogIcon(log.activity_type)} fs-5`}></i>
                         </div>
                         <div>
-                          <p className="mb-0 fw-500">{formatLogText(log)}</p>
+                          <p className="mb-0 fw-500" style={{ wordBreak: 'break-word' }}>{formatLogText(log)}</p>
                           <small className="text-muted text-capitalize">Log ID: {log.id} | Type: {log.activity_type.replace(/_/g, ' ')}</small>
                         </div>
                       </div>
-                      <span className="small text-muted">{new Date(log.created_at).toLocaleString()}</span>
+                      <span className="small text-muted flex-shrink-0 align-self-end align-self-sm-center">{new Date(log.created_at).toLocaleString()}</span>
                     </div>
                   ))}
                 </div>
