@@ -473,8 +473,8 @@ router.post('/', authenticate, requireRole(['branch_admin']), propertyUploads, a
   }
 });
 
-// POST /api/properties/:id/submit (Submit draft for approval)
-router.post('/:id/submit', authenticate, requireRole(['branch_admin']), async (req, res) => {
+// POST /api/properties/:id/submit (Submit draft, approved, or rejected property for approval review)
+router.post('/:id/submit', authenticate, requireRole(['branch_admin', 'super_admin']), async (req, res) => {
   const { id } = req.params;
 
   try {
@@ -485,18 +485,210 @@ router.post('/:id/submit', authenticate, requireRole(['branch_admin']), async (r
       return res.status(404).json({ error: 'Property not found.' });
     }
 
-    if (!enforceBranchIsolation(req, res, property.branch_id)) return;
+    if (req.user.role === 'branch_admin') {
+      if (!enforceBranchIsolation(req, res, property.branch_id)) return;
+    }
 
-    if (property.approval_status !== 'draft') {
-      return res.status(400).json({ error: 'Only drafts can be submitted for approval.' });
+    if (property.approval_status === 'pending_approval') {
+      return res.status(400).json({ error: 'Property is already pending approval in the review queue.' });
     }
 
     await pool.query("UPDATE properties SET approval_status = 'pending_approval' WHERE id = ?", [id]);
-    return res.json({ message: 'Property draft submitted successfully for Super Admin audit.' });
+    return res.json({ message: 'Property submitted successfully for Super Admin audit & approval.' });
 
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: 'Server error submitting property.' });
+  }
+});
+
+// GET /api/properties/detail-by-id/:id (Fetch property details by numeric ID for Edit Mode)
+router.get('/detail-by-id/:id', authenticate, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [props] = await pool.query(
+      `SELECT p.*, b.name as branch_name, b.code as branch_code 
+       FROM properties p
+       JOIN branches b ON p.branch_id = b.id
+       WHERE p.id = ? AND p.is_deleted = 0 LIMIT 1`,
+      [id]
+    );
+
+    const property = props[0];
+    if (!property) {
+      return res.status(404).json({ error: 'Property not found.' });
+    }
+
+    if (['branch_admin', 'branch_executive'].includes(req.user.role)) {
+      if (!enforceBranchIsolation(req, res, property.branch_id)) return;
+    }
+
+    const [configs] = await pool.query('SELECT bhk_type, carpet_area, price, estimated_emi FROM property_configurations WHERE property_id = ?', [id]);
+    const [amenities] = await pool.query('SELECT amenity_name FROM property_amenities WHERE property_id = ?', [id]);
+    const amenitiesList = amenities.map(a => a.amenity_name);
+    const [specifications] = await pool.query('SELECT title, details FROM property_specifications WHERE property_id = ?', [id]);
+    const [media] = await pool.query('SELECT id, media_type, file_url, file_name FROM property_media WHERE property_id = ?', [id]);
+
+    const mediaGrouped = { images: [], floor_plans: [], documents: [], brochures: [] };
+    media.forEach(item => {
+      const typeKey = item.media_type + 's';
+      if (mediaGrouped[typeKey]) {
+        mediaGrouped[typeKey].push({ id: item.id, url: item.file_url, name: item.file_name });
+      }
+    });
+
+    return res.json({
+      property,
+      configurations: configs,
+      amenities: amenitiesList,
+      specifications,
+      media: mediaGrouped
+    });
+
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Server error retrieving property by ID.' });
+  }
+});
+
+// PUT /api/properties/:id (Update Property details & re-submit for review if requested)
+router.put('/:id', authenticate, requireRole(['branch_admin', 'super_admin', 'assistant_admin']), propertyUploads, async (req, res) => {
+  const { id } = req.params;
+  const {
+    project_name, property_type, location, city, address, survey_number,
+    builder, rera_id, completion_date, project_status, highlights,
+    map_embed_url, developer_legacy, availability_status, action
+  } = req.body;
+
+  const dbConnection = await pool.getConnection();
+
+  try {
+    await dbConnection.beginTransaction();
+
+    const [existingProps] = await dbConnection.query('SELECT * FROM properties WHERE id = ? AND is_deleted = 0 LIMIT 1', [id]);
+    const existingProperty = existingProps[0];
+
+    if (!existingProperty) {
+      dbConnection.release();
+      return res.status(404).json({ error: 'Property not found.' });
+    }
+
+    if (req.user.role === 'branch_admin') {
+      if (!enforceBranchIsolation(req, res, existingProperty.branch_id)) {
+        dbConnection.release();
+        return;
+      }
+    }
+
+    // Determine target approval status:
+    let targetApprovalStatus = existingProperty.approval_status;
+    if (action === 'submit') {
+      targetApprovalStatus = 'pending_approval';
+    } else if (req.user.role === 'branch_admin' && existingProperty.approval_status === 'approved') {
+      targetApprovalStatus = 'pending_approval';
+    }
+
+    // Update main properties table
+    await dbConnection.query(
+      `UPDATE properties SET 
+       project_name = ?, property_type = ?, location = ?, address = ?, survey_number = ?, 
+       city = ?, builder = ?, rera_id = ?, completion_date = ?, project_status = ?, 
+       highlights = ?, map_embed_url = ?, developer_legacy = ?, availability_status = ?, 
+       approval_status = ? 
+       WHERE id = ?`,
+      [
+        project_name || existingProperty.project_name,
+        property_type || existingProperty.property_type,
+        location || existingProperty.location,
+        address || existingProperty.address,
+        survey_number !== undefined ? survey_number : existingProperty.survey_number,
+        city || existingProperty.city,
+        builder || existingProperty.builder,
+        rera_id !== undefined ? rera_id : existingProperty.rera_id,
+        completion_date || existingProperty.completion_date,
+        project_status || existingProperty.project_status,
+        highlights !== undefined ? highlights : existingProperty.highlights,
+        map_embed_url !== undefined ? map_embed_url : existingProperty.map_embed_url,
+        developer_legacy !== undefined ? developer_legacy : existingProperty.developer_legacy,
+        availability_status || existingProperty.availability_status,
+        targetApprovalStatus,
+        id
+      ]
+    );
+
+    // Replace configurations if provided
+    if (req.body.configurations) {
+      const configurations = JSON.parse(req.body.configurations);
+      if (Array.isArray(configurations)) {
+        await dbConnection.query('DELETE FROM property_configurations WHERE property_id = ?', [id]);
+        for (let config of configurations) {
+          await dbConnection.query(
+            'INSERT INTO property_configurations (property_id, bhk_type, carpet_area, price, estimated_emi) VALUES (?, ?, ?, ?, ?)',
+            [id, config.bhk_type, config.carpet_area, config.price, config.estimated_emi || null]
+          );
+        }
+      }
+    }
+
+    // Replace amenities if provided
+    if (req.body.amenities) {
+      const amenities = JSON.parse(req.body.amenities);
+      if (Array.isArray(amenities)) {
+        await dbConnection.query('DELETE FROM property_amenities WHERE property_id = ?', [id]);
+        for (let amenity of amenities) {
+          await dbConnection.query(
+            'INSERT INTO property_amenities (property_id, amenity_name) VALUES (?, ?)',
+            [id, amenity]
+          );
+        }
+      }
+    }
+
+    // Replace specifications if provided
+    if (req.body.specifications) {
+      const specifications = JSON.parse(req.body.specifications);
+      if (Array.isArray(specifications)) {
+        await dbConnection.query('DELETE FROM property_specifications WHERE property_id = ?', [id]);
+        for (let spec of specifications) {
+          await dbConnection.query(
+            'INSERT INTO property_specifications (property_id, title, details) VALUES (?, ?, ?)',
+            [id, spec.title, spec.details]
+          );
+        }
+      }
+    }
+
+    // Handle Uploaded Files
+    const mediaTypes = ['image', 'floor_plan', 'document', 'brochure'];
+    for (let mType of mediaTypes) {
+      const fieldname = mType + 's';
+      if (req.files && req.files[fieldname]) {
+        for (let file of req.files[fieldname]) {
+          const relativeUrl = 'uploads/' + file.filename;
+          await dbConnection.query(
+            'INSERT INTO property_media (property_id, media_type, file_url, file_name) VALUES (?, ?, ?, ?)',
+            [id, mType, relativeUrl, file.originalname]
+          );
+        }
+      }
+    }
+
+    await dbConnection.commit();
+    return res.json({ 
+      message: targetApprovalStatus === 'pending_approval'
+        ? 'Property updated and submitted for Super Admin review & approval.' 
+        : 'Property updated successfully.',
+      propertyId: id,
+      approval_status: targetApprovalStatus
+    });
+
+  } catch (err) {
+    await dbConnection.rollback();
+    console.error(err);
+    return res.status(500).json({ error: 'Server error updating property details.' });
+  } finally {
+    dbConnection.release();
   }
 });
 

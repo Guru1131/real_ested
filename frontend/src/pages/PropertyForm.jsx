@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useParams } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import api from '../services/api';
 
 const PropertyForm = () => {
+  const { id } = useParams();
+  const isEditMode = Boolean(id);
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -37,10 +39,56 @@ const PropertyForm = () => {
   const [images, setImages] = useState([]);
   const [floorPlans, setFloorPlans] = useState([]);
   const [brochures, setBrochures] = useState([]);
+  const [existingMedia, setExistingMedia] = useState(null);
 
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(isEditMode);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [approvalStatus, setApprovalStatus] = useState('draft');
+
+  // Load existing property data if in Edit Mode
+  useEffect(() => {
+    if (!isEditMode) return;
+
+    const fetchPropertyData = async () => {
+      try {
+        setInitialLoading(true);
+        const res = await api.get(`/api/properties/detail-by-id/${id}`);
+        const { property, configurations: fetchedConfigs, amenities: fetchedAmenities, specifications: fetchedSpecs, media: fetchedMedia } = res.data;
+
+        setFormData({
+          project_name: property.project_name || '',
+          property_type: property.property_type || 'flat',
+          location: property.location || '',
+          address: property.address || '',
+          survey_number: property.survey_number || '',
+          city: property.city || '',
+          builder: property.builder || '',
+          rera_id: property.rera_id || '',
+          completion_date: property.completion_date ? property.completion_date.split('T')[0] : '',
+          project_status: property.project_status || 'under_construction',
+          highlights: property.highlights || '',
+          map_embed_url: property.map_embed_url || '',
+          developer_legacy: property.developer_legacy || '',
+          availability_status: property.availability_status || 'available'
+        });
+
+        setConfigurations(fetchedConfigs || []);
+        setSpecifications(fetchedSpecs || []);
+        setSelectedAmenities(fetchedAmenities || []);
+        setExistingMedia(fetchedMedia || null);
+        setApprovalStatus(property.approval_status || 'draft');
+
+      } catch (err) {
+        setError(err.response?.data?.error || 'Failed to load property details for editing.');
+      } finally {
+        setInitialLoading(false);
+      }
+    };
+
+    fetchPropertyData();
+  }, [id, isEditMode]);
 
   const amenitiesList = [
     "Swimming Pool", "Club House", "Gymnasium", 
@@ -99,8 +147,8 @@ const PropertyForm = () => {
     setSpecifications(specifications.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (e, submitForApproval = false) => {
+    if (e) e.preventDefault();
     setError('');
     setSuccess('');
 
@@ -127,6 +175,10 @@ const PropertyForm = () => {
         }
       });
 
+      if (submitForApproval) {
+        payload.append('action', 'submit');
+      }
+
       // Append relational data arrays as JSON strings
       payload.append('configurations', JSON.stringify(configurations));
       payload.append('amenities', JSON.stringify(selectedAmenities));
@@ -149,37 +201,67 @@ const PropertyForm = () => {
         }
       }
 
-      const res = await api.post('/api/properties', payload, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
-
-      setSuccess(`Property draft registered successfully with unique ID: ${res.data.property_code}.`);
+      if (isEditMode) {
+        // PUT request to update existing property
+        const res = await api.put(`/api/properties/${id}`, payload, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        setSuccess(res.data.message || 'Property updated successfully.');
+      } else {
+        // POST request to create new property
+        const res = await api.post('/api/properties', payload, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        setSuccess(`Property draft registered successfully with code: ${res.data.property_code}.`);
+      }
       
-      // Redirect to catalog after delay
+      // Redirect to catalog after brief delay
       setTimeout(() => {
         navigate('/properties');
       }, 1500);
 
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to register property draft. Please check server constraints.');
+      setError(err.response?.data?.error || 'Failed to save property. Please check server constraints.');
     } finally {
       setLoading(false);
     }
   };
 
+  if (initialLoading) {
+    return (
+      <div className="d-flex justify-content-center align-items-center vh-50 text-light">
+        <div className="spinner-border text-primary me-2" role="status"></div> Loading property details...
+      </div>
+    );
+  }
+
+
   return (
     <div className="container-fluid py-2 animate-fade-in">
       {/* Header */}
       <div className="glass-panel p-4 mb-4">
-        <h2 className="fw-700 text-white mb-1">Create Property Listing Draft</h2>
-        <p className="text-muted mb-0">Fill in project specs, layout configurations, and upload brochures. Drafts will be submitted to the Super Admin queue for approved activation.</p>
+        <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div>
+            <h2 className="fw-700 text-white mb-1">
+              {isEditMode ? <><i className="bi bi-pencil-square text-primary me-2"></i>Edit Property Listing</> : <><i className="bi bi-plus-circle text-primary me-2"></i>Create Property Listing Draft</>}
+            </h2>
+            <p className="text-muted mb-0">
+              {isEditMode 
+                ? 'Update specifications, pricing, configurations, or uploaded assets. Submit changes for Super Admin re-approval.'
+                : 'Fill in project specs, layout configurations, and upload brochures. Drafts will be submitted to the Super Admin queue.'}
+            </p>
+          </div>
+          {isEditMode && (
+            <span className={`badge-status badge-${approvalStatus === 'approved' ? 'approved' : approvalStatus === 'pending_approval' ? 'pending' : 'draft'}`}>
+              Status: {approvalStatus.replace('_', ' ')}
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="glass-panel p-4 text-light">
         <h5 className="fw-600 text-white mb-4 border-bottom pb-3" style={{ borderColor: 'var(--border-color)' }}>
-          <i className="bi bi-file-earmark-plus text-primary me-2"></i>Property Information Form
+          <i className="bi bi-building text-primary me-2"></i>{isEditMode ? 'Update Property Parameters' : 'Property Information Form'}
         </h5>
 
         {error && (
@@ -569,19 +651,32 @@ const PropertyForm = () => {
           </div>
 
           {/* Actions */}
-          <div className="d-flex gap-3 justify-content-end border-top pt-4" style={{ borderColor: 'var(--border-color)' }}>
+          <div className="d-flex gap-3 justify-content-end border-top pt-4 flex-wrap" style={{ borderColor: 'var(--border-color)' }}>
             <Link to="/properties" className="btn btn-premium-outline px-4 py-2">
-              Cancel Draft
+              Cancel
             </Link>
-            <button type="submit" className="btn btn-premium px-5 py-2" disabled={loading}>
+            <button 
+              type="button" 
+              className="btn btn-premium-outline px-4 py-2" 
+              disabled={loading}
+              onClick={(e) => handleSubmit(e, false)}
+            >
+              <i className="bi bi-save me-1"></i> {isEditMode ? 'Save Changes as Draft' : 'Save Draft'}
+            </button>
+            <button 
+              type="button" 
+              className="btn btn-premium px-5 py-2" 
+              disabled={loading}
+              onClick={(e) => handleSubmit(e, true)}
+            >
               {loading ? (
                 <>
                   <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                  Saving draft...
+                  Processing...
                 </>
               ) : (
                 <>
-                  <i className="bi bi-save me-1"></i> Save Draft
+                  <i className="bi bi-send-check me-1"></i> {isEditMode ? 'Save & Submit for Review' : 'Create & Submit for Review'}
                 </>
               )}
             </button>

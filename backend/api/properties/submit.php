@@ -41,9 +41,9 @@ try {
     // Branch isolation check
     AuthMiddleware::enforceBranchIsolation($currentUser, $property['branch_id']);
 
-    if ($property['approval_status'] !== 'draft') {
+    if ($property['approval_status'] === 'pending_approval') {
         http_response_code(400);
-        echo json_encode(["error" => "Only property drafts can be submitted for approval."]);
+        echo json_encode(["error" => "Property is already pending approval in the review queue."]);
         exit();
     }
 

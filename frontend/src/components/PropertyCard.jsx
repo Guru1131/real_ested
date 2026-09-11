@@ -78,13 +78,19 @@ const PropertyCard = ({ property, onStatusSubmit, userRole }) => {
 
       {/* Card Actions Footer */}
       <div className="p-4 pt-0 border-top mt-auto" style={{ borderColor: 'var(--border-color)' }}>
-        <div className="d-flex gap-2 pt-3">
+        <div className="d-flex gap-2 pt-3 flex-wrap">
           <Link to={`/property/${property.property_slug}`} className="btn btn-premium-outline flex-grow-1 text-center py-2 px-3" style={{ fontSize: '0.85rem' }}>
-            <i className="bi bi-eye"></i> View Details
+            <i className="bi bi-eye me-1"></i> View Details
           </Link>
           
-          {/* Direct Submit Action for Branch Admins on drafts */}
-          {userRole === 'branch_admin' && property.approval_status === 'draft' && onStatusSubmit && (
+          {(userRole === 'branch_admin' || userRole === 'super_admin') && (
+            <Link to={`/properties/edit/${property.id}`} className="btn btn-premium-outline py-2 px-3" style={{ fontSize: '0.85rem' }} title="Edit Property Details">
+              <i className="bi bi-pencil-square"></i> Edit
+            </Link>
+          )}
+
+          {/* Direct Submit Action for Branch Admins on drafts/rejected */}
+          {userRole === 'branch_admin' && (property.approval_status === 'draft' || property.approval_status === 'rejected') && onStatusSubmit && (
             <button 
               onClick={() => onStatusSubmit(property.id)} 
               className="btn btn-premium py-2 px-3" 

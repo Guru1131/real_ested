@@ -129,11 +129,20 @@ const App = () => {
               } 
             />
 
-            {/* New Property Draft Creator */}
+            {/* New Property Creator & Editor */}
             <Route 
               path="/properties/new" 
               element={
-                <ProtectedRoute allowedRoles={['branch_admin']}>
+                <ProtectedRoute allowedRoles={['branch_admin', 'super_admin']}>
+                  <PropertyForm />
+                </ProtectedRoute>
+              } 
+            />
+
+            <Route 
+              path="/properties/edit/:id" 
+              element={
+                <ProtectedRoute allowedRoles={['branch_admin', 'super_admin']}>
                   <PropertyForm />
                 </ProtectedRoute>
               } 
