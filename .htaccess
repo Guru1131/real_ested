@@ -1,10 +1,21 @@
 <IfModule mod_rewrite.c>
   RewriteEngine On
-  
+
+  # Route /uploads/ requests to backend/uploads/ if file exists in backend/uploads
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{DOCUMENT_ROOT}/backend/uploads/$1 -f
+  RewriteRule ^uploads/(.*)$ backend/uploads/$1 [L]
+
+  # Route /uploads/ requests if inside subfolder
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_URI} ^/(.+)/uploads/(.*)$
+  RewriteCond %{DOCUMENT_ROOT}/%1/backend/uploads/%2 -f
+  RewriteRule ^(.*)/uploads/(.*)$ $1/backend/uploads/$2 [L]
+
   # Don't rewrite files or directories
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d
-  
+
   # Rewrite everything else to index.html for React Router
   RewriteRule ^ index.html [QSA,L]
 </IfModule>

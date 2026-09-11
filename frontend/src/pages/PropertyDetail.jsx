@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import api from '../services/api';
 import LeadFormModal from '../components/LeadFormModal';
+import { formatImageUrl, handleImageError } from '../utils/imageHelper';
 
 const PropertyDetail = () => {
   const { slug } = useParams(); // Using property URL slug
@@ -104,7 +105,7 @@ const PropertyDetail = () => {
 
   // Resolve main banner photo
   const mainPhoto = media.images && media.images.length > 0 
-    ? `/${media.images[0].url}` 
+    ? formatImageUrl(media.images[0].url)
     : 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=80';
 
   const statusLabels = {
@@ -396,10 +397,11 @@ const PropertyDetail = () => {
                 {media.images.map((img) => (
                   <div key={img.id} className="col-6">
                     <div className="glass-panel p-1 overflow-hidden" style={{ borderRadius: '8px' }}>
-                      <a href={`/${img.url}`} target="_blank" rel="noreferrer">
+                      <a href={formatImageUrl(img.url)} target="_blank" rel="noreferrer">
                         <img 
-                          src={`/${img.url}`} 
+                          src={formatImageUrl(img.url)} 
                           alt={img.name} 
+                          onError={handleImageError}
                           className="img-fluid rounded hover-scale" 
                           style={{ objectFit: 'cover', height: '110px', width: '100%' }}
                         />
@@ -421,10 +423,11 @@ const PropertyDetail = () => {
                   {media.floor_plans.map((fp) => (
                     <div key={fp.id} className="col-12 text-center mb-2">
                       <div className="glass-panel p-1 d-inline-block w-100">
-                        <a href={`/${fp.url}`} target="_blank" rel="noreferrer">
+                        <a href={formatImageUrl(fp.url)} target="_blank" rel="noreferrer">
                           <img 
-                            src={`/${fp.url}`} 
+                            src={formatImageUrl(fp.url)} 
                             alt={fp.name} 
+                            onError={handleImageError}
                             className="img-fluid rounded hover-scale" 
                             style={{ maxHeight: '180px', objectFit: 'contain' }}
                           />

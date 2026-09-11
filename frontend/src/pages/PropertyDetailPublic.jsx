@@ -4,6 +4,7 @@ import { AuthContext } from '../context/AuthContext';
 import { CustomizationContext } from '../context/CustomizationContext';
 import api from '../services/api';
 import CustomizationModal from '../components/CustomizationModal';
+import { formatImageUrl, handleImageError } from '../utils/imageHelper';
 
 const PropertyDetailPublic = () => {
   const { slug } = useParams();
@@ -142,7 +143,7 @@ const PropertyDetailPublic = () => {
   const { property, configurations, amenities, specifications, media } = data;
 
   const mainPhoto = media.images && media.images.length > 0 
-    ? `/${media.images[0].url}` 
+    ? formatImageUrl(media.images[0].url)
     : 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=80';
 
   const statusLabels = {
@@ -419,10 +420,11 @@ const PropertyDetailPublic = () => {
                   {media.images.map((img) => (
                     <div key={img.id} className="col-6 col-sm-4">
                       <div className="glass-panel p-1 overflow-hidden" style={{ borderRadius: '16px', border: '1px solid rgba(25, 41, 81, 0.06)' }}>
-                        <a href={`/${img.url}`} target="_blank" rel="noreferrer">
+                        <a href={formatImageUrl(img.url)} target="_blank" rel="noreferrer">
                           <img 
-                            src={`/${img.url}`} 
+                            src={formatImageUrl(img.url)} 
                             alt={img.name} 
+                            onError={handleImageError}
                             className="img-fluid rounded hover-scale" 
                             style={{ objectFit: 'cover', height: '120px', width: '100%', borderRadius: '12px' }}
                           />
@@ -444,10 +446,11 @@ const PropertyDetailPublic = () => {
                     {media.floor_plans.map((fp) => (
                       <div key={fp.id} className="col-sm-6 text-center">
                         <div className="p-2 bg-light d-inline-block w-100" style={{ border: '1px solid rgba(25, 41, 81, 0.06)', borderRadius: '16px' }}>
-                          <a href={`/${fp.url}`} target="_blank" rel="noreferrer">
+                          <a href={formatImageUrl(fp.url)} target="_blank" rel="noreferrer">
                             <img 
-                              src={`/${fp.url}`} 
+                              src={formatImageUrl(fp.url)} 
                               alt={fp.name} 
+                              onError={handleImageError}
                               className="img-fluid rounded hover-scale" 
                               style={{ maxHeight: '200px', objectFit: 'contain' }}
                             />

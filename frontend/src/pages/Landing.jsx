@@ -4,6 +4,7 @@ import { AuthContext } from '../context/AuthContext';
 import { CustomizationContext } from '../context/CustomizationContext';
 import api from '../services/api';
 import CustomizationModal from '../components/CustomizationModal';
+import { formatImageUrl } from '../utils/imageHelper';
 
 const Landing = () => {
   const { user } = useContext(AuthContext);
@@ -358,9 +359,7 @@ const Landing = () => {
             ) : (
               <div className="row g-4 animate-fade-in">
                 {properties.map(p => {
-                  const mainPhoto = p.primary_image
-                    ? `/${p.primary_image}`
-                    : 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=600&q=80';
+                  const mainPhoto = formatImageUrl(p.primary_image);
 
                   return (
                     <div key={p.id} className="col-md-6 col-lg-4">
