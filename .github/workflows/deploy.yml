@@ -24,7 +24,9 @@ jobs:
           npm install
 
       - name: Zip backend folder
-        run: zip -r backend.zip backend/
+        run: |
+          cd backend
+          zip -r ../backend.zip .
 
       - name: Setup SSH Key
         uses: webfactory/ssh-agent@v0.9.0
@@ -43,9 +45,8 @@ jobs:
           scp -P $PORT -o StrictHostKeyChecking=no backend.zip ${HOST_USER}@${HOST_IP}:~/backend.zip
           ssh -p $PORT -o StrictHostKeyChecking=no ${HOST_USER}@${HOST_IP} 'bash -s' << 'EOF'
             set -e
-            rm -rf ~/real_ested/backend
             mkdir -p ~/real_ested/backend
-            unzip -o ~/backend.zip -d ~/real_ested/
+            unzip -o ~/backend.zip -d ~/real_ested/backend/
             rm -f ~/backend.zip
             echo "✅ Backend deployment completed successfully on Hostycare server."
           EOF
