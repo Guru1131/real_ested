@@ -42,7 +42,7 @@ switch ($method) {
                           ORDER BY a.id DESC";
                 $stmt = $db->prepare($query);
                 $stmt->execute();
-                echo json_encode($stmt->fetchAll());
+                echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
             } else {
                 // Fetch active announcements matching current user role
                 $userRole = $currentUser['role'];
@@ -61,7 +61,7 @@ switch ($method) {
                 $stmt->bindParam(':role', $userRole);
                 $stmt->bindValue(':is_staff', $isStaff ? 1 : 0, PDO::PARAM_INT);
                 $stmt->execute();
-                echo json_encode($stmt->fetchAll());
+                echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
             }
         } catch(PDOException $e) {
             http_response_code(500);
@@ -83,6 +83,8 @@ switch ($method) {
             exit();
         }
 
+        $created_by = isset($currentUser['id']) ? (int)$currentUser['id'] : (isset($currentUser['user_id']) ? (int)$currentUser['user_id'] : 1);
+
         try {
             $query = "INSERT INTO announcements (message, target_audience, theme, is_active, created_by) 
                       VALUES (:message, :target_audience, :theme, :is_active, :created_by)";
@@ -91,13 +93,13 @@ switch ($method) {
             $stmt->bindParam(':target_audience', $target_audience);
             $stmt->bindParam(':theme', $theme);
             $stmt->bindParam(':is_active', $is_active, PDO::PARAM_INT);
-            $stmt->bindParam(':created_by', $currentUser['id']);
+            $stmt->bindParam(':created_by', $created_by, PDO::PARAM_INT);
             $stmt->execute();
 
-            echo json_encode(["message" => "Announcement broadcast created successfully.", "announcementId" => $db->lastInsertId()]);
+            echo json_encode(["message" => "Announcement broadcast created successfully.", "announcementId" => (int)$db->lastInsertId()]);
         } catch(PDOException $e) {
             http_response_code(500);
-            echo json_encode(["error" => "Error creating announcement", "details" => $e->getMessage()]);
+            echo json_encode(["error" => "Error creating announcement: " . $e->getMessage()]);
         }
         break;
 

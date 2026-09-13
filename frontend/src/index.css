@@ -4,7 +4,7 @@
   --bg-primary: #f8fafc;
   --bg-secondary: #ffffff;
   --bg-tertiary: #f1f5f9;
-  --card-bg: rgba(255, 255, 255, 0.9);
+  --card-bg: rgba(255, 255, 255, 0.95);
   --border-color: rgba(15, 23, 42, 0.08);
   --text-primary: #0f172a;
   --text-secondary: #475569;
@@ -29,39 +29,37 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Glassmorphism Classes */
+/* Glassmorphism & Panel Classes */
 .glass-panel {
-  background: var(--card-bg);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--border-color);
   border-radius: 16px;
-  box-shadow: 0 8px 32px 0 rgba(15, 23, 42, 0.04);
+  box-shadow: 0 8px 32px 0 rgba(15, 23, 42, 0.06);
   transition: var(--transition-smooth);
 }
 
-/* Theme color overrides to handle hardcoded bootstrap classes in light mode */
-.text-white:not(.btn *):not(.bg-primary *):not(.bg-dark *):not(.bg-success *):not(.bg-danger *):not(.bg-warning *):not(.position-relative *):not(.badge-status *):not(.badge *):not(.btn) {
-  color: var(--text-primary) !important;
-}
-.text-light:not(.btn *):not(.bg-primary *):not(.bg-dark *):not(.bg-success *):not(.bg-danger *):not(.bg-warning *):not(.position-relative *):not(.badge-status *):not(.badge *):not(.btn) {
-  color: var(--text-secondary) !important;
-}
-strong.text-white, strong.text-light {
-  color: var(--text-primary) !important;
-}
-
-.bg-dark:not(.navbar *):not(.badge-status *):not(.badge *):not(.btn *):not(.btn) {
-  background-color: var(--bg-tertiary) !important;
+/* Modal Content Defaults */
+.modal-content {
+  background-color: var(--bg-secondary) !important;
   color: var(--text-primary) !important;
   border-color: var(--border-color) !important;
 }
 
-/* Explicit Checkbox & Radio Label Visibility Fixes */
-.form-check-label {
-  color: #0f172a !important;
+.modal-header, .modal-footer {
+  border-color: var(--border-color) !important;
+}
+
+.modal-title, h1, h2, h3, h4, h5, h6 {
+  color: var(--text-primary);
+}
+
+/* Explicit Form Labels & Text High Contrast Fixes */
+.form-label, label, .form-check-label {
+  color: var(--text-primary) !important;
   font-weight: 600 !important;
-  cursor: pointer;
 }
 
 .form-check-input {
@@ -71,6 +69,13 @@ strong.text-white, strong.text-light {
 .form-check-input:checked {
   background-color: var(--accent-primary) !important;
   border-color: var(--accent-primary) !important;
+}
+
+/* Background Container Contrast Overrides */
+.bg-dark:not(.navbar *):not(.badge-status *):not(.badge *):not(.btn *):not(.btn) {
+  background-color: var(--bg-tertiary) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
 }
 
 /* Badge Contrast Overrides */
@@ -207,7 +212,7 @@ strong.text-white, strong.text-light {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0 8px;
-  min-width: 640px; /* Ensures minimum readable width inside table-responsive */
+  min-width: 640px;
 }
 
 .table-premium th {
@@ -296,7 +301,6 @@ strong.text-white, strong.text-light {
   border: 1px solid rgba(239, 68, 68, 0.3) !important;
 }
 
-
 /* Input Styles */
 .form-premium-control {
   background-color: var(--bg-secondary);
@@ -321,9 +325,8 @@ strong.text-white, strong.text-light {
 
 ::placeholder, .form-premium-control::placeholder {
   color: #94a3b8 !important;
-  opacity: 1; /* Override default browser styles */
+  opacity: 1;
 }
-
 
 /* Scrollbar */
 ::-webkit-scrollbar {
