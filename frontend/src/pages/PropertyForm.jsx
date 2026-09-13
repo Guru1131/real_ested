@@ -54,8 +54,22 @@ const PropertyForm = () => {
     const fetchPropertyData = async () => {
       try {
         setInitialLoading(true);
-        const res = await api.get(`/api/properties/detail-by-id/${id}`);
+        let res;
+        try {
+          res = await api.get(`/api/properties/detail-by-id/${id}`);
+        } catch (err1) {
+          try {
+            res = await api.get(`/api/properties/detail-by-id.php?id=${id}`);
+          } catch (err2) {
+            res = await api.get(`/api/properties/detail.php?id=${id}`);
+          }
+        }
+
         const { property, configurations: fetchedConfigs, amenities: fetchedAmenities, specifications: fetchedSpecs, media: fetchedMedia } = res.data;
+
+        if (!property) {
+          throw new Error('Property record not found.');
+        }
 
         setFormData({
           project_name: property.project_name || '',
@@ -76,12 +90,22 @@ const PropertyForm = () => {
 
         setConfigurations(fetchedConfigs || []);
         setSpecifications(fetchedSpecs || []);
-        setSelectedAmenities(fetchedAmenities || []);
+        
+        let normalizedAmenities = [];
+        if (Array.isArray(fetchedAmenities)) {
+          normalizedAmenities = fetchedAmenities;
+        } else if (typeof property.amenities === 'string' && property.amenities.trim() !== '') {
+          try { normalizedAmenities = JSON.parse(property.amenities); } catch (e) {}
+        } else if (Array.isArray(property.amenities)) {
+          normalizedAmenities = property.amenities;
+        }
+        setSelectedAmenities(normalizedAmenities);
+
         setExistingMedia(fetchedMedia || null);
         setApprovalStatus(property.approval_status || 'draft');
 
       } catch (err) {
-        setError(err.response?.data?.error || 'Failed to load property details for editing.');
+        setError(err.response?.data?.error || err.message || 'Failed to load property details for editing.');
       } finally {
         setInitialLoading(false);
       }
@@ -203,16 +227,30 @@ const PropertyForm = () => {
 
       if (isEditMode) {
         // PUT request to update existing property
-        const res = await api.put(`/api/properties/${id}`, payload, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
+        let res;
+        try {
+          res = await api.put(`/api/properties/${id}`, payload, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+          });
+        } catch (putErr) {
+          res = await api.post(`/api/properties/update.php?id=${id}`, payload, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+          });
+        }
         setSuccess(res.data.message || 'Property updated successfully.');
       } else {
         // POST request to create new property
-        const res = await api.post('/api/properties', payload, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
-        setSuccess(`Property draft registered successfully with code: ${res.data.property_code}.`);
+        let res;
+        try {
+          res = await api.post('/api/properties', payload, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+          });
+        } catch (postErr) {
+          res = await api.post('/api/properties/create.php', payload, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+          });
+        }
+        setSuccess(res.data.message || `Property draft registered successfully with code: ${res.data.property_code || ''}.`);
       }
       
       // Redirect to catalog after brief delay
