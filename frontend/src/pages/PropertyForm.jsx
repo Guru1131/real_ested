@@ -62,6 +62,8 @@ const PropertyForm = () => {
   const [success, setSuccess] = useState('');
   const [approvalStatus, setApprovalStatus] = useState('draft');
 
+  const [notFoundError, setNotFoundError] = useState(false);
+
   // Load existing property data if in Edit Mode
   useEffect(() => {
     if (!isEditMode) return;
@@ -70,6 +72,7 @@ const PropertyForm = () => {
       try {
         setInitialLoading(true);
         setError('');
+        setNotFoundError(false);
         let res;
         try {
           res = await api.get(`/api/properties/detail/${id}`);
@@ -81,10 +84,11 @@ const PropertyForm = () => {
           }
         }
 
-        const { property, configurations: fetchedConfigs, amenities: fetchedAmenities, specifications: fetchedSpecs, media: fetchedMedia } = res.data;
+        const { property, configurations: fetchedConfigs, amenities: fetchedAmenities, specifications: fetchedSpecs, media: fetchedMedia } = res.data || {};
 
         if (!property) {
-          throw new Error('Property record not found.');
+          setNotFoundError(true);
+          throw new Error(`Property listing #${id} was not found in the database.`);
         }
 
         if (property.branch_id) {
@@ -127,6 +131,9 @@ const PropertyForm = () => {
         setApprovalStatus(property.approval_status || 'draft');
 
       } catch (err) {
+        if (err.response?.status === 404 || err.message?.includes('not found')) {
+          setNotFoundError(true);
+        }
         setError(err.response?.data?.error || err.message || 'Failed to load property details for editing.');
       } finally {
         setInitialLoading(false);
@@ -327,12 +334,34 @@ const PropertyForm = () => {
     }
   };
 
-  const isCommercialType = ['shop', 'office', 'commercial'].includes(formData.property_type);
-
   if (initialLoading) {
     return (
       <div className="d-flex justify-content-center align-items-center vh-50 text-muted">
         <div className="spinner-border text-primary me-2" role="status"></div> Loading property details...
+      </div>
+    );
+  }
+
+  if (isEditMode && notFoundError) {
+    return (
+      <div className="container-fluid py-5 animate-fade-in text-center">
+        <div className="glass-panel p-5 mx-auto rounded-4 shadow-sm" style={{ maxWidth: '640px', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>
+          <div className="text-warning mb-3" style={{ fontSize: '3.5rem' }}>
+            <i className="bi bi-exclamation-triangle-fill"></i>
+          </div>
+          <h3 className="fw-800 mb-2" style={{ color: 'var(--text-primary)' }}>Property Listing Not Found</h3>
+          <p className="text-muted mb-4 fs-6">
+            Property listing <strong>#{id}</strong> was not found in the database. It may have been deleted or the ID is invalid.
+          </p>
+          <div className="d-flex justify-content-center flex-wrap gap-3">
+            <Link to="/properties" className="btn btn-primary rounded-pill px-4 py-2 fw-600">
+              <i className="bi bi-search me-1.5"></i> Search & Browse Properties
+            </Link>
+            <Link to="/properties/new" className="btn btn-outline-secondary rounded-pill px-4 py-2 fw-600">
+              <i className="bi bi-plus-circle me-1.5"></i> Create New Property
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }
