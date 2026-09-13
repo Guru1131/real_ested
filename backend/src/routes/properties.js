@@ -376,7 +376,7 @@ router.post('/', authenticate, requireRole(['super_admin', 'assistant_admin', 'b
   const {
     project_name, property_type, location, city, address, survey_number,
     builder, rera_id, completion_date, project_status, highlights,
-    map_embed_url, developer_legacy, availability_status
+    map_embed_url, virtual_tour_url, developer_legacy, availability_status
   } = req.body;
 
   // JSON strings to parse
@@ -407,12 +407,12 @@ router.post('/', authenticate, requireRole(['super_admin', 'assistant_admin', 'b
     // Insert main properties record
     const [propResult] = await dbConnection.query(
       `INSERT INTO properties 
-       (property_code, property_slug, project_name, property_type, branch_id, location, address, survey_number, city, builder, rera_id, completion_date, project_status, highlights, map_embed_url, developer_legacy, availability_status, approval_status, created_by)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?)`,
+       (property_code, property_slug, project_name, property_type, branch_id, location, address, survey_number, city, builder, rera_id, completion_date, project_status, highlights, map_embed_url, virtual_tour_url, developer_legacy, availability_status, approval_status, created_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?)`,
       [
         property_code, property_slug, project_name, property_type, branchId, location, address, survey_number || null,
         city, builder, rera_id || null, completion_date || null, project_status || 'under_construction',
-        highlights || null, map_embed_url || null, developer_legacy || null, availability_status || 'available',
+        highlights || null, map_embed_url || null, virtual_tour_url || null, developer_legacy || null, availability_status || 'available',
         req.user.id
       ]
     );
@@ -564,7 +564,7 @@ router.put('/:id', authenticate, requireRole(['branch_admin', 'super_admin', 'as
   const {
     project_name, property_type, location, city, address, survey_number,
     builder, rera_id, completion_date, project_status, highlights,
-    map_embed_url, developer_legacy, availability_status, action
+    map_embed_url, virtual_tour_url, developer_legacy, availability_status, action
   } = req.body;
 
   const dbConnection = await pool.getConnection();
@@ -600,7 +600,7 @@ router.put('/:id', authenticate, requireRole(['branch_admin', 'super_admin', 'as
       `UPDATE properties SET 
        project_name = ?, property_type = ?, location = ?, address = ?, survey_number = ?, 
        city = ?, builder = ?, rera_id = ?, completion_date = ?, project_status = ?, 
-       highlights = ?, map_embed_url = ?, developer_legacy = ?, availability_status = ?, 
+       highlights = ?, map_embed_url = ?, virtual_tour_url = ?, developer_legacy = ?, availability_status = ?, 
        approval_status = ? 
        WHERE id = ?`,
       [
@@ -616,6 +616,7 @@ router.put('/:id', authenticate, requireRole(['branch_admin', 'super_admin', 'as
         project_status || existingProperty.project_status,
         highlights !== undefined ? highlights : existingProperty.highlights,
         map_embed_url !== undefined ? map_embed_url : existingProperty.map_embed_url,
+        virtual_tour_url !== undefined ? virtual_tour_url : existingProperty.virtual_tour_url,
         developer_legacy !== undefined ? developer_legacy : existingProperty.developer_legacy,
         availability_status || existingProperty.availability_status,
         targetApprovalStatus,

@@ -30,6 +30,7 @@ try {
     $project_status = isset($_POST['project_status']) ? trim($_POST['project_status']) : 'under_construction';
     $highlights = isset($_POST['highlights']) ? trim($_POST['highlights']) : '';
     $map_embed_url = isset($_POST['map_embed_url']) ? trim($_POST['map_embed_url']) : '';
+    $virtual_tour_url = isset($_POST['virtual_tour_url']) ? trim($_POST['virtual_tour_url']) : '';
     $developer_legacy = isset($_POST['developer_legacy']) ? trim($_POST['developer_legacy']) : '';
     $availability_status = isset($_POST['availability_status']) ? trim($_POST['availability_status']) : 'available';
 
@@ -68,8 +69,8 @@ try {
 
     // Insert property record
     $query = "INSERT INTO properties 
-              (property_code, property_slug, project_name, property_type, branch_id, location, address, survey_number, city, builder, rera_id, completion_date, project_status, highlights, map_embed_url, developer_legacy, availability_status, approval_status, created_by) 
-              VALUES (:code, :slug, :pname, :ptype, :bid, :loc, :addr, :surv, :city, :builder, :rera, :comp, :pstat, :high, :map, :leg, :avail, 'draft', :cby)";
+              (property_code, property_slug, project_name, property_type, branch_id, location, address, survey_number, city, builder, rera_id, completion_date, project_status, highlights, map_embed_url, virtual_tour_url, developer_legacy, availability_status, approval_status, created_by) 
+              VALUES (:code, :slug, :pname, :ptype, :bid, :loc, :addr, :surv, :city, :builder, :rera, :comp, :pstat, :high, :map, :vtour, :leg, :avail, 'draft', :cby)";
               
     $stmt = $db->prepare($query);
     $stmt->bindParam(':code', $property_code);
@@ -87,6 +88,7 @@ try {
     $stmt->bindParam(':pstat', $project_status);
     $stmt->bindParam(':high', $highlights);
     $stmt->bindParam(':map', $map_embed_url);
+    $stmt->bindParam(':vtour', $virtual_tour_url);
     $stmt->bindParam(':leg', $developer_legacy);
     $stmt->bindParam(':avail', $availability_status);
     $stmt->bindParam(':cby', $currentUser['id']);
@@ -105,6 +107,29 @@ try {
             $cStmt->bindParam(':price', $cfg['price']);
             $cStmt->bindParam(':emi', $cfg['estimated_emi']);
             $cStmt->execute();
+        }
+    }
+
+    // Insert amenities
+    $amenities = json_decode($amenities_raw, true);
+    if (is_array($amenities)) {
+        $aStmt = $db->prepare("INSERT INTO property_amenities (property_id, amenity_name) VALUES (:pid, :name)");
+        foreach ($amenities as $amenity) {
+            $aStmt->bindParam(':pid', $property_id);
+            $aStmt->bindParam(':name', $amenity);
+            $aStmt->execute();
+        }
+    }
+
+    // Insert specifications
+    $specifications = json_decode($specifications_raw, true);
+    if (is_array($specifications)) {
+        $sStmt = $db->prepare("INSERT INTO property_specifications (property_id, title, details) VALUES (:pid, :title, :details)");
+        foreach ($specifications as $spec) {
+            $sStmt->bindParam(':pid', $property_id);
+            $sStmt->bindParam(':title', $spec['title']);
+            $sStmt->bindParam(':details', $spec['details']);
+            $sStmt->execute();
         }
     }
 

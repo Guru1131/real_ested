@@ -58,7 +58,8 @@ try {
     $completion_date = isset($input['completion_date']) ? trim($input['completion_date']) : $existing['completion_date'];
     $project_status = isset($input['project_status']) ? trim($input['project_status']) : $existing['project_status'];
     $highlights = isset($input['highlights']) ? trim($input['highlights']) : $existing['highlights'];
-    $map_embed_url = isset($input['map_embed_url']) ? trim($input['map_embed_url']) : $existing['map_embed_url'];
+    $map_embed_url = isset($input['map_embed_url']) ? trim($input['map_embed_url']) : (isset($existing['map_embed_url']) ? $existing['map_embed_url'] : '');
+    $virtual_tour_url = isset($input['virtual_tour_url']) ? trim($input['virtual_tour_url']) : (isset($existing['virtual_tour_url']) ? $existing['virtual_tour_url'] : '');
     $developer_legacy = isset($input['developer_legacy']) ? trim($input['developer_legacy']) : $existing['developer_legacy'];
     $availability_status = isset($input['availability_status']) ? trim($input['availability_status']) : $existing['availability_status'];
     $action = isset($input['action']) ? trim($input['action']) : '';
@@ -76,8 +77,9 @@ try {
                     project_name = :project_name, property_type = :property_type, location = :location, 
                     address = :address, survey_number = :survey_number, city = :city, builder = :builder, 
                     rera_id = :rera_id, completion_date = :completion_date, project_status = :project_status, 
-                    highlights = :highlights, map_embed_url = :map_embed_url, developer_legacy = :developer_legacy, 
-                    availability_status = :availability_status, approval_status = :approval_status 
+                    highlights = :highlights, map_embed_url = :map_embed_url, virtual_tour_url = :virtual_tour_url, 
+                    developer_legacy = :developer_legacy, availability_status = :availability_status, 
+                    approval_status = :approval_status 
                     WHERE id = :id";
     
     $uStmt = $db->prepare($updateQuery);
@@ -93,6 +95,7 @@ try {
     $uStmt->bindParam(':project_status', $project_status);
     $uStmt->bindParam(':highlights', $highlights);
     $uStmt->bindParam(':map_embed_url', $map_embed_url);
+    $uStmt->bindParam(':virtual_tour_url', $virtual_tour_url);
     $uStmt->bindParam(':developer_legacy', $developer_legacy);
     $uStmt->bindParam(':availability_status', $availability_status);
     $uStmt->bindParam(':approval_status', $targetApprovalStatus);
@@ -115,6 +118,41 @@ try {
                 $cStmt->bindParam(':price', $cfg['price']);
                 $cStmt->bindParam(':emi', $cfg['estimated_emi']);
                 $cStmt->execute();
+            }
+        }
+    }
+
+    // Replace amenities if present
+    if (isset($input['amenities'])) {
+        $amenities = is_array($input['amenities']) ? $input['amenities'] : json_decode($input['amenities'], true);
+        if (is_array($amenities)) {
+            $delA = $db->prepare("DELETE FROM property_amenities WHERE property_id = :id");
+            $delA->bindParam(':id', $id);
+            $delA->execute();
+
+            $aStmt = $db->prepare("INSERT INTO property_amenities (property_id, amenity_name) VALUES (:pid, :name)");
+            foreach ($amenities as $amenity) {
+                $aStmt->bindParam(':pid', $id);
+                $aStmt->bindParam(':name', $amenity);
+                $aStmt->execute();
+            }
+        }
+    }
+
+    // Replace specifications if present
+    if (isset($input['specifications'])) {
+        $specifications = is_array($input['specifications']) ? $input['specifications'] : json_decode($input['specifications'], true);
+        if (is_array($specifications)) {
+            $delS = $db->prepare("DELETE FROM property_specifications WHERE property_id = :id");
+            $delS->bindParam(':id', $id);
+            $delS->execute();
+
+            $sStmt = $db->prepare("INSERT INTO property_specifications (property_id, title, details) VALUES (:pid, :title, :details)");
+            foreach ($specifications as $spec) {
+                $sStmt->bindParam(':pid', $id);
+                $sStmt->bindParam(':title', $spec['title']);
+                $sStmt->bindParam(':details', $spec['details']);
+                $sStmt->execute();
             }
         }
     }
