@@ -5,11 +5,48 @@
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteRule ^uploads/(.*)$ backend/uploads/$1 [L]
 
+  # Route /api/ requests to backend/ API PHP controllers
+  RewriteRule ^api/properties/detail/([^/]+)/?$ backend/api/properties/detail.php?id=$1 [QSA,L]
+  RewriteRule ^api/properties/detail-by-id/([^/]+)/?$ backend/api/properties/detail.php?id=$1 [QSA,L]
+  RewriteRule ^api/properties/public/detail/([^/]+)/?$ backend/api/properties/detail.php?slug=$1 [QSA,L]
+  RewriteRule ^api/properties/public/?$ backend/api/properties/index.php?public=1 [QSA,L]
+  RewriteRule ^api/properties/([^/]+)/submit/?$ backend/api/properties/submit.php?id=$1 [QSA,L]
+  RewriteRule ^api/properties/([^/]+)/approve/?$ backend/api/properties/approve.php?id=$1 [QSA,L]
+  RewriteRule ^api/properties/([^/]+)/share/?$ backend/api/properties/share.php?id=$1 [QSA,L]
+  RewriteRule ^api/properties/delete.php$ backend/api/properties/delete.php [QSA,L]
+  RewriteRule ^api/properties/update.php$ backend/api/properties/update.php [QSA,L]
+  RewriteRule ^api/properties/create.php$ backend/api/properties/create.php [QSA,L]
+  RewriteRule ^api/properties/([^/]+)/?$ backend/api/properties/index.php?id=$1 [QSA,L]
+  RewriteRule ^api/properties/?$ backend/api/properties/index.php [QSA,L]
+
+  RewriteRule ^api/announcements/admin/?$ backend/api/announcements/index.php?action=admin [QSA,L]
+  RewriteRule ^api/announcements/index.php$ backend/api/announcements/index.php [QSA,L]
+  RewriteRule ^api/announcements/([^/]+)/?$ backend/api/announcements/index.php?id=$1 [QSA,L]
+  RewriteRule ^api/announcements/?$ backend/api/announcements/index.php [QSA,L]
+
+  RewriteRule ^api/branches/index.php$ backend/api/branches/index.php [QSA,L]
+  RewriteRule ^api/branches/([^/]+)/?$ backend/api/branches/index.php?id=$1 [QSA,L]
+  RewriteRule ^api/branches/?$ backend/api/branches/index.php [QSA,L]
+
+  RewriteRule ^api/users/brokers/?$ backend/api/users/brokers.php [QSA,L]
+  RewriteRule ^api/users/broker/([^/]+)/logs/?$ backend/api/users/broker_logs.php?broker_id=$1 [QSA,L]
+  RewriteRule ^api/users/index.php$ backend/api/users/index.php [QSA,L]
+  RewriteRule ^api/users/([^/]+)/?$ backend/api/users/index.php?id=$1 [QSA,L]
+  RewriteRule ^api/users/?$ backend/api/users/index.php [QSA,L]
+
+  RewriteRule ^api/leads/public/?$ backend/api/leads/index.php?public=1 [QSA,L]
+  RewriteRule ^api/leads/index.php$ backend/api/leads/index.php [QSA,L]
+  RewriteRule ^api/leads/([^/]+)/status/?$ backend/api/leads/index.php?id=$1 [QSA,L]
+  RewriteRule ^api/leads/?$ backend/api/leads/index.php [QSA,L]
+
+  RewriteRule ^api/auth/login/?$ backend/api/auth/login.php [QSA,L]
+  RewriteRule ^api/auth/profile/?$ backend/api/auth/profile.php [QSA,L]
+
   # Don't rewrite existing files or directories
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d
 
-  # Rewrite everything else to index.html for React Router
+  # Rewrite everything else to index.html for React Router SPA
   RewriteRule ^ index.html [QSA,L]
 </IfModule>
 
