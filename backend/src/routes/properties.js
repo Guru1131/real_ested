@@ -89,9 +89,10 @@ router.get('/public', async (req, res) => {
   }
 });
 
-// GET /api/properties/public/detail/:slug (Retrieve public property content by Slug URL)
+// GET /api/properties/public/detail/:slug (Retrieve public property content by Slug URL or ID)
 router.get('/public/detail/:slug', async (req, res) => {
   const { slug } = req.params;
+  const isNumericId = !isNaN(slug) && !isNaN(parseInt(slug));
 
   try {
     // 1. Fetch main property record (must be approved and not deleted)
@@ -99,8 +100,8 @@ router.get('/public/detail/:slug', async (req, res) => {
       `SELECT p.*, b.name as branch_name, b.code as branch_code 
        FROM properties p
        JOIN branches b ON p.branch_id = b.id
-       WHERE p.property_slug = ? AND p.approval_status = 'approved' AND p.is_deleted = 0 LIMIT 1`,
-      [slug]
+       WHERE (p.property_slug = ? ${isNumericId ? 'OR p.id = ?' : ''}) AND p.approval_status = 'approved' AND p.is_deleted = 0 LIMIT 1`,
+      isNumericId ? [slug, parseInt(slug)] : [slug]
     );
 
     const property = props[0];
@@ -275,9 +276,10 @@ router.get('/', authenticate, async (req, res) => {
   }
 });
 
-// GET /api/properties/detail/:slug (Retrieve dynamic property content by Slug URL)
+// GET /api/properties/detail/:slug (Retrieve dynamic property content by Slug URL or numeric ID)
 router.get('/detail/:slug', authenticate, async (req, res) => {
   const { slug } = req.params;
+  const isNumericId = !isNaN(slug) && !isNaN(parseInt(slug));
 
   try {
     // 1. Fetch main property record
@@ -285,8 +287,8 @@ router.get('/detail/:slug', authenticate, async (req, res) => {
       `SELECT p.*, b.name as branch_name, b.code as branch_code 
        FROM properties p
        JOIN branches b ON p.branch_id = b.id
-       WHERE p.property_slug = ? AND p.is_deleted = 0 LIMIT 1`,
-      [slug]
+       WHERE (p.property_slug = ? ${isNumericId ? 'OR p.id = ?' : ''}) AND p.is_deleted = 0 LIMIT 1`,
+      isNumericId ? [slug, parseInt(slug)] : [slug]
     );
 
     const property = props[0];

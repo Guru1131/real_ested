@@ -75,9 +75,9 @@ const PropertyForm = () => {
           res = await api.get(`/api/properties/detail/${id}`);
         } catch (err1) {
           try {
-            res = await api.get(`/api/properties/detail.php?id=${id}`);
-          } catch (err2) {
             res = await api.get(`/api/properties/detail-by-id/${id}`);
+          } catch (err2) {
+            res = await api.get(`/api/properties/detail.php?id=${id}`);
           }
         }
 

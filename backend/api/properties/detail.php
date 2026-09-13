@@ -14,31 +14,50 @@ $database = new Database();
 $db = $database->getConnection();
 
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+$slug = isset($_GET['slug']) ? trim($_GET['slug']) : '';
 
-// Parse path if id query parameter was not passed
-if ($id <= 0) {
-    if (isset($_SERVER['PATH_INFO']) && preg_match('/^\/(\d+)/', $_SERVER['PATH_INFO'], $m)) {
-        $id = (int)$m[1];
-    } elseif (isset($_SERVER['REQUEST_URI']) && preg_match('/\/(\d+)(?:\?|$)/', $_SERVER['REQUEST_URI'], $m)) {
-        $id = (int)$m[1];
+// Parse path or request URI if id or slug query parameter was not passed
+if ($id <= 0 && empty($slug)) {
+    if (isset($_SERVER['PATH_INFO']) && preg_match('/^\/([^\/]+)/', $_SERVER['PATH_INFO'], $m)) {
+        if (is_numeric($m[1])) {
+            $id = (int)$m[1];
+        } else {
+            $slug = $m[1];
+        }
+    } elseif (isset($_SERVER['REQUEST_URI']) && preg_match('/\/detail(?:\-by\-id)?\/([^\/\?]+)/', $_SERVER['REQUEST_URI'], $m)) {
+        if (is_numeric($m[1])) {
+            $id = (int)$m[1];
+        } else {
+            $slug = $m[1];
+        }
     }
 }
 
-if ($id <= 0) {
+if ($id <= 0 && empty($slug)) {
     http_response_code(400);
-    echo json_encode(["error" => "Valid property ID is required."]);
+    echo json_encode(["error" => "Valid property ID or slug is required."]);
     exit();
 }
 
 try {
-    // 1. Fetch main property data
-    $query = "SELECT p.*, b.name as branch_name, b.code as branch_code 
-              FROM properties p
-              JOIN branches b ON p.branch_id = b.id
-              WHERE p.id = :id AND p.is_deleted = 0 LIMIT 1";
-              
-    $stmt = $db->prepare($query);
-    $stmt->bindParam(':id', $id);
+    // 1. Fetch main property data by ID or Slug
+    if ($id > 0) {
+        $query = "SELECT p.*, b.name as branch_name, b.code as branch_code 
+                  FROM properties p
+                  JOIN branches b ON p.branch_id = b.id
+                  WHERE p.id = :id AND p.is_deleted = 0 LIMIT 1";
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':id', $id);
+    } else {
+        $query = "SELECT p.*, b.name as branch_name, b.code as branch_code 
+                  FROM properties p
+                  JOIN branches b ON p.branch_id = b.id
+                  WHERE (p.property_slug = :slug OR p.id = :slug_as_id) AND p.is_deleted = 0 LIMIT 1";
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':slug', $slug);
+        $slugAsId = is_numeric($slug) ? (int)$slug : 0;
+        $stmt->bindParam(':slug_as_id', $slugAsId);
+    }
     $stmt->execute();
     $property = $stmt->fetch(PDO::FETCH_ASSOC);
 

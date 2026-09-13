@@ -4,8 +4,8 @@
     RewriteCond %{REQUEST_FILENAME} !-d
 
     # Route /admin to index.php?action=admin
-    RewriteRule ^admin$ index.php?action=admin [QSA,L]
+    RewriteRule ^admin/?$ index.php?action=admin [QSA,L]
 
     # Route /:id to index.php?id=$1
-    RewriteRule ^([0-9]+)$ index.php?id=$1 [QSA,L]
+    RewriteRule ^([0-9]+)/?$ index.php?id=$1 [QSA,L]
 </IfModule>

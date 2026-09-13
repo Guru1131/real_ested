@@ -1,9 +1,38 @@
 <IfModule mod_rewrite.c>
   RewriteEngine On
-  RewriteBase /api/
-  
-  # Pass all requests to Node.js server
-  RewriteCond %{REQUEST_FILENAME} !-f
-  RewriteCond %{REQUEST_FILENAME} !-d
-  RewriteRule ^(.*)$ http://localhost:3000/$1 [P,L]
+
+  # Don't rewrite existing files or directories
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # Route clean API paths to PHP backend controllers
+  RewriteRule ^properties/detail/([^/]+)/?$ api/properties/detail.php?id=$1 [QSA,L]
+  RewriteRule ^properties/detail-by-id/([^/]+)/?$ api/properties/detail.php?id=$1 [QSA,L]
+  RewriteRule ^properties/public/detail/([^/]+)/?$ api/properties/detail.php?slug=$1 [QSA,L]
+  RewriteRule ^properties/public/?$ api/properties/index.php?public=1 [QSA,L]
+  RewriteRule ^properties/([^/]+)/submit/?$ api/properties/submit.php?id=$1 [QSA,L]
+  RewriteRule ^properties/([^/]+)/approve/?$ api/properties/approve.php?id=$1 [QSA,L]
+  RewriteRule ^properties/([^/]+)/share/?$ api/properties/share.php?id=$1 [QSA,L]
+  RewriteRule ^properties/([^/]+)/?$ api/properties/index.php?id=$1 [QSA,L]
+  RewriteRule ^properties/?$ api/properties/index.php [QSA,L]
+
+  RewriteRule ^announcements/admin/?$ api/announcements/index.php?action=admin [QSA,L]
+  RewriteRule ^announcements/([^/]+)/?$ api/announcements/index.php?id=$1 [QSA,L]
+  RewriteRule ^announcements/?$ api/announcements/index.php [QSA,L]
+
+  RewriteRule ^branches/([^/]+)/?$ api/branches/index.php?id=$1 [QSA,L]
+  RewriteRule ^branches/?$ api/branches/index.php [QSA,L]
+
+  RewriteRule ^users/brokers/?$ api/users/brokers.php [QSA,L]
+  RewriteRule ^users/broker/([^/]+)/logs/?$ api/users/broker_logs.php?broker_id=$1 [QSA,L]
+  RewriteRule ^users/([^/]+)/?$ api/users/index.php?id=$1 [QSA,L]
+  RewriteRule ^users/?$ api/users/index.php [QSA,L]
+
+  RewriteRule ^leads/public/?$ api/leads/index.php?public=1 [QSA,L]
+  RewriteRule ^leads/([^/]+)/status/?$ api/leads/index.php?id=$1 [QSA,L]
+  RewriteRule ^leads/?$ api/leads/index.php [QSA,L]
+
+  RewriteRule ^auth/login/?$ api/auth/login.php [QSA,L]
+  RewriteRule ^auth/profile/?$ api/auth/profile.php [QSA,L]
 </IfModule>

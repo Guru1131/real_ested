@@ -29,7 +29,11 @@ const AnnouncementManagerModal = ({ show, onClose }) => {
       try {
         res = await api.get('/api/announcements/admin');
       } catch (e1) {
-        res = await api.get('/api/announcements/index.php?action=admin');
+        try {
+          res = await api.get('/api/announcements?action=admin');
+        } catch (e2) {
+          res = await api.get('/api/announcements/index.php?action=admin');
+        }
       }
       setAnnouncements(res.data || []);
     } catch (err) {

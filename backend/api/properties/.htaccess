@@ -1,0 +1,20 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+
+    # Route /detail/:id to detail.php?id=$1
+    RewriteRule ^detail/([0-9]+)/?$ detail.php?id=$1 [QSA,L]
+    # Route /detail/:slug to detail.php?slug=$1
+    RewriteRule ^detail/([^/]+)/?$ detail.php?slug=$1 [QSA,L]
+    # Route /detail-by-id/:id to detail.php?id=$1
+    RewriteRule ^detail-by-id/([0-9]+)/?$ detail.php?id=$1 [QSA,L]
+    # Route /public/detail/:slug to detail.php?slug=$1
+    RewriteRule ^public/detail/([^/]+)/?$ detail.php?slug=$1 [QSA,L]
+    # Route /:id/submit to submit.php?id=$1
+    RewriteRule ^([0-9]+)/submit/?$ submit.php?id=$1 [QSA,L]
+    # Route /:id/approve to approve.php?id=$1
+    RewriteRule ^([0-9]+)/approve/?$ approve.php?id=$1 [QSA,L]
+    # Route /:id/share to share.php?id=$1
+    RewriteRule ^([0-9]+)/share/?$ share.php?id=$1 [QSA,L]
+</IfModule>
