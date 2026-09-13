@@ -26,6 +26,7 @@ const PropertyForm = () => {
     project_status: 'under_construction',
     highlights: '',
     map_embed_url: '',
+    virtual_tour_url: '',
     developer_legacy: '',
     availability_status: 'available',
     branch_id: ''
@@ -43,6 +44,7 @@ const PropertyForm = () => {
   const [configurations, setConfigurations] = useState([]);
   const [specifications, setSpecifications] = useState([]);
   const [selectedAmenities, setSelectedAmenities] = useState([]);
+  const [customAmenityInput, setCustomAmenityInput] = useState('');
 
   // Temp states for sub-forms
   const [tempConfig, setTempConfig] = useState({ bhk_type: '', carpet_area: '', price: '', estimated_emi: '' });
@@ -67,14 +69,15 @@ const PropertyForm = () => {
     const fetchPropertyData = async () => {
       try {
         setInitialLoading(true);
+        setError('');
         let res;
         try {
-          res = await api.get(`/api/properties/detail-by-id/${id}`);
+          res = await api.get(`/api/properties/detail/${id}`);
         } catch (err1) {
           try {
-            res = await api.get(`/api/properties/detail-by-id.php?id=${id}`);
-          } catch (err2) {
             res = await api.get(`/api/properties/detail.php?id=${id}`);
+          } catch (err2) {
+            res = await api.get(`/api/properties/detail-by-id/${id}`);
           }
         }
 
@@ -133,11 +136,19 @@ const PropertyForm = () => {
     fetchPropertyData();
   }, [id, isEditMode]);
 
-  const amenitiesList = [
+  // Standard preset amenities list
+  const defaultAmenitiesList = [
     "Swimming Pool", "Club House", "Gymnasium", 
     "Landscape Garden", "24/7 Security", "Children Play Area",
-    "Power Backup", "Car Parking", "Jogging Track", "Intercom",
-    "Private Garden", "Solar Water System", "Home Automation"
+    "Power Backup", "Car Parking", "Visitor Parking", "Jogging Track", 
+    "Intercom", "Private Garden", "Solar Water System", "Home Automation",
+    "EV Charging Station", "Multi-purpose Hall", "Badminton Court", "Fire Fighting System"
+  ];
+
+  // Popular Maharashtra & Indian Real Estate Hub Cities
+  const quickCityList = [
+    'Pune', 'Mumbai', 'Navi Mumbai', 'Thane', 'Nashik', 
+    'Nagpur', 'PCMC', 'Chhatrapati Sambhajinagar', 'Goa'
   ];
 
   const handleTextChange = (e) => {
@@ -154,28 +165,33 @@ const PropertyForm = () => {
 
   const handleAmenityToggle = (amenity) => {
     if (selectedAmenities.includes(amenity)) {
-      setSelectedAmenities(selectedAmenities.filter(item => item !== amenity));
+      setSelectedAmenities(selectedAmenities.filter(a => a !== amenity));
     } else {
       setSelectedAmenities([...selectedAmenities, amenity]);
     }
   };
 
-  // Add BHK configuration item to list
+  const handleAddCustomAmenity = (e) => {
+    e.preventDefault();
+    if (!customAmenityInput || !customAmenityInput.trim()) return;
+    const trimmed = customAmenityInput.trim();
+    if (!selectedAmenities.includes(trimmed)) {
+      setSelectedAmenities([...selectedAmenities, trimmed]);
+    }
+    setCustomAmenityInput('');
+  };
+
+  // Add BHK Configuration item
   const addConfiguration = () => {
     if (!tempConfig.bhk_type || !tempConfig.carpet_area || !tempConfig.price) {
-      alert('Please fill out Type, Carpet Area, and Price for the BHK configuration.');
+      alert('Please fill in BHK/Unit Type, Carpet Area, and Total Price.');
       return;
     }
-    setConfigurations([...configurations, {
-      bhk_type: tempConfig.bhk_type,
-      carpet_area: parseInt(tempConfig.carpet_area),
-      price: parseFloat(tempConfig.price),
-      estimated_emi: tempConfig.estimated_emi ? parseFloat(tempConfig.estimated_emi) : null
-    }]);
+    setConfigurations([...configurations, { ...tempConfig, price: parseFloat(tempConfig.price), estimated_emi: tempConfig.estimated_emi ? parseFloat(tempConfig.estimated_emi) : null }]);
     setTempConfig({ bhk_type: '', carpet_area: '', price: '', estimated_emi: '' });
   };
 
-  // Remove configuration item
+  // Remove BHK Configuration item
   const removeConfiguration = (index) => {
     setConfigurations(configurations.filter((_, i) => i !== index));
   };
@@ -213,12 +229,10 @@ const PropertyForm = () => {
     setLoading(true);
 
     try {
-      // Create FormData payload for multipart file upload
       const payload = new FormData();
       
-      // Append text fields
       Object.keys(formData).forEach(key => {
-        if (formData[key] !== '') {
+        if (formData[key] !== '' && formData[key] !== null) {
           payload.append(key, formData[key]);
         }
       });
@@ -231,12 +245,10 @@ const PropertyForm = () => {
         payload.append('action', 'submit');
       }
 
-      // Append relational data arrays as JSON strings
       payload.append('configurations', JSON.stringify(configurations));
       payload.append('amenities', JSON.stringify(selectedAmenities));
       payload.append('specifications', JSON.stringify(specifications));
 
-      // Append files
       if (images.length > 0) {
         for (let i = 0; i < images.length; i++) {
           payload.append('images', images[i]);
@@ -254,7 +266,6 @@ const PropertyForm = () => {
       }
 
       if (isEditMode) {
-        // PUT request to update existing property
         let res;
         try {
           res = await api.put(`/api/properties/${id}`, payload, {
@@ -267,7 +278,6 @@ const PropertyForm = () => {
         }
         setSuccess(res.data.message || 'Property updated successfully.');
       } else {
-        // POST request to create new property
         let res;
         try {
           res = await api.post('/api/properties', payload, {
@@ -281,13 +291,12 @@ const PropertyForm = () => {
         setSuccess(res.data.message || `Property draft registered successfully with code: ${res.data.property_code || ''}.`);
       }
       
-      // Redirect to catalog after brief delay
       setTimeout(() => {
         navigate('/properties');
       }, 1500);
 
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to save property. Please check server constraints.');
+      setError(err.response?.data?.error || err.message || 'Failed to save property. Please check server constraints.');
     } finally {
       setLoading(false);
     }
@@ -322,7 +331,7 @@ const PropertyForm = () => {
 
   if (initialLoading) {
     return (
-      <div className="d-flex justify-content-center align-items-center vh-50 text-light">
+      <div className="d-flex justify-content-center align-items-center vh-50 text-muted">
         <div className="spinner-border text-primary me-2" role="status"></div> Loading property details...
       </div>
     );
@@ -330,16 +339,19 @@ const PropertyForm = () => {
 
   return (
     <div className="container-fluid py-2 animate-fade-in">
-      {/* Header */}
-      <div className="glass-panel p-4 mb-4">
+      
+      {/* Header Panel */}
+      <div className="glass-panel p-4 mb-4" style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>
         <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
           <div>
-            <h2 className="fw-700 text-white mb-1">
-              {isEditMode ? <><i className="bi bi-pencil-square text-primary me-2"></i>Edit Property Listing</> : <><i className="bi bi-plus-circle text-primary me-2"></i>Create Property Listing Draft</>}
+            <h2 className="fw-800 mb-1" style={{ color: 'var(--text-primary)' }}>
+              {isEditMode 
+                ? <><i className="bi bi-pencil-square text-primary me-2"></i>Edit Property Listing</> 
+                : <><i className="bi bi-plus-circle text-primary me-2"></i>Create New Property Listing</>}
             </h2>
             <p className="text-muted mb-0">
               {isEditMode 
-                ? 'Update specifications, pricing, configurations, or uploaded assets. Submit changes for Super Admin re-approval.'
+                ? 'Update specifications, pricing, configurations, or uploaded assets. Submit changes for Super Admin approval.'
                 : 'Fill in project specs, layout configurations, and upload brochures. Drafts will be submitted to the Super Admin queue.'}
             </p>
           </div>
@@ -351,27 +363,29 @@ const PropertyForm = () => {
         </div>
       </div>
 
-      <div className="glass-panel p-4 text-light">
-        <h5 className="fw-600 text-white mb-4 border-bottom pb-3" style={{ borderColor: 'var(--border-color)' }}>
-          <i className="bi bi-building text-primary me-2"></i>{isEditMode ? 'Update Property Parameters' : 'Property Information Form'}
+      {/* Main Form Section */}
+      <div className="glass-panel p-4" style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>
+        <h5 className="fw-800 mb-4 border-bottom pb-3" style={{ color: 'var(--text-primary)', borderColor: 'var(--border-color)' }}>
+          <i className="bi bi-building text-primary me-2"></i>{isEditMode ? 'Update Property Parameters' : 'Property Details & Specs Form'}
         </h5>
 
         {error && (
-          <div className="alert alert-danger p-3 mb-4">
+          <div className="alert alert-danger p-3 mb-4 fw-600" style={{ borderRadius: '12px' }}>
             <i className="bi bi-exclamation-triangle-fill me-2"></i> {error}
           </div>
         )}
         {success && (
-          <div className="alert alert-success p-3 mb-4">
+          <div className="alert alert-success p-3 mb-4 fw-600" style={{ borderRadius: '12px' }}>
             <i className="bi bi-check-circle-fill me-2"></i> {success}
           </div>
         )}
 
         <form onSubmit={handleSubmit}>
           
+          {/* Target Branch Assignment (Super Admin) */}
           {['super_admin', 'assistant_admin'].includes(user?.role) && (
-            <div className="mb-4 p-3 bg-dark bg-opacity-30 rounded border border-primary border-opacity-40">
-              <label className="form-label text-primary small fw-700 mb-1">
+            <div className="mb-4 p-3 rounded border border-primary border-opacity-40" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
+              <label className="form-label text-primary small fw-800 mb-1 d-block">
                 <i className="bi bi-diagram-3-fill me-1"></i> TARGET BRANCH ASSIGNMENT (SUPER ADMIN SCOPE) *
               </label>
               <select 
@@ -390,9 +404,9 @@ const PropertyForm = () => {
           )}
 
           {/* Property Category / Sector Selection */}
-          <div className="mb-4 p-3 bg-dark bg-opacity-20 rounded border border-secondary border-opacity-20">
-            <label className="form-label text-white small fw-700 mb-2">
-              <i className="bi bi-tags-fill text-warning me-1"></i> PROPERTY SECTOR & CATEGORY *
+          <div className="mb-4 p-3 rounded border" style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)' }}>
+            <label className="form-label small fw-800 mb-2 d-block" style={{ color: 'var(--text-primary)' }}>
+              <i className="bi bi-tags-fill text-warning me-1.5"></i> PROPERTY SECTOR & CATEGORY *
             </label>
             <div className="d-flex flex-wrap gap-2 mb-3">
               <button
@@ -420,7 +434,7 @@ const PropertyForm = () => {
           {/* Main Info Row */}
           <div className="row g-3 mb-3">
             <div className="col-md-5">
-              <label className="form-label text-muted small fw-600">PROJECT / PROPERTY NAME *</label>
+              <label className="form-label small fw-700" style={{ color: 'var(--text-primary)' }}>PROJECT / PROPERTY NAME *</label>
               <input 
                 type="text" 
                 name="project_name"
@@ -432,7 +446,7 @@ const PropertyForm = () => {
               />
             </div>
             <div className="col-md-3">
-              <label className="form-label text-muted small fw-600">PROPERTY TYPE *</label>
+              <label className="form-label small fw-700" style={{ color: 'var(--text-primary)' }}>PROPERTY TYPE *</label>
               <select 
                 name="property_type" 
                 value={formData.property_type}
@@ -453,7 +467,7 @@ const PropertyForm = () => {
               </select>
             </div>
             <div className="col-md-4">
-              <label className="form-label text-muted small fw-600">BUILDER / DEVELOPER GROUP *</label>
+              <label className="form-label small fw-700" style={{ color: 'var(--text-primary)' }}>BUILDER / DEVELOPER GROUP *</label>
               <input 
                 type="text" 
                 name="builder"
@@ -466,53 +480,48 @@ const PropertyForm = () => {
             </div>
           </div>
 
+          {/* City & Locality Row */}
           <div className="row g-3 mb-3">
-            <div className="col-md-4">
-              <label className="form-label text-muted small fw-600">CITY (PROJECT MARKET) *</label>
-              <div className="input-group">
-                <input 
-                  type="text" 
-                  name="city"
-                  value={formData.city}
-                  onChange={handleTextChange}
-                  className="form-control form-premium-control" 
-                  placeholder="e.g. Pune or Mumbai"
-                  required
-                />
+            <div className="col-md-5">
+              <label className="form-label small fw-700" style={{ color: 'var(--text-primary)' }}>
+                CITY (PROJECT MARKET) *
+              </label>
+              <input 
+                type="text" 
+                name="city"
+                list="city-options-list"
+                value={formData.city}
+                onChange={handleTextChange}
+                className="form-control form-premium-control" 
+                placeholder="Type or pick city e.g. Pune, Mumbai, Thane..."
+                required
+              />
+              <datalist id="city-options-list">
+                {quickCityList.map(c => <option key={c} value={c} />)}
+              </datalist>
+
+              {/* Quick Select City Pills */}
+              <div className="mt-2 d-flex gap-1.5 flex-wrap align-items-center">
+                <span className="small text-muted me-1 fw-600">Quick Pick:</span>
+                {quickCityList.map(cityItem => {
+                  const isActive = formData.city.toLowerCase() === cityItem.toLowerCase();
+                  return (
+                    <button 
+                      key={cityItem}
+                      type="button" 
+                      className={`btn btn-xs rounded-pill px-2 py-0.5 fw-600 transition ${isActive ? 'btn-warning text-dark shadow-sm' : 'btn-outline-secondary'}`} 
+                      onClick={() => setFormData(prev => ({ ...prev, city: cityItem }))}
+                      style={{ fontSize: '0.75rem' }}
+                    >
+                      📍 {cityItem}
+                    </button>
+                  );
+                })}
               </div>
-              <div className="mt-1.5 d-flex gap-1 flex-wrap align-items-center">
-                <span className="small text-muted me-1">Quick Select:</span>
-                <button 
-                  type="button" 
-                  className={`btn btn-xs ${formData.city.toLowerCase() === 'pune' ? 'btn-danger' : 'btn-outline-secondary'}`} 
-                  onClick={() => setFormData(prev => ({ ...prev, city: 'Pune' }))}
-                  style={{ fontSize: '0.75rem', padding: '2px 8px' }}
-                >
-                  📍 Pune
-                </button>
-                <button 
-                  type="button" 
-                  className={`btn btn-xs ${formData.city.toLowerCase() === 'mumbai' ? 'btn-warning text-dark' : 'btn-outline-secondary'}`} 
-                  onClick={() => setFormData(prev => ({ ...prev, city: 'Mumbai' }))}
-                  style={{ fontSize: '0.75rem', padding: '2px 8px' }}
-                >
-                  📍 Mumbai
-                </button>
-                <button 
-                  type="button" 
-                  className={`btn btn-xs ${formData.city.toLowerCase() === 'navi mumbai' ? 'btn-info text-dark' : 'btn-outline-secondary'}`} 
-                  onClick={() => setFormData(prev => ({ ...prev, city: 'Navi Mumbai' }))}
-                  style={{ fontSize: '0.75rem', padding: '2px 8px' }}
-                >
-                  📍 Navi Mumbai
-                </button>
-              </div>
-              <small className="text-info mt-1 d-block" style={{ fontSize: '0.78rem' }}>
-                <i className="bi bi-info-circle me-1"></i> Entering "Pune" or "Mumbai" categorizes this project under the <strong>Projects in Pune</strong> or <strong>Projects in Mumbai</strong> dashboard collections.
-              </small>
             </div>
+
             <div className="col-md-3">
-              <label className="form-label text-muted small fw-600">LOCALITY / SUBURB *</label>
+              <label className="form-label small fw-700" style={{ color: 'var(--text-primary)' }}>LOCALITY / SUBURB *</label>
               <input 
                 type="text" 
                 name="location"
@@ -523,8 +532,9 @@ const PropertyForm = () => {
                 required
               />
             </div>
+
             <div className="col-md-2">
-              <label className="form-label text-muted small fw-600">SURVEY NUMBER</label>
+              <label className="form-label small fw-700" style={{ color: 'var(--text-primary)' }}>SURVEY NUMBER</label>
               <input 
                 type="text" 
                 name="survey_number"
@@ -534,8 +544,9 @@ const PropertyForm = () => {
                 placeholder="e.g. Survey No 42/1A"
               />
             </div>
-            <div className="col-md-3">
-              <label className="form-label text-muted small fw-600">RERA REGISTRATION ID</label>
+
+            <div className="col-md-2">
+              <label className="form-label small fw-700" style={{ color: 'var(--text-primary)' }}>RERA ID</label>
               <input 
                 type="text" 
                 name="rera_id"
@@ -549,7 +560,7 @@ const PropertyForm = () => {
 
           <div className="row g-3 mb-3">
             <div className="col-md-4">
-              <label className="form-label text-muted small fw-600">PROJECT STAGE / STATUS *</label>
+              <label className="form-label small fw-700" style={{ color: 'var(--text-primary)' }}>PROJECT STAGE / STATUS *</label>
               <select 
                 name="project_status" 
                 value={formData.project_status}
@@ -563,7 +574,7 @@ const PropertyForm = () => {
               </select>
             </div>
             <div className="col-md-4">
-              <label className="form-label text-muted small fw-600">ESTIMATED COMPLETION DATE</label>
+              <label className="form-label small fw-700" style={{ color: 'var(--text-primary)' }}>ESTIMATED COMPLETION DATE</label>
               <input 
                 type="date" 
                 name="completion_date"
@@ -573,7 +584,7 @@ const PropertyForm = () => {
               />
             </div>
             <div className="col-md-4">
-              <label className="form-label text-muted small fw-600">AVAILABILITY STATUS *</label>
+              <label className="form-label small fw-700" style={{ color: 'var(--text-primary)' }}>AVAILABILITY STATUS *</label>
               <select 
                 name="availability_status" 
                 value={formData.availability_status}
@@ -589,7 +600,7 @@ const PropertyForm = () => {
           </div>
 
           <div className="mb-3">
-            <label className="form-label text-muted small fw-600">OFFICE / SITE STREET ADDRESS *</label>
+            <label className="form-label small fw-700" style={{ color: 'var(--text-primary)' }}>OFFICE / SITE STREET ADDRESS *</label>
             <input 
               type="text" 
               name="address"
@@ -602,7 +613,7 @@ const PropertyForm = () => {
           </div>
 
           <div className="mb-3">
-            <label className="form-label text-muted small fw-600">PROJECT SUMMARY & HIGHLIGHTS</label>
+            <label className="form-label small fw-700" style={{ color: 'var(--text-primary)' }}>PROJECT SUMMARY & HIGHLIGHTS</label>
             <textarea 
               name="highlights"
               value={formData.highlights}
@@ -614,7 +625,7 @@ const PropertyForm = () => {
           </div>
 
           <div className="mb-3">
-            <label className="form-label text-muted small fw-600">DEVELOPER LEGACY DETAILS</label>
+            <label className="form-label small fw-700" style={{ color: 'var(--text-primary)' }}>DEVELOPER LEGACY DETAILS</label>
             <textarea 
               name="developer_legacy"
               value={formData.developer_legacy}
@@ -626,7 +637,7 @@ const PropertyForm = () => {
           </div>
 
           <div className="mb-3">
-            <label className="form-label text-muted small fw-600">GOOGLE MAPS EMBED IFRAME URL OR EMBED CODE</label>
+            <label className="form-label small fw-700" style={{ color: 'var(--text-primary)' }}>GOOGLE MAPS EMBED IFRAME URL OR EMBED CODE</label>
             <input 
               type="text" 
               name="map_embed_url"
@@ -635,14 +646,11 @@ const PropertyForm = () => {
               className="form-control form-premium-control" 
               placeholder='Paste Google Maps URL or iframe code e.g. <iframe src="https://www.google.com/maps/embed?pb=..."></iframe>'
             />
-            <small className="text-muted d-block mt-1" style={{ fontSize: '0.78rem' }}>
-              <i className="bi bi-info-circle me-1"></i> You can paste either the direct <code>https://...</code> link or the full Google Maps <code>&lt;iframe src="..."&gt;&lt;/iframe&gt;</code> HTML code.
-            </small>
           </div>
 
-          <div className="mb-3 p-3 bg-dark bg-opacity-20 rounded border border-warning border-opacity-30">
+          <div className="mb-3 p-3 rounded border border-warning border-opacity-30" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
             <div className="d-flex justify-content-between align-items-center mb-1 flex-wrap gap-1">
-              <label className="form-label text-warning small fw-700 mb-0">
+              <label className="form-label text-warning small fw-800 mb-0">
                 <i className="bi bi-vr me-1"></i> 360° VIRTUAL TOUR EMBED LINK (MATTERPORT / KUULA / GOOGLE 360)
               </label>
               <a 
@@ -663,19 +671,16 @@ const PropertyForm = () => {
               className="form-control form-premium-control" 
               placeholder="e.g. https://kuula.co/share/collection/7yX... or https://my.matterport.com/show/?m=..."
             />
-            <small className="text-muted d-block mt-1.5" style={{ fontSize: '0.78rem' }}>
-              <i className="bi bi-info-circle me-1"></i> Paste your 360° virtual tour share or iframe link from Kuula.co, Matterport, Momento360, or Google Street View. It will be interactively embedded under the <strong>🥽 360° Tour</strong> tab.
-            </small>
           </div>
 
           {/* Dynamic BHK Layouts Configs */}
-          <h6 className="fw-600 text-white mb-3 mt-4 border-bottom pb-2" style={{ borderColor: 'var(--border-color)' }}>
+          <h6 className="fw-800 mb-3 mt-4 border-bottom pb-2" style={{ color: 'var(--text-primary)', borderColor: 'var(--border-color)' }}>
             <i className="bi bi-grid-3x3-gap text-primary me-1"></i>BHK Configurations & Pricing *
           </h6>
 
-          <div className="row g-2 mb-3 align-items-end bg-dark bg-opacity-20 p-3 rounded border border-secondary border-opacity-10">
+          <div className="row g-2 mb-3 align-items-end p-3 rounded border" style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)' }}>
             <div className="col-12 col-sm-6 col-md-3">
-              <label className="form-label text-muted small fw-600">BHK / UNIT TYPE</label>
+              <label className="form-label small fw-700" style={{ color: 'var(--text-primary)' }}>BHK / UNIT TYPE</label>
               <input 
                 type="text" 
                 placeholder="e.g. 2 BHK Standard"
@@ -685,7 +690,7 @@ const PropertyForm = () => {
               />
             </div>
             <div className="col-12 col-sm-6 col-md-3">
-              <label className="form-label text-muted small fw-600">CARPET AREA (SQ. FT.)</label>
+              <label className="form-label small fw-700" style={{ color: 'var(--text-primary)' }}>CARPET AREA (SQ. FT.)</label>
               <input 
                 type="number" 
                 placeholder="e.g. 1050"
@@ -695,7 +700,7 @@ const PropertyForm = () => {
               />
             </div>
             <div className="col-12 col-sm-6 col-md-3">
-              <label className="form-label text-muted small fw-600">TOTAL PRICE (INR)</label>
+              <label className="form-label small fw-700" style={{ color: 'var(--text-primary)' }}>TOTAL PRICE (INR)</label>
               <input 
                 type="number" 
                 placeholder="e.g. 7500000"
@@ -705,7 +710,7 @@ const PropertyForm = () => {
               />
             </div>
             <div className="col-12 col-sm-6 col-md-2">
-              <label className="form-label text-muted small fw-600">ESTIMATED EMI (/MO)</label>
+              <label className="form-label small fw-700" style={{ color: 'var(--text-primary)' }}>ESTIMATED EMI (/MO)</label>
               <input 
                 type="number" 
                 placeholder="e.g. 55000"
@@ -722,23 +727,23 @@ const PropertyForm = () => {
           {/* List Added configurations */}
           {configurations.length > 0 && (
             <div className="table-responsive mb-4">
-              <table className="table table-bordered border-secondary text-white">
+              <table className="table table-bordered align-middle small" style={{ color: 'var(--text-primary)' }}>
                 <thead>
-                  <tr className="text-muted small">
-                    <th>BHK/Unit Type</th>
-                    <th>Carpet Area</th>
-                    <th>Price</th>
-                    <th>Est. EMI</th>
-                    <th className="text-center">Action</th>
+                  <tr className="table-light text-muted">
+                    <th style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}>BHK/Unit Type</th>
+                    <th style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}>Carpet Area</th>
+                    <th style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}>Price</th>
+                    <th style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}>Est. EMI</th>
+                    <th className="text-center" style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}>Action</th>
                   </tr>
                 </thead>
                 <tbody>
                   {configurations.map((c, i) => (
-                    <tr key={i} className="small">
-                      <td>{c.bhk_type}</td>
+                    <tr key={i}>
+                      <td className="fw-600">{c.bhk_type}</td>
                       <td>{c.carpet_area} sq.ft.</td>
-                      <td>₹{c.price.toLocaleString('en-IN')}</td>
-                      <td>{c.estimated_emi ? `₹${c.estimated_emi.toLocaleString('en-IN')}` : 'N/A'}</td>
+                      <td className="text-success fw-700">₹{Number(c.price).toLocaleString('en-IN')}</td>
+                      <td>{c.estimated_emi ? `₹${Number(c.estimated_emi).toLocaleString('en-IN')}` : 'N/A'}</td>
                       <td className="text-center">
                         <button type="button" onClick={() => removeConfiguration(i)} className="btn btn-sm btn-outline-danger py-0 px-2"><i className="bi bi-trash"></i></button>
                       </td>
@@ -750,13 +755,13 @@ const PropertyForm = () => {
           )}
 
           {/* Dynamic Specifications */}
-          <h6 className="fw-600 text-white mb-3 mt-4 border-bottom pb-2" style={{ borderColor: 'var(--border-color)' }}>
+          <h6 className="fw-800 mb-3 mt-4 border-bottom pb-2" style={{ color: 'var(--text-primary)', borderColor: 'var(--border-color)' }}>
             <i className="bi bi-sliders text-primary me-1"></i>Technical Specifications
           </h6>
 
-          <div className="row g-2 mb-3 align-items-end bg-dark bg-opacity-20 p-3 rounded border border-secondary border-opacity-10">
+          <div className="row g-2 mb-3 align-items-end p-3 rounded border" style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)' }}>
             <div className="col-12 col-sm-5 col-md-4">
-              <label className="form-label text-muted small fw-600">SPECIFICATION TITLE</label>
+              <label className="form-label small fw-700" style={{ color: 'var(--text-primary)' }}>SPECIFICATION TITLE</label>
               <input 
                 type="text" 
                 placeholder="e.g. Flooring"
@@ -766,7 +771,7 @@ const PropertyForm = () => {
               />
             </div>
             <div className="col-12 col-sm-7 col-md-7">
-              <label className="form-label text-muted small fw-600">SPECIFICATION DETAILS</label>
+              <label className="form-label small fw-700" style={{ color: 'var(--text-primary)' }}>SPECIFICATION DETAILS</label>
               <input 
                 type="text" 
                 placeholder="e.g. Vitrified double-charged tiles in all rooms"
@@ -782,11 +787,11 @@ const PropertyForm = () => {
 
           {/* List Added Specifications */}
           {specifications.length > 0 && (
-            <div className="mb-4 bg-dark bg-opacity-10 p-3 rounded">
+            <div className="mb-4 p-3 rounded" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
               {specifications.map((s, i) => (
-                <div key={i} className="d-flex justify-content-between align-items-start border-bottom border-secondary border-opacity-20 py-2 small">
+                <div key={i} className="d-flex justify-content-between align-items-start border-bottom py-2 small" style={{ borderColor: 'var(--border-color)' }}>
                   <div>
-                    <strong>{s.title}:</strong> <span className="text-muted">{s.details}</span>
+                    <strong style={{ color: 'var(--text-primary)' }}>{s.title}:</strong> <span className="text-muted">{s.details}</span>
                   </div>
                   <button type="button" onClick={() => removeSpecification(i)} className="btn btn-sm text-danger py-0 px-1"><i className="bi bi-x-circle"></i></button>
                 </div>
@@ -795,10 +800,14 @@ const PropertyForm = () => {
           )}
 
           {/* Amenities Selector */}
-          <div className="mb-3">
-            <label className="form-label text-muted small fw-600">PROJECT AMENITIES (CHECK ALL THAT APPLY)</label>
-            <div className="row g-2 p-3 bg-dark bg-opacity-20 rounded border border-secondary border-opacity-10">
-              {amenitiesList.map(a => (
+          <div className="mb-4">
+            <label className="form-label small fw-800 d-block" style={{ color: 'var(--text-primary)' }}>
+              <i className="bi bi-patch-check-fill text-warning me-1.5"></i> PROJECT AMENITIES (CHECK ALL THAT APPLY)
+            </label>
+
+            {/* Checkbox Preset Grid */}
+            <div className="row g-2 p-3 rounded border mb-3" style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)' }}>
+              {defaultAmenitiesList.map(a => (
                 <div key={a} className="col-md-3 col-sm-4 col-6">
                   <div className="form-check">
                     <input 
@@ -808,89 +817,140 @@ const PropertyForm = () => {
                       checked={selectedAmenities.includes(a)}
                       onChange={() => handleAmenityToggle(a)}
                     />
-                    <label className="form-check-label small" htmlFor={`form_amenity_${a}`}>
+                    <label className="form-check-label small" htmlFor={`form_amenity_${a}`} style={{ color: 'var(--text-primary)' }}>
                       {a}
                     </label>
                   </div>
                 </div>
               ))}
             </div>
+
+            {/* Dynamic Custom Amenity Input */}
+            <div className="p-3 rounded border" style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)' }}>
+              <label className="form-label small fw-700 mb-2" style={{ color: 'var(--text-primary)' }}>
+                ➕ ADD CUSTOM PROJECT AMENITY (SUPER ADMIN PROVISION)
+              </label>
+              <div className="d-flex gap-2">
+                <input 
+                  type="text" 
+                  className="form-control form-premium-control flex-grow-1"
+                  placeholder="e.g. Skate Park, Co-Working Lounge, Rooftop Infinity Pool..."
+                  value={customAmenityInput}
+                  onChange={(e) => setCustomAmenityInput(e.target.value)}
+                />
+                <button 
+                  type="button" 
+                  onClick={handleAddCustomAmenity}
+                  className="btn btn-warning text-dark fw-700 px-3"
+                >
+                  Add Amenity
+                </button>
+              </div>
+
+              {/* Custom Added Amenity Pills */}
+              {selectedAmenities.length > 0 && (
+                <div className="mt-3 d-flex flex-wrap gap-2">
+                  <span className="small text-muted fw-600 me-1">Selected Amenities ({selectedAmenities.length}):</span>
+                  {selectedAmenities.map(amenity => (
+                    <span 
+                      key={amenity}
+                      className="badge bg-primary text-white px-2.5 py-1.5 rounded-pill d-flex align-items-center gap-1.5"
+                    >
+                      {amenity}
+                      <i 
+                        className="bi bi-x-circle-fill cursor-pointer" 
+                        onClick={() => handleAmenityToggle(amenity)}
+                        title="Remove amenity"
+                      ></i>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
           </div>
 
           {/* Files Upload Row */}
-          <h6 className="fw-600 text-white mb-3 mt-4 border-bottom pb-2" style={{ borderColor: 'var(--border-color)' }}>
-            <i className="bi bi-paperclip text-primary me-1"></i>Marketing Assets Uploads
+          <h6 className="fw-800 mb-3 mt-4 border-bottom pb-2" style={{ color: 'var(--text-primary)', borderColor: 'var(--border-color)' }}>
+            <i className="bi bi-images text-primary me-1"></i>Media & Brochure Assets
           </h6>
 
           <div className="row g-3 mb-4">
             <div className="col-md-4">
-              <label className="form-label text-muted small fw-600">PROPERTY PHOTOS GALLERY (MULTIPLE)</label>
+              <label className="form-label small fw-700" style={{ color: 'var(--text-primary)' }}>PROJECT GALLERY IMAGES</label>
               <input 
                 type="file" 
                 multiple
                 accept="image/*"
                 onChange={(e) => setImages(e.target.files)}
-                className="form-control form-premium-control"
-              />
-            </div>
-            
-            <div className="col-md-4">
-              <label className="form-label text-muted small fw-600">FLOOR PLANS / LAYOUT DIAGRAMS (MULTIPLE)</label>
-              <input 
-                type="file" 
-                multiple
-                accept="image/*"
-                onChange={(e) => setFloorPlans(e.target.files)}
-                className="form-control form-premium-control"
+                className="form-control form-premium-control" 
               />
             </div>
 
             <div className="col-md-4">
-              <label className="form-label text-muted small fw-600">PDF BROCHURE FILE (MULTIPLE)</label>
+              <label className="form-label small fw-700" style={{ color: 'var(--text-primary)' }}>FLOOR PLAN BLUEPRINTS</label>
               <input 
                 type="file" 
                 multiple
-                accept="application/pdf"
+                accept="image/*,.pdf"
+                onChange={(e) => setFloorPlans(e.target.files)}
+                className="form-control form-premium-control" 
+              />
+            </div>
+
+            <div className="col-md-4">
+              <label className="form-label small fw-700" style={{ color: 'var(--text-primary)' }}>PDF BROCHURES</label>
+              <input 
+                type="file" 
+                multiple
+                accept=".pdf,.doc,.docx"
                 onChange={(e) => setBrochures(e.target.files)}
-                className="form-control form-premium-control"
+                className="form-control form-premium-control" 
               />
             </div>
           </div>
 
-          {/* Actions */}
-          <div className="d-flex gap-3 justify-content-end border-top pt-4 flex-wrap" style={{ borderColor: 'var(--border-color)' }}>
-            <Link to="/properties" className="btn btn-premium-outline px-4 py-2">
+          {/* Existing Media Preview in Edit Mode */}
+          {isEditMode && existingMedia && (
+            <div className="mb-4 p-3 rounded border" style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)' }}>
+              <h6 className="fw-700 mb-2" style={{ color: 'var(--text-primary)' }}>Existing Uploaded Assets</h6>
+              <div className="d-flex gap-3 flex-wrap">
+                {existingMedia.images && existingMedia.images.map(img => (
+                  <div key={img.id} className="border rounded p-1" style={{ width: '80px', height: '60px', backgroundImage: `url(${img.url})`, backgroundSize: 'cover' }}></div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Form Action Buttons */}
+          <div className="d-flex justify-content-end gap-3 pt-3 border-top" style={{ borderColor: 'var(--border-color)' }}>
+            <Link to="/properties" className="btn btn-outline-secondary px-4 py-2 rounded-pill fw-600">
               Cancel
             </Link>
+
+            {!isEditMode && (
+              <button 
+                type="button" 
+                onClick={(e) => handleSubmit(e, false)}
+                disabled={loading}
+                className="btn btn-outline-primary px-4 py-2 rounded-pill fw-600"
+              >
+                {loading ? 'Saving...' : 'Save Draft'}
+              </button>
+            )}
+
             <button 
-              type="button" 
-              className="btn btn-premium-outline px-4 py-2" 
+              type="submit" 
               disabled={loading}
-              onClick={(e) => handleSubmit(e, false)}
+              className="btn btn-premium px-5 py-2.5 rounded-pill fw-700 shadow-sm"
             >
-              <i className="bi bi-save me-1"></i> {isEditMode ? 'Save Changes as Draft' : 'Save Draft'}
-            </button>
-            <button 
-              type="button" 
-              className="btn btn-premium px-5 py-2" 
-              disabled={loading}
-              onClick={(e) => handleSubmit(e, true)}
-            >
-              {loading ? (
-                <>
-                  <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                  Processing...
-                </>
-              ) : (
-                <>
-                  <i className="bi bi-send-check me-1"></i> {isEditMode ? 'Save & Submit for Review' : 'Create & Submit for Review'}
-                </>
-              )}
+              {loading ? 'Processing...' : isEditMode ? 'Update Property Listing' : 'Submit for Super Admin Approval'}
             </button>
           </div>
 
         </form>
       </div>
+
     </div>
   );
 };

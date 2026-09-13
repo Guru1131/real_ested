@@ -3,11 +3,11 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import api from '../services/api';
 import LeadFormModal from '../components/LeadFormModal';
-import { formatImageUrl, handleImageError } from '../utils/imageHelper';
+import { formatImageUrl } from '../utils/imageHelper';
 import { extractMapUrl } from '../utils/mapHelper';
 
 const PropertyDetail = () => {
-  const { slug } = useParams(); // Using property URL slug
+  const { slug } = useParams();
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -53,10 +53,8 @@ const PropertyDetail = () => {
     const propertyLink = `${window.location.origin}/property/${slug}`;
     const text = `Check out this premium property: *${data.property.project_name}* (${data.property.property_code}) by ${data.property.builder} located at ${data.property.location}. RERA ID: ${data.property.rera_id || 'N/A'}. Details link: ${propertyLink}`;
     
-    // Log sharing action
     handleShareLog('whatsapp', shareRecipient || 'Unspecified Contact');
 
-    // Trigger WhatsApp web API redirection
     const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
     window.open(url, '_blank');
     setShowShareMenu(false);
@@ -65,12 +63,10 @@ const PropertyDetail = () => {
   const handleEmailShare = () => {
     const propertyLink = `${window.location.origin}/property/${slug}`;
     const subject = `Property Information: ${data.property.project_name}`;
-    const body = `Dear Client,\n\nPlease find the details for ${data.property.project_name} (${data.property.property_code}) by ${data.property.builder} located at ${data.property.location}.\nRERA ID: ${data.property.rera_id || 'N/A'}\n\nClick the link to view the complete details and download files: ${propertyLink}\n\nBest regards,\n${user.username}`;
+    const body = `Dear Client,\n\nPlease find the details for ${data.property.project_name} (${data.property.property_code}) by ${data.property.builder} located at ${data.property.location}.\nRERA ID: ${data.property.rera_id || 'N/A'}\n\nClick the link to view details: ${propertyLink}\n\nBest regards,\n${user.username}`;
     
-    // Log sharing action
     handleShareLog('email', shareRecipient || 'Unspecified Email');
 
-    // Trigger mailto client
     const mailtoUrl = `mailto:${shareRecipient}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     window.location.href = mailtoUrl;
     setShowShareMenu(false);
@@ -86,8 +82,9 @@ const PropertyDetail = () => {
 
   if (loading) {
     return (
-      <div className="d-flex justify-content-center align-items-center vh-50 text-light">
-        <div className="spinner-border text-primary" role="status"></div>
+      <div className="d-flex justify-content-center align-items-center vh-50 text-muted">
+        <div className="spinner-border text-primary me-2" role="status"></div>
+        <span>Loading property details...</span>
       </div>
     );
   }
@@ -104,7 +101,6 @@ const PropertyDetail = () => {
 
   const { property, configurations, amenities, specifications, media } = data;
 
-  // Resolve main banner photo
   const mainPhoto = media.images && media.images.length > 0 
     ? formatImageUrl(media.images[0].url)
     : 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=80';
@@ -133,7 +129,7 @@ const PropertyDetail = () => {
   };
 
   return (
-    <div className="container-fluid py-2">
+    <div className="container-fluid py-2 animate-fade-in">
       
       {/* Back Button & Edit Action */}
       <div className="mb-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
@@ -152,13 +148,13 @@ const PropertyDetail = () => {
         )}
       </div>
 
-      {/* Main BeyondWalls Banner layout */}
-      <div className="position-relative rounded-4 overflow-hidden mb-4 animate-fade-in" style={{ minHeight: '260px', backgroundImage: `linear-gradient(rgba(0,0,0,0.2), rgba(11,15,25,0.95)), url(${mainPhoto})`, backgroundSize: 'cover', backgroundPosition: 'center', border: '1px solid var(--border-color)' }}>
+      {/* Main Banner layout */}
+      <div className="position-relative rounded-4 overflow-hidden mb-4 shadow-sm" style={{ minHeight: '280px', backgroundImage: `linear-gradient(rgba(0,0,0,0.3), rgba(15,23,42,0.92)), url(${mainPhoto})`, backgroundSize: 'cover', backgroundPosition: 'center', border: '1px solid var(--border-color)' }}>
         <div className="position-absolute bottom-0 left-0 p-3 p-md-4 w-100 d-flex justify-content-between align-items-end flex-wrap gap-3">
           <div>
-            <span className="text-muted small fw-700 tracking-wide text-uppercase d-block mb-1">{property.property_code}</span>
-            <h1 className="fw-700 text-white mb-2 fs-3 fs-md-1">{property.project_name}</h1>
-            <p className="mb-2 text-light small fs-md-6"><i className="bi bi-geo-alt-fill text-primary"></i> {property.location}, {property.address}</p>
+            <span className="text-light small fw-700 tracking-wide text-uppercase d-block mb-1 opacity-90">{property.property_code}</span>
+            <h1 className="fw-800 text-white mb-2 fs-3 fs-md-1">{property.project_name}</h1>
+            <p className="mb-2 text-light small fs-md-6 opacity-90"><i className="bi bi-geo-alt-fill text-warning"></i> {property.location}, {property.city}</p>
             {property.rera_id && (
               <span className="badge bg-dark text-light border border-secondary border-opacity-30 rounded px-2.5 py-1 small">
                 RERA ID: {property.rera_id}
@@ -167,9 +163,9 @@ const PropertyDetail = () => {
           </div>
           
           <div className="text-md-end text-start mt-2 mt-md-0">
-            <span className="text-muted d-block small">PROJECT STAGE</span>
-            <h3 className="text-primary fw-700 mb-1 fs-5 fs-md-3">{statusLabels[property.project_status] || property.project_status}</h3>
-            <span className={`badge bg-${property.availability_status === 'available' ? 'success' : 'danger'} text-dark fw-600 rounded-pill px-2.5 py-1`}>
+            <span className="text-light d-block small opacity-80">PROJECT STAGE</span>
+            <h3 className="text-warning fw-800 mb-1 fs-5 fs-md-3">{statusLabels[property.project_status] || property.project_status}</h3>
+            <span className={`badge bg-${property.availability_status === 'available' ? 'success' : 'danger'} text-white fw-600 rounded-pill px-3 py-1 text-capitalize`}>
               {property.availability_status}
             </span>
           </div>
@@ -177,9 +173,8 @@ const PropertyDetail = () => {
       </div>
 
       {/* Quick Actions Panel */}
-      <div className="glass-panel p-3 mb-4 d-flex justify-content-between align-items-center flex-wrap gap-2 gap-sm-3 animate-fade-in" style={{ animationDelay: '0.1s' }}>
+      <div className="glass-panel p-3 mb-4 d-flex justify-content-between align-items-center flex-wrap gap-2 gap-sm-3" style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>
         
-        {/* Referral hooks for Broker or Executive */}
         <div className="d-flex align-items-center gap-2">
           {['external_broker', 'branch_executive'].includes(user.role) ? (
             <button className="btn btn-premium px-3 px-sm-4 py-2" onClick={() => setShowLeadModal(true)}>
@@ -194,80 +189,36 @@ const PropertyDetail = () => {
           )}
         </div>
 
-        {/* Share buttons hooks */}
+        {/* Share buttons */}
         <div className="d-flex align-items-center gap-2 flex-wrap">
           <button 
             className="btn btn-outline-success btn-sm px-3 py-2 d-flex align-items-center gap-1.5" 
-            onClick={() => { setShareChannel('whatsapp'); setShowShareMenu(true); }}
-            title="Log and share details on WhatsApp"
+            onClick={() => { setShowShareMenu(true); setShareChannel('whatsapp'); }}
           >
-            <i className="bi bi-whatsapp"></i> WhatsApp Share
+            <i className="bi bi-whatsapp"></i> Share WhatsApp
           </button>
-          
           <button 
-            className="btn btn-outline-primary btn-sm px-3 py-2 d-flex align-items-center gap-1.5"
-            onClick={() => { setShareChannel('email'); setShowShareMenu(true); }}
-            title="Log and share details via email"
+            className="btn btn-outline-primary btn-sm px-3 py-2 d-flex align-items-center gap-1.5" 
+            onClick={() => { setShowShareMenu(true); setShareChannel('email'); }}
           >
-            <i className="bi bi-envelope"></i> Email Share
+            <i className="bi bi-envelope"></i> Email Client
           </button>
-
-          {media.brochures && media.brochures.length > 0 ? (
-            <a 
-              href={`/${media.brochures[0].url}`} 
-              target="_blank" 
-              rel="noreferrer"
-              className="btn btn-premium-outline btn-sm px-3 py-2 d-flex align-items-center gap-1.5"
-              onClick={() => handleShareLog('brochure_download', 'Self Download')}
-            >
-              <i className="bi bi-file-earmark-pdf-fill text-danger"></i> Brochure
-            </a>
-          ) : (
-            <button className="btn btn-premium-outline btn-sm px-3 py-2" disabled title="No brochure uploaded for this project">
-              <i className="bi bi-file-earmark-pdf"></i> No Brochure
-            </button>
-          )}
         </div>
 
       </div>
 
-      {/* Share metadata contact popup */}
-      {showShareMenu && (
-        <div className="glass-panel p-4 mb-4 animate-fade-in border-primary">
-          <h6 className="fw-600 text-white mb-2">Configure Sharing Logging (Recipient Contact)</h6>
-          <p className="text-muted small">Enter the email/phone of the buyer you are sharing this property link with to record in activity logs.</p>
-          <div className="d-flex gap-2 flex-wrap">
-            <input 
-              type="text" 
-              className="form-control form-premium-control flex-grow-1" 
-              placeholder={shareChannel === 'whatsapp' ? 'e.g. +91 99999 99999' : 'e.g. buyer@gmail.com'}
-              value={shareRecipient} 
-              onChange={(e) => setShareRecipient(e.target.value)} 
-            />
-            <button 
-              className={`btn btn-${shareChannel === 'whatsapp' ? 'success' : 'primary'} px-4`}
-              onClick={shareChannel === 'whatsapp' ? handleWhatsAppShare : handleEmailShare}
-            >
-              Proceed
-            </button>
-            <button className="btn btn-premium-outline" onClick={() => setShowShareMenu(false)}>Cancel</button>
-          </div>
-        </div>
-      )}
-
-      {/* Main Specifications Details & Gallery */}
+      {/* Main Details Grid */}
       <div className="row g-4 mb-4">
         
         {/* Left Column: Spec Tabs */}
-        <div className="col-12 col-lg-8 animate-fade-in" style={{ animationDelay: '0.2s' }}>
-          <div className="glass-panel p-4 h-100">
+        <div className="col-12 col-lg-8">
+          <div className="glass-panel p-4 h-100" style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>
             
             {/* Tab Links */}
-            <ul className="nav nav-tabs border-bottom mb-4 flex-nowrap overflow-auto pb-1" style={{ borderColor: 'var(--border-color)', scrollbarWidth: 'none' }}>
+            <ul className="nav nav-tabs border-bottom mb-4 flex-nowrap overflow-auto pb-1" style={{ borderColor: 'var(--border-color)' }}>
               <li className="nav-item">
                 <button 
-                  className={`nav-link bg-transparent text-light border-0 py-2 px-3 fw-600 ${activeTab === 'overview' ? 'active text-primary border-bottom border-primary' : 'text-muted'}`}
-                  style={{ borderBottomWidth: '2px !important' }}
+                  className={`nav-link bg-transparent border-0 py-2 px-3 fw-700 ${activeTab === 'overview' ? 'active' : ''}`}
                   onClick={() => setActiveTab('overview')}
                 >
                   Overview & Layouts
@@ -275,8 +226,7 @@ const PropertyDetail = () => {
               </li>
               <li className="nav-item">
                 <button 
-                  className={`nav-link bg-transparent text-light border-0 py-2 px-3 fw-600 ${activeTab === 'specifications' ? 'active text-primary border-bottom border-primary' : 'text-muted'}`}
-                  style={{ borderBottomWidth: '2px !important' }}
+                  className={`nav-link bg-transparent border-0 py-2 px-3 fw-700 ${activeTab === 'specifications' ? 'active' : ''}`}
                   onClick={() => setActiveTab('specifications')}
                 >
                   Specifications
@@ -284,8 +234,7 @@ const PropertyDetail = () => {
               </li>
               <li className="nav-item">
                 <button 
-                  className={`nav-link bg-transparent text-light border-0 py-2 px-3 fw-600 ${activeTab === 'amenities' ? 'active text-primary border-bottom border-primary' : 'text-muted'}`}
-                  style={{ borderBottomWidth: '2px !important' }}
+                  className={`nav-link bg-transparent border-0 py-2 px-3 fw-700 ${activeTab === 'amenities' ? 'active' : ''}`}
                   onClick={() => setActiveTab('amenities')}
                 >
                   Amenities
@@ -293,8 +242,7 @@ const PropertyDetail = () => {
               </li>
               <li className="nav-item">
                 <button 
-                  className={`nav-link bg-transparent text-light border-0 py-2 px-3 fw-600 ${activeTab === 'location' ? 'active text-primary border-bottom border-primary' : 'text-muted'}`}
-                  style={{ borderBottomWidth: '2px !important' }}
+                  className={`nav-link bg-transparent border-0 py-2 px-3 fw-700 ${activeTab === 'location' ? 'active' : ''}`}
                   onClick={() => setActiveTab('location')}
                 >
                   Location Map
@@ -302,8 +250,7 @@ const PropertyDetail = () => {
               </li>
               <li className="nav-item">
                 <button 
-                  className={`nav-link bg-transparent text-light border-0 py-2 px-3 fw-600 ${activeTab === 'virtual_tour' ? 'active text-warning border-bottom border-warning' : 'text-muted'}`}
-                  style={{ borderBottomWidth: '2px !important' }}
+                  className={`nav-link bg-transparent border-0 py-2 px-3 fw-700 ${activeTab === 'virtual_tour' ? 'active text-warning' : ''}`}
                   onClick={() => setActiveTab('virtual_tour')}
                 >
                   <i className="bi bi-vr text-warning me-1"></i> 360° Tour
@@ -314,27 +261,27 @@ const PropertyDetail = () => {
             {/* Tab content */}
             {activeTab === 'overview' && (
               <div>
-                <h5 className="text-white fw-600 mb-3">Project Summary</h5>
+                <h5 className="fw-800 mb-3" style={{ color: 'var(--text-primary)' }}>Project Summary</h5>
                 <p className="text-muted mb-4">{property.highlights || 'No highlights summary details recorded yet.'}</p>
                 
-                <h5 className="text-white fw-600 mb-3">BHK Configurations & Pricing</h5>
+                <h5 className="fw-800 mb-3" style={{ color: 'var(--text-primary)' }}>BHK Configurations & Pricing</h5>
                 {configurations && configurations.length > 0 ? (
                   <div className="table-responsive mb-4">
-                    <table className="table table-bordered border-secondary text-white">
+                    <table className="table table-bordered align-middle small" style={{ color: 'var(--text-primary)' }}>
                       <thead>
-                        <tr className="text-muted small">
-                          <th>BHK/Unit Variant</th>
-                          <th>Carpet Area</th>
-                          <th>Price (INR)</th>
-                          <th>Est. Monthly EMI</th>
+                        <tr className="table-light text-muted">
+                          <th style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}>BHK/Unit Variant</th>
+                          <th style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}>Carpet Area</th>
+                          <th style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}>Price (INR)</th>
+                          <th style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}>Est. Monthly EMI</th>
                         </tr>
                       </thead>
                       <tbody>
                         {configurations.map((c, idx) => (
-                          <tr key={idx} className="small">
-                            <td>{c.bhk_type}</td>
+                          <tr key={idx}>
+                            <td className="fw-600">{c.bhk_type}</td>
                             <td>{c.carpet_area} sq.ft.</td>
-                            <td className="text-success fw-600">₹{parseFloat(c.price).toLocaleString('en-IN')}</td>
+                            <td className="text-success fw-700">₹{parseFloat(c.price).toLocaleString('en-IN')}</td>
                             <td>{c.estimated_emi ? `₹${parseFloat(c.estimated_emi).toLocaleString('en-IN')}` : 'Price on Request'}</td>
                           </tr>
                         ))}
@@ -342,27 +289,27 @@ const PropertyDetail = () => {
                     </table>
                   </div>
                 ) : (
-                  <p className="text-muted small">No BHK configurations listed for this project.</p>
+                  <p className="text-muted small mb-4">No BHK configurations listed for this project.</p>
                 )}
 
                 <div className="row g-3">
                   <div className="col-sm-6">
-                    <div className="p-3 bg-dark bg-opacity-20 rounded border border-secondary border-opacity-10">
-                      <span className="text-muted small d-block mb-1">BUILDER GROUP</span>
-                      <strong className="text-white fs-6">{property.builder}</strong>
+                    <div className="p-3 rounded border" style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)' }}>
+                      <span className="text-muted small d-block mb-1 fw-700">BUILDER GROUP</span>
+                      <strong className="fs-6 fw-800" style={{ color: 'var(--text-primary)' }}>{property.builder}</strong>
                     </div>
                   </div>
                   <div className="col-sm-6">
-                    <div className="p-3 bg-dark bg-opacity-20 rounded border border-secondary border-opacity-10">
-                      <span className="text-muted small d-block mb-1">ESTIMATED COMPLETION</span>
-                      <strong className="text-white fs-6">{property.completion_date ? new Date(property.completion_date).toLocaleDateString() : 'N/A'}</strong>
+                    <div className="p-3 rounded border" style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)' }}>
+                      <span className="text-muted small d-block mb-1 fw-700">ESTIMATED COMPLETION</span>
+                      <strong className="fs-6 fw-800" style={{ color: 'var(--text-primary)' }}>{property.completion_date ? new Date(property.completion_date).toLocaleDateString() : 'N/A'}</strong>
                     </div>
                   </div>
                 </div>
 
                 {property.developer_legacy && (
                   <div className="mt-4">
-                    <h5 className="text-white fw-600 mb-2">Developer Legacy</h5>
+                    <h5 className="fw-800 mb-2" style={{ color: 'var(--text-primary)' }}>Developer Legacy</h5>
                     <p className="text-muted small">{property.developer_legacy}</p>
                   </div>
                 )}
@@ -371,12 +318,12 @@ const PropertyDetail = () => {
 
             {activeTab === 'specifications' && (
               <div>
-                <h5 className="text-white fw-600 mb-3">Construction Specifications</h5>
+                <h5 className="fw-800 mb-3" style={{ color: 'var(--text-primary)' }}>Construction Specifications</h5>
                 {specifications && specifications.length > 0 ? (
                   <div className="row g-3">
                     {specifications.map((spec, idx) => (
-                      <div key={idx} className="col-12 border-bottom border-secondary border-opacity-20 pb-3">
-                        <h6 className="text-primary fw-600 mb-1">{spec.title}</h6>
+                      <div key={idx} className="col-12 border-bottom pb-3" style={{ borderColor: 'var(--border-color)' }}>
+                        <h6 className="fw-700 mb-1" style={{ color: 'var(--accent-primary)' }}>{spec.title}</h6>
                         <p className="text-muted mb-0 small">{spec.details}</p>
                       </div>
                     ))}
@@ -389,58 +336,60 @@ const PropertyDetail = () => {
 
             {activeTab === 'amenities' && (
               <div>
-                <h5 className="text-white fw-600 mb-4">Amenities List</h5>
+                <h5 className="fw-800 mb-4" style={{ color: 'var(--text-primary)' }}>Project Amenities</h5>
                 {amenities && amenities.length > 0 ? (
                   <div className="row g-3">
                     {amenities.map((amenity, index) => (
                       <div key={index} className="col-sm-6 col-md-4">
-                        <div className="d-flex align-items-center gap-2 p-2 bg-dark bg-opacity-20 rounded">
-                          <i className="bi bi-patch-check-fill text-primary"></i>
-                          <span className="small">{amenity}</span>
+                        <div className="d-flex align-items-center gap-2 p-3 rounded border" style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)' }}>
+                          <i className="bi bi-patch-check-fill text-success fs-5"></i>
+                          <span className="small fw-700" style={{ color: 'var(--text-primary)' }}>{amenity}</span>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-muted small">No amenities specified.</p>
+                  <p className="text-muted small">No amenities specified for this project.</p>
                 )}
               </div>
             )}
 
             {activeTab === 'location' && (
               <div>
-                <h5 className="text-white fw-600 mb-3">Site Location Map</h5>
-                {extractMapUrl(property.map_embed_url) ? (
-                  <div className="ratio ratio-16x9 rounded overflow-hidden border border-secondary border-opacity-20">
+                <h5 className="fw-800 mb-3" style={{ color: 'var(--text-primary)' }}>Location & Map Outline</h5>
+                <p className="text-muted small mb-3"><i className="bi bi-geo-alt-fill text-warning me-1"></i> {property.address}</p>
+                {property.map_embed_url ? (
+                  <div className="ratio ratio-16x9 rounded overflow-hidden shadow-sm" style={{ border: '1px solid var(--border-color)' }}>
                     <iframe 
-                      src={extractMapUrl(property.map_embed_url)} 
-                      allowFullScreen="" 
-                      loading="lazy" 
-                      title="Location Map"
+                      src={property.map_embed_url} 
+                      title="Location Map" 
+                      allowFullScreen
+                      loading="lazy"
                     ></iframe>
                   </div>
                 ) : (
-                  <p className="text-muted small">Google location map embed URL not configured or invalid.</p>
+                  <div className="text-muted small p-4 border rounded text-center" style={{ borderColor: 'var(--border-color)' }}>
+                    Google maps iframe not embedded for this listing yet.
+                  </div>
                 )}
               </div>
             )}
 
             {activeTab === 'virtual_tour' && (
               <div>
-                <h5 className="text-white fw-600 mb-3"><i className="bi bi-vr text-warning me-2"></i>Interactive 360° Virtual Tour</h5>
+                <h5 className="fw-800 mb-3" style={{ color: 'var(--text-primary)' }}>Interactive 360° Virtual Tour</h5>
                 {property.virtual_tour_url ? (
-                  <div className="ratio ratio-16x9 rounded overflow-hidden border border-secondary border-opacity-20">
+                  <div className="ratio ratio-16x9 rounded overflow-hidden shadow-sm" style={{ border: '1px solid var(--border-color)' }}>
                     <iframe 
                       src={property.virtual_tour_url} 
-                      allowFullScreen="" 
-                      loading="lazy" 
-                      title="360 Virtual Tour"
+                      title="360 Virtual Tour" 
+                      allowFullScreen
                     ></iframe>
                   </div>
                 ) : (
-                  <div className="p-4 bg-dark bg-opacity-20 rounded text-center text-muted small border border-secondary border-opacity-20">
-                    <i className="bi bi-vr fs-1 d-block mb-2 text-warning"></i>
-                    Interactive 360° Virtual Tour link is available upon request or can be embedded by editing this listing parameters.
+                  <div className="text-muted small p-5 border rounded text-center" style={{ borderColor: 'var(--border-color)' }}>
+                    <i className="bi bi-camera-video fs-1 d-block mb-2 text-warning"></i>
+                    No 360° Virtual Tour embedded yet. You can edit this property listing to add a 360° URL from Kuula or Matterport.
                   </div>
                 )}
               </div>
@@ -449,71 +398,47 @@ const PropertyDetail = () => {
           </div>
         </div>
 
-        {/* Right Column: Image Gallery Grid */}
-        <div className="col-12 col-lg-4 animate-fade-in" style={{ animationDelay: '0.3s' }}>
-          <div className="glass-panel p-4 h-100">
-            <h5 className="fw-600 text-white mb-4"><i className="bi bi-images text-primary me-2"></i>Project Assets Gallery</h5>
-            
-            {media.images && media.images.length > 0 ? (
-              <div className="row g-3">
-                {media.images.map((img) => (
-                  <div key={img.id} className="col-6">
-                    <div className="glass-panel p-1 overflow-hidden" style={{ borderRadius: '8px' }}>
-                      <a href={formatImageUrl(img.url)} target="_blank" rel="noreferrer">
-                        <img 
-                          src={formatImageUrl(img.url)} 
-                          alt={img.name} 
-                          onError={handleImageError}
-                          className="img-fluid rounded hover-scale" 
-                          style={{ objectFit: 'cover', height: '110px', width: '100%' }}
-                        />
-                      </a>
-                    </div>
-                  </div>
+        {/* Right Column: Branch & Brochure info */}
+        <div className="col-12 col-lg-4">
+          <div className="glass-panel p-4 mb-4" style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>
+            <h6 className="fw-800 mb-3" style={{ color: 'var(--text-primary)' }}>Regional Office Scope</h6>
+            <div className="p-3 rounded border mb-3" style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)' }}>
+              <span className="text-muted small d-block mb-1 fw-600">ASSIGNED BRANCH</span>
+              <strong className="fs-6 fw-800" style={{ color: 'var(--text-primary)' }}>{property.branch_name} ({property.branch_code})</strong>
+            </div>
+
+            <h6 className="fw-800 mb-3" style={{ color: 'var(--text-primary)' }}>Brochures & Documents</h6>
+            {media.brochures && media.brochures.length > 0 ? (
+              <div className="d-flex flex-column gap-2">
+                {media.brochures.map(b => (
+                  <a 
+                    key={b.id} 
+                    href={b.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="btn btn-outline-primary btn-sm text-start py-2 px-3 d-flex align-items-center justify-content-between"
+                  >
+                    <span><i className="bi bi-file-earmark-pdf me-2"></i> {b.name}</span>
+                    <i className="bi bi-download"></i>
+                  </a>
                 ))}
               </div>
             ) : (
-              <div className="text-center py-5 text-muted small">
-                <i className="bi bi-image fs-1 d-block mb-2"></i> No images uploaded yet.
-              </div>
-            )}
-
-            {media.floor_plans && media.floor_plans.length > 0 && (
-              <div className="mt-4">
-                <h6 className="fw-600 text-white mb-3">Floor Layout Plans</h6>
-                <div className="row g-3">
-                  {media.floor_plans.map((fp) => (
-                    <div key={fp.id} className="col-12 text-center mb-2">
-                      <div className="glass-panel p-1 d-inline-block w-100">
-                        <a href={formatImageUrl(fp.url)} target="_blank" rel="noreferrer">
-                          <img 
-                            src={formatImageUrl(fp.url)} 
-                            alt={fp.name} 
-                            onError={handleImageError}
-                            className="img-fluid rounded hover-scale" 
-                            style={{ maxHeight: '180px', objectFit: 'contain' }}
-                          />
-                        </a>
-                      </div>
-                      <p className="small text-muted mt-1 mb-0">{fp.name}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <p className="text-muted small mb-0">No PDF brochures uploaded for this listing.</p>
             )}
           </div>
         </div>
 
       </div>
 
-      {/* Lead Inquiry Modal */}
-      <LeadFormModal 
-        show={showLeadModal} 
-        propertyId={property.id} 
-        propertyName={property.project_name} 
+      {/* Refer Lead Modal */}
+      <LeadFormModal
+        show={showLeadModal}
         onClose={() => setShowLeadModal(false)}
-        onSuccess={() => alert('Referral lead inquiry has been registered in the system and routed to the corresponding branch sales executives.')}
+        propertyId={property.id}
+        propertyName={property.project_name}
       />
+
     </div>
   );
 };
