@@ -701,7 +701,7 @@ router.post('/:id/approve', authenticate, requireRole(['super_admin']), async (r
   const { id } = req.params;
   const { action } = req.body; // 'approve' or 'reject'
 
-  if (action !== 'approve' && $action !== 'reject' && action !== 'reject') { // check strings
+  if (action !== 'approve' && action !== 'reject') { // check strings
     return res.status(400).json({ error: "Action must be either 'approve' or 'reject'." });
   }
 
@@ -763,6 +763,7 @@ router.post('/:id/share', authenticate, async (req, res) => {
     console.error(err);
     return res.status(500).json({ error: 'Server error logging share action.' });
   }
+});
 // DELETE /api/properties/:id (Soft-delete property)
 router.delete('/:id', authenticate, requireRole(['super_admin', 'assistant_admin', 'branch_admin']), async (req, res) => {
   const { id } = req.params;
