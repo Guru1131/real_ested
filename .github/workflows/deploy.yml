@@ -9,8 +9,6 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    env:
-      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
@@ -28,25 +26,26 @@ jobs:
       - name: Zip backend folder
         run: zip -r backend.zip backend/
 
-      - name: Copy zip file to Hostycare server
-        uses: appleboy/scp-action@master
+      - name: Setup SSH Key
+        uses: webfactory/ssh-agent@v0.9.0
         with:
-          host: ${{ secrets.HOSTYCARE_IP }}
-          username: ${{ secrets.HOSTYCARE_USERNAME }}
-          key: ${{ secrets.HOSTYCARE_PRIVATE_KEY }}
-          source: "backend.zip"
-          target: "~/"
+          ssh-private-key: ${{ secrets.HOSTYCARE_PRIVATE_KEY }}
 
-      - name: Deploy files (NO PM2)
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.HOSTYCARE_IP }}
-          username: ${{ secrets.HOSTYCARE_USERNAME }}
-          key: ${{ secrets.HOSTYCARE_PRIVATE_KEY }}
-          script: |
+      - name: Transfer zip & Deploy on Hostycare server
+        env:
+          HOST_IP: ${{ secrets.HOSTYCARE_IP }}
+          HOST_USER: ${{ secrets.HOSTYCARE_USERNAME }}
+          HOST_PORT: ${{ secrets.HOSTYCARE_PORT }}
+        run: |
+          mkdir -p ~/.ssh
+          PORT="${HOST_PORT:-22}"
+          ssh-keyscan -p $PORT -H $HOST_IP >> ~/.ssh/known_hosts 2>/dev/null || true
+          scp -P $PORT -o StrictHostKeyChecking=no backend.zip ${HOST_USER}@${HOST_IP}:~/backend.zip
+          ssh -p $PORT -o StrictHostKeyChecking=no ${HOST_USER}@${HOST_IP} 'bash -s' << 'EOF'
             set -e
             rm -rf ~/real_ested/backend
             mkdir -p ~/real_ested/backend
             unzip -o ~/backend.zip -d ~/real_ested/
             rm -f ~/backend.zip
-            echo "✅ Deployment finished. Login to server and start node manually."
+            echo "✅ Backend deployment completed successfully on Hostycare server."
+          EOF

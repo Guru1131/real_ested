@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Accounts, Roles & Operations Guide - Real Ested System</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-body: #f1f5f9;
+      --card-bg: #ffffff;
+      --border-color: #cbd5e1;
+      --primary-color: #0284c7;
+      --accent-color: #d97706;
+      --text-dark: #0f172a;
+      --text-body: #1e293b;
+      --text-muted: #475569;
+    }
+    body {
+      background-color: var(--bg-body);
+      color: var(--text-body);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      line-height: 1.6;
+      padding-bottom: 60px;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      font-family: 'Outfit', sans-serif;
+      color: var(--text-dark);
+    }
+    .hero-header {
+      background: linear-gradient(135deg, #0284c7 0%, #0369a1 50%, #0f172a 100%);
+      color: #ffffff;
+      padding: 48px 0;
+      margin-bottom: 36px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    .guide-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 28px;
+      margin-bottom: 32px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    }
+    .role-badge {
+      font-size: 0.85rem;
+      padding: 6px 14px;
+      border-radius: 30px;
+      font-weight: 700;
+      display: inline-block;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .badge-super-admin { background-color: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+    .badge-assistant-admin { background-color: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+    .badge-branch-admin { background-color: #e0f2fe; color: #075985; border: 1px solid #7dd3fc; }
+    .badge-branch-executive { background-color: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
+    .badge-external-broker { background-color: #f3e8ff; color: #6b21a8; border: 1px solid #d8b4fe; }
+    .badge-public { background-color: #e2e8f0; color: #334155; border: 1px solid #cbd5e1; }
+    
+    .step-box {
+      background-color: #f8fafc;
+      border-left: 4px solid var(--primary-color);
+      border-radius: 0 12px 12px 0;
+      padding: 18px 22px;
+      margin-bottom: 18px;
+      border-top: 1px solid #e2e8f0;
+      border-right: 1px solid #e2e8f0;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .table-custom {
+      color: var(--text-dark);
+      border-color: var(--border-color);
+    }
+    .table-custom th {
+      background-color: #0f172a;
+      color: #ffffff;
+      font-weight: 700;
+      border-bottom: 2px solid var(--border-color);
+      padding: 12px 16px;
+    }
+    .table-custom td {
+      background-color: #ffffff;
+      color: #1e293b;
+      font-weight: 500;
+      padding: 12px 16px;
+    }
+    code {
+      background-color: #e0f2fe;
+      color: #0369a1;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 0.9em;
+    }
+    ol li, ul li {
+      margin-bottom: 6px;
+      color: #1e293b;
+      font-weight: 500;
+    }
+    p {
+      color: #334155;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Hero Header -->
+  <header class="hero-header text-center">
+    <div class="container">
+      <div class="d-inline-flex align-items-center gap-2 mb-3">
+        <i class="bi bi-building-fill text-warning fs-1"></i>
+        <h1 class="fw-800 display-5 text-white m-0">Real Ested Enterprise System</h1>
+      </div>
+      <p class="lead text-white opacity-90 mx-auto fw-500" style="max-width: 800px;">
+        User Accounts, Role Permissions, System Operations & Step-by-Step Operating Workflows Guide
+      </p>
+      <span class="badge bg-white text-primary fw-700 px-3 py-2 fs-6 shadow-sm">System Version 1.0.0 | High-Contrast Reference Guide</span>
+    </div>
+  </header>
+
+  <div class="container">
+
+    <!-- Executive Summary & Architecture Overview -->
+    <div class="guide-card">
+      <h3 class="fw-700 text-primary mb-3"><i class="bi bi-shield-lock-fill me-2"></i>System Access Architecture Overview</h3>
+      <p class="fs-6">
+        The <strong>Real Ested</strong> application enforces strict <strong>Role-Based Access Control (RBAC)</strong> and <strong>Multi-Branch Data Isolation</strong> across regional hubs (e.g., Pune, Mumbai, Bangalore).
+        Every account type has defined system privileges, data isolation scopes, and operational responsibilities.
+      </p>
+      <div class="row g-3 mt-2">
+        <div class="col-md-4">
+          <div class="p-3 rounded border border-info bg-light">
+            <h6 class="text-primary fw-700 mb-1"><i class="bi bi-globe me-1"></i> Global Scope</h6>
+            <p class="small text-dark mb-0">Super Admin & Assistant Admin access all branches nationwide with unrestricted read/write permissions.</p>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="p-3 rounded border border-success bg-light">
+            <h6 class="text-success fw-700 mb-1"><i class="bi bi-diagram-3 me-1"></i> Branch Isolated Scope</h6>
+            <p class="small text-dark mb-0">Branch Admins & Sales Executives operate strictly within their assigned regional branch office records.</p>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="p-3 rounded border border-warning bg-light">
+            <h6 class="text-warning fw-700 mb-1"><i class="bi bi-person-badge me-1"></i> Assigned Partner Scope</h6>
+            <p class="small text-dark mb-0">External Brokers only access approved properties in explicitly assigned branch offices.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Master Roles Matrix Table -->
+    <div class="guide-card">
+      <h3 class="fw-700 text-dark mb-4"><i class="bi bi-table me-2"></i>User Accounts & Roles Summary Matrix</h3>
+      <div class="table-responsive">
+        <table class="table table-bordered table-custom align-middle">
+          <thead>
+            <tr>
+              <th>Role Name</th>
+              <th>Role Code</th>
+              <th>Data Scope</th>
+              <th>Property Permissions</th>
+              <th>Lead & Broker Permissions</th>
+              <th>Default Purpose</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="role-badge badge-super-admin">Super Admin</span></td>
+              <td><code>super_admin</code></td>
+              <td>Global (All Branches)</td>
+              <td>Full (Create, Edit, Delete, Approve, Reject)</td>
+              <td>Full Access to all Leads & Broker Assignments</td>
+              <td>System owner; manages branches, approves listings, oversees entire business.</td>
+            </tr>
+            <tr>
+              <td><span class="role-badge badge-assistant-admin">Assistant Admin</span></td>
+              <td><code>assistant_admin</code></td>
+              <td>Global (All Branches)</td>
+              <td>Full (Create, Edit, Delete properties across any branch)</td>
+              <td>View & assign leads globally; manage staff</td>
+              <td>Headquarters operations manager assisting Super Admin.</td>
+            </tr>
+            <tr>
+              <td><span class="role-badge badge-branch-admin">Branch Admin</span></td>
+              <td><code>branch_admin</code></td>
+              <td>Branch Isolated</td>
+              <td>Branch Only (Create Drafts, Edit, Delete, Submit for Review)</td>
+              <td>Manage branch sales staff, assigned brokers & branch leads</td>
+              <td>Regional office head overseeing branch listings, staff & incoming buyer leads.</td>
+            </tr>
+            <tr>
+              <td><span class="role-badge badge-branch-executive">Sales Executive</span></td>
+              <td><code>branch_executive</code></td>
+              <td>Branch Isolated</td>
+              <td>Read-Only (Approved Branch Properties)</td>
+              <td>Refer client leads & update lead pipeline status</td>
+              <td>Frontline branch sales agent presenting properties and closing buyer inquiries.</td>
+            </tr>
+            <tr>
+              <td><span class="role-badge badge-external-broker">External Broker</span></td>
+              <td><code>external_broker</code></td>
+              <td>Assigned Branches</td>
+              <td>Read-Only (Approved Assigned Properties)</td>
+              <td>Refer buyer leads, log WhatsApp/Email property shares</td>
+              <td>Channel partner sharing property links with clients for referral commissions.</td>
+            </tr>
+            <tr>
+              <td><span class="role-badge badge-public">Public Client</span></td>
+              <td><code>public_visitor</code></td>
+              <td>Public Catalog</td>
+              <td>Read-Only (Approved Listings)</td>
+              <td>Submit public inquiry callback forms</td>
+              <td>General public property seekers exploring real estate holdings online.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Detailed Account Manual per Role -->
+    <h2 class="fw-800 text-dark mb-4 mt-5"><i class="bi bi-journal-text me-2"></i>Detailed Role-by-Role Operating Manual</h2>
+
+    <!-- Account 1: Super Admin -->
+    <div class="guide-card">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <h4 class="fw-700 text-dark m-0">1. Super Admin Account (<code>super_admin</code>)</h4>
+        <span class="role-badge badge-super-admin">Global System Owner & Final Authority</span>
+      </div>
+
+      <h6 class="text-primary fw-700">Account Purpose & Scope:</h6>
+      <p class="fs-6">
+        The Super Admin possesses complete system-wide read and write authority. This account is used for high-level administration, audit approvals, branch setup, staff onboarding, property listing overrides, and global lead tracking.
+      </p>
+
+      <h6 class="text-accent fw-700 mt-4 mb-3" style="color: #d97706;">What Needs To Be Done In This Account (Workflows):</h6>
+      
+      <div class="step-box">
+        <h6 class="text-dark fw-700 mb-2"><i class="bi bi-building-add text-primary me-1"></i> A. How to Add, Edit, or Delete Any Property Listing</h6>
+        <ol class="mb-0">
+          <li><strong>Add Property:</strong> Click <code>Add Property</code> from the sidebar or search catalog. Select the <strong>TARGET BRANCH ASSIGNMENT</strong> dropdown to assign the property to any regional branch office (e.g., Pune Main Branch).</li>
+          <li><strong>Edit Property:</strong> Open any property details page or search card and click <code>Edit Property Listing</code>. You can modify all parameters, configurations, pricing, and uploaded brochure/image files.</li>
+          <li><strong>Delete Property:</strong> On any property card or detail action bar, click the red <code>Delete</code> button. Confirm the prompt to soft-delete the listing from the catalog.</li>
+        </ol>
+      </div>
+
+      <div class="step-box">
+        <h6 class="text-dark fw-700 mb-2"><i class="bi bi-check-circle-fill text-success me-1"></i> B. How to Audit & Approve Property Listing Drafts</h6>
+        <ol class="mb-0">
+          <li>Navigate to <code>Approvals Queue</code> from the sidebar navigation menu.</li>
+          <li>Review pending listing drafts submitted by Branch Administrators.</li>
+          <li>Click <code>Approve</code> to publish the property to the live public site, or click <code>Reject</code> to send it back to the branch for revisions.</li>
+        </ol>
+      </div>
+
+      <div class="step-box">
+        <h6 class="text-dark fw-700 mb-2"><i class="bi bi-diagram-3-fill text-info me-1"></i> C. How to Create and Manage Regional Branch Offices</h6>
+        <ol class="mb-0">
+          <li>Navigate to <code>Branches</code> from the sidebar.</li>
+          <li>Click <code>Create New Branch</code> to register a new location (e.g. Mumbai Suburbs Branch, Code: MUM).</li>
+          <li>Edit branch information, street address, or contact details anytime.</li>
+        </ol>
+      </div>
+
+      <div class="step-box">
+        <h6 class="text-dark fw-700 mb-2"><i class="bi bi-people-fill text-purple me-1"></i> D. How to Onboard Staff & Assign External Brokers</h6>
+        <ol class="mb-0">
+          <li><strong>Staff Directory:</strong> Go to <code>Staff Directory</code> &rarr; Click <code>Add New User</code>. Assign username, email, password, role, and branch office.</li>
+          <li><strong>Brokers Control:</strong> Go to <code>Brokers Control</code> &rarr; Register new channel partners and assign them to specific regional branch office catalogs.</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- Account 2: Assistant Admin -->
+    <div class="guide-card">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <h4 class="fw-700 text-dark m-0">2. Assistant Admin Account (<code>assistant_admin</code>)</h4>
+        <span class="role-badge badge-assistant-admin">Headquarters Operations Manager</span>
+      </div>
+
+      <h6 class="text-primary fw-700">Account Purpose & Scope:</h6>
+      <p class="fs-6">
+        Assists the Super Admin in day-to-day central operations. Has global read/write access to create, edit, and delete properties across all branches, manage staff records, and monitor lead activity.
+      </p>
+
+      <h6 class="fw-700 mt-4 mb-3" style="color: #d97706;">What Needs To Be Done In This Account (Workflows):</h6>
+      <div class="step-box">
+        <h6 class="text-dark fw-700 mb-2"><i class="bi bi-gear-wide-connected text-primary me-1"></i> Operational Tasks:</h6>
+        <ul class="mb-0">
+          <li>Create and update property specs across any regional branch.</li>
+          <li>Delete duplicate or obsolete property listings.</li>
+          <li>Monitor lead referral progress across all sales teams.</li>
+          <li>Register sales staff and channel brokers.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Account 3: Branch Admin -->
+    <div class="guide-card">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <h4 class="fw-700 text-dark m-0">3. Branch Admin Account (<code>branch_admin</code>)</h4>
+        <span class="role-badge badge-branch-admin">Regional Branch Office Head</span>
+      </div>
+
+      <h6 class="text-primary fw-700">Account Purpose & Scope:</h6>
+      <p class="fs-6">
+        Restricted to their specific regional branch office scope. Responsible for creating property drafts, maintaining branch inventories, managing local sales executives, and handling local buyer leads.
+      </p>
+
+      <h6 class="fw-700 mt-4 mb-3" style="color: #d97706;">What Needs To Be Done In This Account (Workflows):</h6>
+      <div class="step-box">
+        <h6 class="text-dark fw-700 mb-2"><i class="bi bi-pencil-square text-primary me-1"></i> A. Creating & Submitting Property Drafts</h6>
+        <ol class="mb-0">
+          <li>Click <code>Add Property</code> &rarr; Fill out property specifications, BHK layout pricing, technical specs, amenities, photos, blueprints, and brochures.</li>
+          <li>Click <code>Save Draft</code> to keep as working draft, or <code>Save & Submit for Review</code> to send it to the Super Admin queue.</li>
+        </ol>
+      </div>
+
+      <div class="step-box">
+        <h6 class="text-dark fw-700 mb-2"><i class="bi bi-funnel-fill text-info me-1"></i> B. Managing Branch Staff & Local Lead Referral Routing</h6>
+        <ol class="mb-0">
+          <li>Go to <code>Staff Directory</code> to add or update local Sales Executives for your branch.</li>
+          <li>Go to <code>Lead Referral Tracker</code> to view incoming buyer inquiries and assign them to your branch Sales Executives.</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- Account 4: Branch Executive -->
+    <div class="guide-card">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <h4 class="fw-700 text-dark m-0">4. Branch Executive / Sales Agent (<code>branch_executive</code>)</h4>
+        <span class="role-badge badge-branch-executive">Frontline Branch Sales Representative</span>
+      </div>
+
+      <h6 class="text-primary fw-700">Account Purpose & Scope:</h6>
+      <p class="fs-6">
+        Frontline sales role operating strictly within their branch office scope. Uses the system to present approved properties to prospective buyers, download marketing collateral, refer leads, and update lead pipeline statuses.
+      </p>
+
+      <h6 class="fw-700 mt-4 mb-3" style="color: #d97706;">What Needs To Be Done In This Account (Workflows):</h6>
+      <div class="step-box">
+        <h6 class="text-dark fw-700 mb-2"><i class="bi bi-graph-up-arrow text-success me-1"></i> Daily Operations & Lead Management</h6>
+        <ol class="mb-0">
+          <li><strong>Search Properties:</strong> Explore approved listings in your branch catalog to present pricing, carpet area, and EMI calculators to buyers.</li>
+          <li><strong>Refer Client Lead:</strong> Click <code>Refer Client Lead</code> on any property detail page to register a prospective buyer into the pipeline.</li>
+          <li><strong>Update Lead Pipeline:</strong> Navigate to <code>Lead Referral Tracker</code> to update inquiry statuses (New &rarr; Contacted &rarr; Site Visit Scheduled &rarr; Deal Closed).</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- Account 5: External Broker -->
+    <div class="guide-card">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <h4 class="fw-700 text-dark m-0">5. External Broker / Channel Partner (<code>external_broker</code>)</h4>
+        <span class="role-badge badge-external-broker">External Channel Partner</span>
+      </div>
+
+      <h6 class="text-primary fw-700">Account Purpose & Scope:</h6>
+      <p class="fs-6">
+        External real estate agents assigned to one or more branch office catalogs. Can view approved properties, share custom marketing links with buyer clients, and refer leads for commission tracking.
+      </p>
+
+      <h6 class="fw-700 mt-4 mb-3" style="color: #d97706;">What Needs To Be Done In This Account (Workflows):</h6>
+      <div class="step-box">
+        <h6 class="text-dark fw-700 mb-2"><i class="bi bi-share-fill text-purple me-1"></i> Sharing & Referral Tracking</h6>
+        <ol class="mb-0">
+          <li><strong>WhatsApp / Email Share:</strong> Open any property detail page &rarr; Click <code>WhatsApp Share</code> or <code>Email Share</code> &rarr; Enter client contact info to generate a personalized link (automatically logged in broker activity logs).</li>
+          <li><strong>Refer Lead:</strong> Submit buyer referrals to earn channel partner commissions upon deal closing.</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- Google Maps Embed Instructions -->
+    <div class="guide-card">
+      <h3 class="fw-700 text-primary mb-3"><i class="bi bi-geo-alt-fill text-danger me-2"></i>Google Maps Embed Integration Guide</h3>
+      <p class="fs-6">
+        When adding or editing a property listing, you can paste the location map embed code into the <strong>GOOGLE MAPS EMBED IFRAME URL OR EMBED CODE</strong> field.
+      </p>
+      
+      <div class="p-3 bg-light rounded border border-primary border-opacity-30 mb-3">
+        <h6 class="text-dark fw-700 mb-2">How to copy Google Maps embed code:</h6>
+        <ol class="mb-0">
+          <li>Go to <a href="https://maps.google.com" target="_blank" class="text-primary fw-600">Google Maps</a> and search for your project location.</li>
+          <li>Click <strong>Share</strong> &rarr; Select the <strong>Embed a map</strong> tab.</li>
+          <li>Click <strong>COPY HTML</strong>.</li>
+          <li>Paste the copied HTML directly into the property form field:
+            <br>
+            <code>&lt;iframe src="https://www.google.com/maps/embed?pb=!1m18!..." width="600" height="450" ...&gt;&lt;/iframe&gt;</code>
+          </li>
+        </ol>
+      </div>
+      <p class="fw-600 text-success mb-0">
+        <i class="bi bi-check-circle-fill me-1"></i> The system automatically sanitizes the input, extracts the clean <code>https://...</code> embed URL, and renders a smooth 16:9 interactive location map on the property listing details page.
+      </p>
+    </div>
+
+    <!-- Pre-seeded Test Credentials Table -->
+    <div class="guide-card">
+      <h3 class="fw-700 text-dark mb-3"><i class="bi bi-key-fill text-warning me-2"></i>Pre-Seeded System User Credentials</h3>
+      <p class="fs-6 mb-3">Default database login accounts available for testing across all role levels:</p>
+      
+      <div class="table-responsive">
+        <table class="table table-bordered table-custom align-middle">
+          <thead>
+            <tr>
+              <th>Username</th>
+              <th>Default Password</th>
+              <th>Role Assigned</th>
+              <th>Branch Office Scope</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>admin</code></td>
+              <td><code>admin123</code></td>
+              <td><span class="role-badge badge-super-admin">Super Admin</span></td>
+              <td>Global Scope (All Branches)</td>
+            </tr>
+            <tr>
+              <td><code>asst_admin</code></td>
+              <td><code>admin123</code></td>
+              <td><span class="role-badge badge-assistant-admin">Assistant Admin</span></td>
+              <td>Global Scope (All Branches)</td>
+            </tr>
+            <tr>
+              <td><code>branch_admin_pune</code></td>
+              <td><code>admin123</code></td>
+              <td><span class="role-badge badge-branch-admin">Branch Admin</span></td>
+              <td>Pune Main Branch (ID: 1)</td>
+            </tr>
+            <tr>
+              <td><code>exec_pune</code></td>
+              <td><code>admin123</code></td>
+              <td><span class="role-badge badge-branch-executive">Sales Executive</span></td>
+              <td>Pune Main Branch (ID: 1)</td>
+            </tr>
+            <tr>
+              <td><code>broker_rahul</code></td>
+              <td><code>admin123</code></td>
+              <td><span class="role-badge badge-external-broker">External Broker</span></td>
+              <td>Pune & Mumbai Assigned Branches</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 360 Virtual Tour Documentation Guide Link -->
+    <div class="guide-card bg-white border-warning">
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div>
+          <h4 class="fw-700 text-dark mb-1"><i class="bi bi-vr text-warning me-2"></i>360° Virtual Tour Creation & Publishing Guide</h4>
+          <p class="text-muted small mb-0">Complete documentation on capturing 360° spherical photos, hosting on Kuula/Matterport, and publishing interactive tours.</p>
+        </div>
+        <a href="360_VIRTUAL_TOUR_CREATION_GUIDE.html" target="_blank" class="btn btn-warning text-dark fw-700 rounded-pill px-4 py-2">
+          <i class="bi bi-book-fill me-1"></i> Open 360° Tour Guide
+        </a>
+      </div>
+    </div>
+
+    <footer class="text-center text-muted small mt-5 pt-3 border-top border-secondary border-opacity-30">
+      <p class="fw-600 text-dark">Real Ested Enterprise Real Estate & Multi-Branch Management System &copy; 2026</p>
+    </footer>
+
+  </div>
+
+</body>
+</html>

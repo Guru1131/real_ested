@@ -2,10 +2,11 @@ import React, { useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 
-const PropertyCard = ({ property, onStatusSubmit, userRole }) => {
+const PropertyCard = ({ property, onStatusSubmit, onDelete, userRole }) => {
   const { user } = useContext(AuthContext);
   const effectiveRole = userRole || user?.role;
   const canEdit = ['super_admin', 'assistant_admin', 'branch_admin'].includes(effectiveRole);
+  const canDelete = ['super_admin', 'assistant_admin', 'branch_admin'].includes(effectiveRole);
   // Format price to Indian Rupees (Lakhs / Crores) or standard format
   const formatPrice = (value) => {
     return new Intl.NumberFormat('en-IN', {
@@ -102,6 +103,17 @@ const PropertyCard = ({ property, onStatusSubmit, userRole }) => {
               title="Submit for Approval"
             >
               <i className="bi bi-send-fill"></i> Submit
+            </button>
+          )}
+
+          {canDelete && onDelete && (
+            <button 
+              onClick={() => onDelete(property.id, property.project_name)} 
+              className="btn btn-outline-danger py-2 px-2.5" 
+              style={{ fontSize: '0.85rem' }}
+              title="Delete Property Listing"
+            >
+              <i className="bi bi-trash"></i>
             </button>
           )}
         </div>

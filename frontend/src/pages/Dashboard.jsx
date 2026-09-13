@@ -158,10 +158,21 @@ const Dashboard = () => {
   // ----------------------------------------------------
   if (user.role === 'external_broker') {
     // Dynamically partition properties into categories
-    const residential = properties.filter(p => ['flat', 'villa', 'bungalow'].includes(p.property_type));
-    const commercial = properties.filter(p => ['shop', 'office', 'commercial'].includes(p.property_type));
-    const puneProperties = properties.filter(p => p.city.toLowerCase() === 'pune');
-    const mumbaiProperties = properties.filter(p => p.city.toLowerCase() === 'mumbai');
+    const residential = properties.filter(p => ['flat', 'villa', 'bungalow', 'apartment', 'residential'].includes((p.property_type || '').toLowerCase()));
+    const commercial = properties.filter(p => ['shop', 'office', 'commercial', 'retail', 'complex'].includes((p.property_type || '').toLowerCase()));
+    
+    // Group properties by City dynamically
+    const cityGroups = {};
+    properties.forEach(p => {
+      let rawCity = (p.city || p.branch_name || 'Other Regions').trim();
+      if (!rawCity) rawCity = 'Other Regions';
+      const formattedCity = rawCity.charAt(0).toUpperCase() + rawCity.slice(1);
+      if (!cityGroups[formattedCity]) {
+        cityGroups[formattedCity] = [];
+      }
+      cityGroups[formattedCity].push(p);
+    });
+    const cityList = Object.keys(cityGroups);
 
     return (
       <div className="container-fluid py-2">
@@ -221,47 +232,37 @@ const Dashboard = () => {
           )}
         </div>
 
-        {/* Category 3: Geographic collections */}
-        <div className="row mb-5">
-          {/* Pune Collection */}
-          <div className="col-md-6 mb-4 mb-md-0">
-            <div className="glass-panel p-4 h-100">
-              <h5 className="fw-700 text-white mb-3 border-bottom pb-2" style={{ borderColor: 'var(--border-color)' }}>
-                <i className="bi bi-geo-alt-fill text-danger me-2"></i>Projects in Pune
-              </h5>
-              {puneProperties.length === 0 ? (
-                <div className="text-muted small">No Pune properties assigned to your account.</div>
-              ) : (
-                <div className="row row-cols-1 row-cols-sm-2 g-3">
-                  {puneProperties.map(p => (
-                    <div key={p.id} className="col">
-                      <PropertyCard property={p} userRole={user.role} />
-                    </div>
-                  ))}
-                </div>
-              )}
+        {/* Category 3: Geographic collections (Dynamic Cities) */}
+        <div className="mb-5">
+          <h4 className="fw-700 text-white mb-3 fs-5 fs-md-4 border-bottom pb-2" style={{ borderColor: 'var(--border-color)' }}>
+            <i className="bi bi-geo-alt-fill text-danger me-2"></i>Projects by Location & City Market
+          </h4>
+          
+          {cityList.length === 0 ? (
+            <div className="text-muted small p-4 bg-dark bg-opacity-20 rounded border border-secondary border-opacity-10">
+              No city-partitioned properties assigned to your account yet.
             </div>
-          </div>
-
-          {/* Mumbai Collection */}
-          <div className="col-md-6">
-            <div className="glass-panel p-4 h-100">
-              <h5 className="fw-700 text-white mb-3 border-bottom pb-2" style={{ borderColor: 'var(--border-color)' }}>
-                <i className="bi bi-geo-alt-fill text-warning me-2"></i>Projects in Mumbai
-              </h5>
-              {mumbaiProperties.length === 0 ? (
-                <div className="text-muted small">No Mumbai properties assigned to your account.</div>
-              ) : (
-                <div className="row row-cols-1 row-cols-sm-2 g-3">
-                  {mumbaiProperties.map(p => (
-                    <div key={p.id} className="col">
-                      <PropertyCard property={p} userRole={user.role} />
+          ) : (
+            <div className="row g-4">
+              {cityList.map(cityName => (
+                <div key={cityName} className="col-12 col-md-6">
+                  <div className="glass-panel p-4 h-100">
+                    <h5 className="fw-700 text-white mb-3 border-bottom pb-2 d-flex justify-content-between align-items-center" style={{ borderColor: 'var(--border-color)' }}>
+                      <span><i className="bi bi-pin-map-fill text-warning me-2"></i>Projects in {cityName}</span>
+                      <span className="badge bg-secondary text-light rounded-pill small">{cityGroups[cityName].length} Listings</span>
+                    </h5>
+                    <div className="row row-cols-1 row-cols-sm-2 g-3">
+                      {cityGroups[cityName].map(p => (
+                        <div key={p.id} className="col">
+                          <PropertyCard property={p} userRole={user.role} />
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  </div>
                 </div>
-              )}
+              ))}
             </div>
-          </div>
+          )}
         </div>
 
       </div>

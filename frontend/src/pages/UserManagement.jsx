@@ -139,6 +139,22 @@ const UserManagement = () => {
     }
   };
 
+  const handleQuickResetPassword = async (userId, username) => {
+    const newPass = window.prompt(`Reset password for staff member "${username}":\nEnter new password:`);
+    if (!newPass) return;
+    if (newPass.length < 4) {
+      alert('Password must be at least 4 characters long.');
+      return;
+    }
+    try {
+      await api.put(`/api/users/${userId}`, { password: newPass });
+      alert(`Password for staff member "${username}" updated successfully.`);
+      fetchData();
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to update password.');
+    }
+  };
+
   const roleLabels = {
     super_admin: 'Super Admin',
     assistant_admin: 'Assistant Admin',
@@ -345,6 +361,9 @@ const UserManagement = () => {
                             </div>
                           ) : (
                             <div className="d-flex justify-content-end gap-1 flex-wrap">
+                              <button className="btn btn-sm btn-outline-warning px-2.5" onClick={() => handleQuickResetPassword(u.id, u.username)} title="Reset User Password">
+                                <i className="bi bi-key"></i>
+                              </button>
                               <button className="btn btn-sm btn-outline-primary px-2.5" onClick={() => handleEditInit(u)} title="Edit user">
                                 <i className="bi bi-pencil"></i>
                               </button>

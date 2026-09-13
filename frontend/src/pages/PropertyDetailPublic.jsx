@@ -5,6 +5,7 @@ import { CustomizationContext } from '../context/CustomizationContext';
 import api from '../services/api';
 import CustomizationModal from '../components/CustomizationModal';
 import { formatImageUrl, handleImageError } from '../utils/imageHelper';
+import { extractMapUrl } from '../utils/mapHelper';
 
 const PropertyDetailPublic = () => {
   const { slug } = useParams();
@@ -394,17 +395,17 @@ const PropertyDetailPublic = () => {
               {activeTab === 'location' && (
                 <div>
                   <h5 className="fw-800 text-dark mb-3">Site Location Map</h5>
-                  {property.map_embed_url ? (
+                  {extractMapUrl(property.map_embed_url) ? (
                     <div className="ratio ratio-16x9 rounded overflow-hidden border border-light" style={{ borderRadius: '16px' }}>
                       <iframe 
-                        src={property.map_embed_url} 
+                        src={extractMapUrl(property.map_embed_url)} 
                         allowFullScreen="" 
                         loading="lazy" 
                         title="Location Map"
                       ></iframe>
                     </div>
                   ) : (
-                    <p className="text-muted small">Location map view not configured.</p>
+                    <p className="text-muted small">Location map view not configured or invalid.</p>
                   )}
                 </div>
               )}

@@ -47,6 +47,17 @@ const Sidebar = ({ isOpen, onClose }) => {
             <i className="bi bi-search"></i> Search Properties
           </NavLink>
 
+          {/* Admin roles: Add Property Listing */}
+          {['super_admin', 'assistant_admin', 'branch_admin'].includes(user.role) && (
+            <NavLink 
+              to="/properties/new" 
+              className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+              onClick={handleLinkClick}
+            >
+              <i className="bi bi-plus-circle"></i> Add Property
+            </NavLink>
+          )}
+
           {/* Super Admin only: Approvals */}
           {user.role === 'super_admin' && (
             <NavLink 

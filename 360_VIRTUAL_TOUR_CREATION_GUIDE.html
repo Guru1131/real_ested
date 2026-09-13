@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>360° Virtual Tour Creation & Publishing Guide - Real Estate Portal</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-body: #f8fafc;
+      --card-bg: #ffffff;
+      --border-color: #cbd5e1;
+      --primary-color: #0284c7;
+      --accent-warning: #d97706;
+      --text-dark: #0f172a;
+      --text-body: #1e293b;
+      --text-muted: #475569;
+    }
+    body {
+      background-color: var(--bg-body);
+      color: var(--text-body);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      line-height: 1.6;
+      padding-bottom: 60px;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      font-family: 'Outfit', sans-serif;
+      color: var(--text-dark);
+    }
+    .hero-header {
+      background: linear-gradient(135deg, #0f172a 0%, #0369a1 50%, #d97706 100%);
+      color: #ffffff;
+      padding: 48px 0;
+      margin-bottom: 36px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+    .guide-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 28px;
+      margin-bottom: 32px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    }
+    .step-box {
+      background-color: #f1f5f9;
+      border-left: 5px solid var(--primary-color);
+      border-radius: 0 12px 12px 0;
+      padding: 20px 24px;
+      margin-bottom: 20px;
+      border-top: 1px solid #cbd5e1;
+      border-right: 1px solid #cbd5e1;
+      border-bottom: 1px solid #cbd5e1;
+    }
+    .step-box-warning {
+      border-left-color: var(--accent-warning);
+      background-color: #fffbe6;
+    }
+    code {
+      background-color: #e0f2fe;
+      color: #0369a1;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 0.9em;
+    }
+    .platform-badge {
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 20px;
+      text-transform: uppercase;
+    }
+    .badge-kuula { background-color: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
+    .badge-matterport { background-color: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+    .badge-streetview { background-color: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
+  </style>
+</head>
+<body>
+
+  <!-- Hero Header -->
+  <div class="hero-header">
+    <div class="container">
+      <div className="d-flex align-items-center gap-3 mb-2">
+        <span className="badge bg-warning text-dark px-3 py-1.5 fw-700 rounded-pill fs-6">
+          <i className="bi bi-vr me-1"></i> Interactive Media Masterclass
+        </span>
+      </div>
+      <h1 class="display-5 fw-800 text-white mb-2">360° Virtual Tour Creation & Publishing Guide</h1>
+      <p class="lead mb-0 text-light opacity-90">
+        Step-by-step instructions on capturing 360° spherical property photos, hosting interactive walkthrough tours, and embedding them into the Real Estate Management System.
+      </p>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <!-- Quick Navigation Bar -->
+    <div class="guide-card mb-4 py-3 bg-white">
+      <div class="d-flex flex-wrap gap-2 justify-content-center align-items-center">
+        <span class="fw-700 text-dark me-2"><i class="bi bi-compass-fill text-primary"></i> Jump to Section:</span>
+        <a href="#phase1" class="btn btn-outline-primary btn-sm rounded-pill"><i class="bi bi-camera-fill me-1"></i> 1. Capture & Creation</a>
+        <a href="#phase2" class="btn btn-outline-warning text-dark btn-sm rounded-pill"><i class="bi bi-cloud-arrow-up-fill me-1"></i> 2. Hosting Platforms</a>
+        <a href="#phase3" class="btn btn-outline-success btn-sm rounded-pill"><i class="bi bi-signpost-fill me-1"></i> 3. Add to Property Form</a>
+        <a href="#examples" class="btn btn-outline-secondary btn-sm rounded-pill"><i class="bi bi-code-slash me-1"></i> 4. Live Embed Examples</a>
+      </div>
+    </div>
+
+    <!-- Overview Box -->
+    <div class="guide-card">
+      <h3 class="fw-700 mb-3"><i class="bi bi-info-circle-fill text-primary me-2"></i>Why Add 360° Virtual Tours?</h3>
+      <p>
+        Virtual 360° tours allow buyers and external channel partner brokers to virtually walk through every room of a property (Living Room, Kitchen, Bedrooms, Balcony) from anywhere in the world. Listings with 360° tours receive <strong>3x higher client engagement</strong> and significantly accelerate buyer decision-making before physical site visits.
+      </p>
+    </div>
+
+    <!-- PHASE 1 -->
+    <div id="phase1" class="guide-card">
+      <h3 class="fw-700 mb-3 border-bottom pb-3">
+        <span class="badge bg-primary rounded-circle me-2" style="width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center;">1</span>
+        Phase 1: How to Capture & Create 360° Content
+      </h3>
+      
+      <p class="text-muted mb-4">Choose one of the three standard capture methods based on your available equipment and property status:</p>
+
+      <div class="row g-4 mb-3">
+        
+        <!-- Method A -->
+        <div class="col-md-4">
+          <div class="card h-100 border-0 shadow-sm bg-light p-3">
+            <h5 class="fw-700 text-primary mb-2"><i class="bi bi-phone-vibrate me-1"></i> Method A: Smartphone Apps</h5>
+            <span class="badge bg-success mb-3 align-self-start">Free & Easy</span>
+            <p class="small text-muted mb-2">No special hardware needed! Use your existing iPhone or Android smartphone.</p>
+            <ol class="small ps-3 mb-0">
+              <li>Download <strong>Polycam</strong>, <strong>360 Panorama</strong>, or <strong>Google Street View App</strong>.</li>
+              <li>Stand in the middle of the room.</li>
+              <li>Rotate 360° following the on-screen target dots until the entire room is captured.</li>
+              <li>Save/Export as a <strong>360° Equirectangular Panoramic JPG</strong>.</li>
+            </ol>
+          </div>
+        </div>
+
+        <!-- Method B -->
+        <div class="col-md-4">
+          <div class="card h-100 border-0 shadow-sm bg-light p-3">
+            <h5 class="fw-700 text-warning text-dark mb-2"><i class="bi bi-camera me-1"></i> Method B: Dedicated 360 Camera</h5>
+            <span class="badge bg-primary mb-3 align-self-start">Professional Quality</span>
+            <p class="small text-muted mb-2">Ideal for sales teams and real estate photographers.</p>
+            <ol class="small ps-3 mb-0">
+              <li>Use a 360° camera such as <strong>Insta360 ONE X2 / X3</strong>, <strong>Ricoh Theta Z1</strong>, or <strong>GoPro MAX</strong>.</li>
+              <li>Mount camera on a slim tripod in room center.</li>
+              <li>Trigger shot remotely via smartphone Wi-Fi app.</li>
+              <li>Export instant 5.7K crystal-clear 360° images.</li>
+            </ol>
+          </div>
+        </div>
+
+        <!-- Method C -->
+        <div class="col-md-4">
+          <div class="card h-100 border-0 shadow-sm bg-light p-3">
+            <h5 class="fw-700 text-danger mb-2"><i class="bi bi-box-seam me-1"></i> Method C: 3D Renderings</h5>
+            <span class="badge bg-secondary mb-3 align-self-start">Under-Construction / Unbuilt</span>
+            <p class="small text-muted mb-2">Perfect for upcoming launches and unbuilt sample flats.</p>
+            <ol class="small ps-3 mb-0">
+              <li>Ask your 3D Architectural / VR Designer.</li>
+              <li>Request 3D VR renders exported as <strong>Spherical 360° Panorama PNGs</strong> (V-Ray 360 Camera render).</li>
+              <li>Renders can be uploaded directly to tour hosts just like photos!</li>
+            </ol>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- PHASE 2 -->
+    <div id="phase2" class="guide-card">
+      <h3 class="fw-700 mb-3 border-bottom pb-3">
+        <span class="badge bg-warning text-dark rounded-circle me-2" style="width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center;">2</span>
+        Phase 2: Uploading & Getting the Share / Embed Link
+      </h3>
+
+      <p class="text-muted mb-4">Once you have your 360° panoramic images, upload them to an interactive tour hosting platform:</p>
+
+      <!-- Kuula.co Guide -->
+      <div class="step-box step-box-warning mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h5 class="fw-700 mb-0 text-dark"><i class="bi bi-star-fill text-warning me-2"></i>Option 1: Kuula.co (Recommended - Free & Fast)</h5>
+          <span class="platform-badge badge-kuula">Kuula Tour Host</span>
+        </div>
+        <ol class="mb-2">
+          <li>Go to <a href="https://kuula.co" target="_blank" class="fw-700">Kuula.co</a> and create a free account.</li>
+          <li>Click <strong>+ Post / Upload</strong> and drag & drop your 360° room images.</li>
+          <li>Add hotspots connecting rooms (e.g. click doorway to navigate from *Living Room ➔ Kitchen*).</li>
+          <li>Click <strong>Share</strong> button at top right ➔ Click <strong>Get Embed Code / Link</strong>.</li>
+          <li>Copy the share URL e.g.: <code>https://kuula.co/share/collection/7yX9P?logo=1&info=1</code></li>
+        </ol>
+      </div>
+
+      <!-- Matterport & Others -->
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="p-3 bg-light rounded border">
+            <h6 class="fw-700 text-dark mb-1"><i class="bi bi-badge-3d-fill text-primary me-1"></i> Option 2: Matterport 3D</h6>
+            <span class="platform-badge badge-matterport mb-2 d-inline-block">3D Spatial Scan</span>
+            <p class="small text-muted mb-1">If using Matterport 3D camera scanner, copy the share link from your Matterport Cloud portal:</p>
+            <code>https://my.matterport.com/show/?m=sampleID</code>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="p-3 bg-light rounded border">
+            <h6 class="fw-700 text-dark mb-1"><i class="bi bi-youtube text-danger me-1"></i> Option 3: YouTube 360° Video</h6>
+            <span class="platform-badge badge-streetview mb-2 d-inline-block">360 Video Embed</span>
+            <p class="small text-muted mb-1">Upload a 360 video walkthrough to YouTube and copy the standard embed URL:</p>
+            <code>https://www.youtube.com/embed/sampleVideoID</code>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- PHASE 3 -->
+    <div id="phase3" class="guide-card">
+      <h3 class="fw-700 mb-3 border-bottom pb-3">
+        <span class="badge bg-success rounded-circle me-2" style="width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center;">3</span>
+        Phase 3: Adding the Link into Property Form
+      </h3>
+
+      <div class="step-box mb-3">
+        <h5 class="fw-700 text-primary mb-3"><i class="bi bi-pencil-square me-2"></i>Step-by-Step Publishing Instructions</h5>
+        <ol class="mb-0">
+          <li class="mb-2">Log in as <strong>Super Admin</strong> or <strong>Branch Admin</strong>.</li>
+          <li class="mb-2">Go to <strong>Property Catalog (`/properties`)</strong> in the sidebar menu.</li>
+          <li class="mb-2">Click <strong>+ Add Property</strong> (or click <strong>Edit</strong> on an existing property).</li>
+          <li class="mb-2">Scroll down to the <strong>🥽 360° VIRTUAL TOUR EMBED LINK</strong> section.</li>
+          <li class="mb-2">Paste your copied Kuula or Matterport URL into the input field:
+            <div class="my-2 p-2 bg-dark text-white rounded font-monospace small">
+              https://kuula.co/share/collection/7yX9P?logo=1&info=1
+            </div>
+          </li>
+          <li>Click <strong>Submit Property / Save Changes</strong>.</li>
+        </ol>
+      </div>
+
+      <div class="alert alert-success border-success mb-0">
+        <h6 class="fw-700 mb-1"><i class="bi bi-check-circle-fill me-1"></i> Live Front-End Rendering</h6>
+        When brokers or clients view the property detail page, a dedicated <strong>🥽 360° Tour</strong> tab will render the interactive 360° virtual walkthrough in full-screen mode automatically!
+      </div>
+    </div>
+
+    <!-- EXAMPLES -->
+    <div id="examples" class="guide-card">
+      <h3 class="fw-700 mb-3 border-bottom pb-3"><i class="bi bi-code-slash text-primary me-2"></i>Live 360° Interactive Embed Preview</h3>
+      
+      <p class="text-muted mb-3">Below is an example of how a 360° tour renders interactively inside the property detail view:</p>
+
+      <div class="ratio ratio-16x9 rounded overflow-hidden border border-secondary shadow-sm">
+        <iframe 
+          src="https://kuula.co/share/collection/7yX9P?logo=1&info=1&fs=1&vr=1&sd=1&thumbs=1" 
+          allowfullscreen="true" 
+          loading="lazy" 
+          title="Sample 360 Virtual Tour Demo"
+        ></iframe>
+      </div>
+    </div>
+
+    <!-- Footer Links -->
+    <div class="text-center mt-5 text-muted small">
+      <p>Real Estate Property Sales & Rental Management System • Interactive Media Documentation</p>
+      <a href="USER_ACCOUNTS_AND_ROLE_GUIDE.html" class="btn btn-outline-secondary btn-sm me-2">
+        <i class="bi bi-people-fill me-1"></i> User Accounts & Roles Guide
+      </a>
+    </div>
+
+  </div>
+
+</body>
+</html>

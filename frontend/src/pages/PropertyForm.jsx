@@ -2,12 +2,16 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate, Link, useParams } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import api from '../services/api';
+import { extractMapUrl } from '../utils/mapHelper';
 
 const PropertyForm = () => {
   const { id } = useParams();
   const isEditMode = Boolean(id);
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
+
+  const [branches, setBranches] = useState([]);
+  const [selectedBranchId, setSelectedBranchId] = useState('');
 
   const [formData, setFormData] = useState({
     project_name: '',
@@ -23,8 +27,17 @@ const PropertyForm = () => {
     highlights: '',
     map_embed_url: '',
     developer_legacy: '',
-    availability_status: 'available'
+    availability_status: 'available',
+    branch_id: ''
   });
+
+  useEffect(() => {
+    if (['super_admin', 'assistant_admin'].includes(user?.role)) {
+      api.get('/api/branches')
+        .then(res => setBranches(res.data || []))
+        .catch(err => console.error('Error fetching branches list', err));
+    }
+  }, [user]);
 
   // Dynamic lists states
   const [configurations, setConfigurations] = useState([]);
@@ -71,6 +84,10 @@ const PropertyForm = () => {
           throw new Error('Property record not found.');
         }
 
+        if (property.branch_id) {
+          setSelectedBranchId(String(property.branch_id));
+        }
+
         setFormData({
           project_name: property.project_name || '',
           property_type: property.property_type || 'flat',
@@ -84,8 +101,10 @@ const PropertyForm = () => {
           project_status: property.project_status || 'under_construction',
           highlights: property.highlights || '',
           map_embed_url: property.map_embed_url || '',
+          virtual_tour_url: property.virtual_tour_url || '',
           developer_legacy: property.developer_legacy || '',
-          availability_status: property.availability_status || 'available'
+          availability_status: property.availability_status || 'available',
+          branch_id: property.branch_id || ''
         });
 
         setConfigurations(fetchedConfigs || []);
@@ -122,9 +141,14 @@ const PropertyForm = () => {
   ];
 
   const handleTextChange = (e) => {
+    let value = e.target.value;
+    if (e.target.name === 'map_embed_url') {
+      const extracted = extractMapUrl(value);
+      if (extracted) value = extracted;
+    }
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [e.target.name]: value
     });
   };
 
@@ -199,6 +223,10 @@ const PropertyForm = () => {
         }
       });
 
+      if (selectedBranchId) {
+        payload.append('branch_id', selectedBranchId);
+      }
+
       if (submitForApproval) {
         payload.append('action', 'submit');
       }
@@ -265,6 +293,33 @@ const PropertyForm = () => {
     }
   };
 
+  const handleBranchSelect = (e) => {
+    const bId = e.target.value;
+    setSelectedBranchId(bId);
+    const matchedBranch = branches.find(b => String(b.id) === String(bId));
+    if (matchedBranch && matchedBranch.city) {
+      setFormData(prev => ({
+        ...prev,
+        branch_id: bId,
+        city: prev.city || matchedBranch.city
+      }));
+    }
+  };
+
+  const handleCategorySelect = (category) => {
+    if (category === 'commercial') {
+      if (!['shop', 'office', 'commercial'].includes(formData.property_type)) {
+        setFormData(prev => ({ ...prev, property_type: 'commercial' }));
+      }
+    } else {
+      if (!['flat', 'villa', 'bungalow'].includes(formData.property_type)) {
+        setFormData(prev => ({ ...prev, property_type: 'flat' }));
+      }
+    }
+  };
+
+  const isCommercialType = ['shop', 'office', 'commercial'].includes(formData.property_type);
+
   if (initialLoading) {
     return (
       <div className="d-flex justify-content-center align-items-center vh-50 text-light">
@@ -272,7 +327,6 @@ const PropertyForm = () => {
       </div>
     );
   }
-
 
   return (
     <div className="container-fluid py-2 animate-fade-in">
@@ -315,6 +369,54 @@ const PropertyForm = () => {
 
         <form onSubmit={handleSubmit}>
           
+          {['super_admin', 'assistant_admin'].includes(user?.role) && (
+            <div className="mb-4 p-3 bg-dark bg-opacity-30 rounded border border-primary border-opacity-40">
+              <label className="form-label text-primary small fw-700 mb-1">
+                <i className="bi bi-diagram-3-fill me-1"></i> TARGET BRANCH ASSIGNMENT (SUPER ADMIN SCOPE) *
+              </label>
+              <select 
+                name="branch_id" 
+                value={selectedBranchId}
+                onChange={handleBranchSelect}
+                className="form-select form-premium-control"
+                required
+              >
+                <option value="">Select Branch Office...</option>
+                {branches.map(b => (
+                  <option key={b.id} value={b.id}>{b.name} ({b.code}) - {b.city}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Property Category / Sector Selection */}
+          <div className="mb-4 p-3 bg-dark bg-opacity-20 rounded border border-secondary border-opacity-20">
+            <label className="form-label text-white small fw-700 mb-2">
+              <i className="bi bi-tags-fill text-warning me-1"></i> PROPERTY SECTOR & CATEGORY *
+            </label>
+            <div className="d-flex flex-wrap gap-2 mb-3">
+              <button
+                type="button"
+                onClick={() => handleCategorySelect('residential')}
+                className={`btn btn-sm ${!isCommercialType ? 'btn-primary' : 'btn-outline-secondary'}`}
+              >
+                <i className="bi bi-house-door-fill me-1"></i> Residential Projects (Flats, Villas, Bungalows)
+              </button>
+              <button
+                type="button"
+                onClick={() => handleCategorySelect('commercial')}
+                className={`btn btn-sm ${isCommercialType ? 'btn-info text-dark fw-600' : 'btn-outline-secondary'}`}
+              >
+                <i className="bi bi-briefcase-fill me-1"></i> Commercial Complex & Retail Shops
+              </button>
+            </div>
+            <small className="text-muted d-block">
+              {isCommercialType 
+                ? 'ℹ️ Selecting Commercial places this property in the "Commercial complex & Retail Shops" dashboard showcase.'
+                : 'ℹ️ Selecting Residential places this property in the "Premium Residential Launches" dashboard showcase.'}
+            </small>
+          </div>
+
           {/* Main Info Row */}
           <div className="row g-3 mb-3">
             <div className="col-md-5">
@@ -338,12 +440,16 @@ const PropertyForm = () => {
                 className="form-select form-premium-control"
                 required
               >
-                <option value="flat">Flat/Apartment</option>
-                <option value="villa">Villa</option>
-                <option value="bungalow">Bungalow</option>
-                <option value="shop">Commercial Shop</option>
-                <option value="office">Office Space</option>
-                <option value="commercial">Commercial Complex</option>
+                <optgroup label="Residential">
+                  <option value="flat">Flat / Apartment</option>
+                  <option value="villa">Villa</option>
+                  <option value="bungalow">Bungalow</option>
+                </optgroup>
+                <optgroup label="Commercial & Retail">
+                  <option value="commercial">Commercial Complex</option>
+                  <option value="shop">Commercial Shop / Retail</option>
+                  <option value="office">Office Space</option>
+                </optgroup>
               </select>
             </div>
             <div className="col-md-4">
@@ -361,17 +467,49 @@ const PropertyForm = () => {
           </div>
 
           <div className="row g-3 mb-3">
-            <div className="col-md-3">
-              <label className="form-label text-muted small fw-600">CITY *</label>
-              <input 
-                type="text" 
-                name="city"
-                value={formData.city}
-                onChange={handleTextChange}
-                className="form-control form-premium-control" 
-                placeholder="e.g. Pune"
-                required
-              />
+            <div className="col-md-4">
+              <label className="form-label text-muted small fw-600">CITY (PROJECT MARKET) *</label>
+              <div className="input-group">
+                <input 
+                  type="text" 
+                  name="city"
+                  value={formData.city}
+                  onChange={handleTextChange}
+                  className="form-control form-premium-control" 
+                  placeholder="e.g. Pune or Mumbai"
+                  required
+                />
+              </div>
+              <div className="mt-1.5 d-flex gap-1 flex-wrap align-items-center">
+                <span className="small text-muted me-1">Quick Select:</span>
+                <button 
+                  type="button" 
+                  className={`btn btn-xs ${formData.city.toLowerCase() === 'pune' ? 'btn-danger' : 'btn-outline-secondary'}`} 
+                  onClick={() => setFormData(prev => ({ ...prev, city: 'Pune' }))}
+                  style={{ fontSize: '0.75rem', padding: '2px 8px' }}
+                >
+                  📍 Pune
+                </button>
+                <button 
+                  type="button" 
+                  className={`btn btn-xs ${formData.city.toLowerCase() === 'mumbai' ? 'btn-warning text-dark' : 'btn-outline-secondary'}`} 
+                  onClick={() => setFormData(prev => ({ ...prev, city: 'Mumbai' }))}
+                  style={{ fontSize: '0.75rem', padding: '2px 8px' }}
+                >
+                  📍 Mumbai
+                </button>
+                <button 
+                  type="button" 
+                  className={`btn btn-xs ${formData.city.toLowerCase() === 'navi mumbai' ? 'btn-info text-dark' : 'btn-outline-secondary'}`} 
+                  onClick={() => setFormData(prev => ({ ...prev, city: 'Navi Mumbai' }))}
+                  style={{ fontSize: '0.75rem', padding: '2px 8px' }}
+                >
+                  📍 Navi Mumbai
+                </button>
+              </div>
+              <small className="text-info mt-1 d-block" style={{ fontSize: '0.78rem' }}>
+                <i className="bi bi-info-circle me-1"></i> Entering "Pune" or "Mumbai" categorizes this project under the <strong>Projects in Pune</strong> or <strong>Projects in Mumbai</strong> dashboard collections.
+              </small>
             </div>
             <div className="col-md-3">
               <label className="form-label text-muted small fw-600">LOCALITY / SUBURB *</label>
@@ -381,11 +519,11 @@ const PropertyForm = () => {
                 value={formData.location}
                 onChange={handleTextChange}
                 className="form-control form-premium-control" 
-                placeholder="e.g. Kondhwa"
+                placeholder="e.g. Kondhwa or Andheri West"
                 required
               />
             </div>
-            <div className="col-md-3">
+            <div className="col-md-2">
               <label className="form-label text-muted small fw-600">SURVEY NUMBER</label>
               <input 
                 type="text" 
@@ -488,15 +626,46 @@ const PropertyForm = () => {
           </div>
 
           <div className="mb-3">
-            <label className="form-label text-muted small fw-600">GOOGLE MAPS EMBED IFRAME URL</label>
+            <label className="form-label text-muted small fw-600">GOOGLE MAPS EMBED IFRAME URL OR EMBED CODE</label>
             <input 
               type="text" 
               name="map_embed_url"
               value={formData.map_embed_url}
               onChange={handleTextChange}
               className="form-control form-premium-control" 
-              placeholder="https://www.google.com/maps/embed?pb=..."
+              placeholder='Paste Google Maps URL or iframe code e.g. <iframe src="https://www.google.com/maps/embed?pb=..."></iframe>'
             />
+            <small className="text-muted d-block mt-1" style={{ fontSize: '0.78rem' }}>
+              <i className="bi bi-info-circle me-1"></i> You can paste either the direct <code>https://...</code> link or the full Google Maps <code>&lt;iframe src="..."&gt;&lt;/iframe&gt;</code> HTML code.
+            </small>
+          </div>
+
+          <div className="mb-3 p-3 bg-dark bg-opacity-20 rounded border border-warning border-opacity-30">
+            <div className="d-flex justify-content-between align-items-center mb-1 flex-wrap gap-1">
+              <label className="form-label text-warning small fw-700 mb-0">
+                <i className="bi bi-vr me-1"></i> 360° VIRTUAL TOUR EMBED LINK (MATTERPORT / KUULA / GOOGLE 360)
+              </label>
+              <a 
+                href="/360_VIRTUAL_TOUR_CREATION_GUIDE.html" 
+                target="_blank" 
+                rel="noreferrer"
+                className="btn btn-xs btn-outline-warning"
+                style={{ fontSize: '0.75rem', padding: '2px 8px' }}
+              >
+                <i className="bi bi-book-fill me-1"></i> 360 Tour Creation Guide
+              </a>
+            </div>
+            <input 
+              type="text" 
+              name="virtual_tour_url"
+              value={formData.virtual_tour_url || ''}
+              onChange={handleTextChange}
+              className="form-control form-premium-control" 
+              placeholder="e.g. https://kuula.co/share/collection/7yX... or https://my.matterport.com/show/?m=..."
+            />
+            <small className="text-muted d-block mt-1.5" style={{ fontSize: '0.78rem' }}>
+              <i className="bi bi-info-circle me-1"></i> Paste your 360° virtual tour share or iframe link from Kuula.co, Matterport, Momento360, or Google Street View. It will be interactively embedded under the <strong>🥽 360° Tour</strong> tab.
+            </small>
           </div>
 
           {/* Dynamic BHK Layouts Configs */}

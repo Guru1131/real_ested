@@ -4,6 +4,7 @@ import { AuthContext } from '../context/AuthContext';
 import api from '../services/api';
 import LeadFormModal from '../components/LeadFormModal';
 import { formatImageUrl, handleImageError } from '../utils/imageHelper';
+import { extractMapUrl } from '../utils/mapHelper';
 
 const PropertyDetail = () => {
   const { slug } = useParams(); // Using property URL slug
@@ -114,6 +115,23 @@ const PropertyDetail = () => {
     ready_possession: 'Ready to Move'
   };
 
+  const handleDeleteProperty = async () => {
+    if (!window.confirm(`Are you sure you want to delete "${property.project_name}"? This action cannot be undone.`)) {
+      return;
+    }
+    try {
+      try {
+        await api.delete(`/api/properties/${property.id}`);
+      } catch (err1) {
+        await api.post(`/api/properties/delete.php?id=${property.id}`);
+      }
+      alert('Property listing has been deleted successfully.');
+      navigate('/properties');
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to delete property listing.');
+    }
+  };
+
   return (
     <div className="container-fluid py-2">
       
@@ -123,9 +141,14 @@ const PropertyDetail = () => {
           <i className="bi bi-arrow-left me-1"></i> Back to search
         </Link>
         {['super_admin', 'assistant_admin', 'branch_admin'].includes(user?.role) && (
-          <Link to={`/properties/edit/${property.id}`} className="btn btn-sm btn-premium px-4 py-1.5">
-            <i className="bi bi-pencil-square me-1"></i> Edit Property Listing
-          </Link>
+          <div className="d-flex gap-2">
+            <Link to={`/properties/edit/${property.id}`} className="btn btn-sm btn-premium px-3 py-1.5">
+              <i className="bi bi-pencil-square me-1"></i> Edit Property Listing
+            </Link>
+            <button onClick={handleDeleteProperty} className="btn btn-sm btn-outline-danger px-3 py-1.5">
+              <i className="bi bi-trash me-1"></i> Delete
+            </button>
+          </div>
         )}
       </div>
 
@@ -277,6 +300,15 @@ const PropertyDetail = () => {
                   Location Map
                 </button>
               </li>
+              <li className="nav-item">
+                <button 
+                  className={`nav-link bg-transparent text-light border-0 py-2 px-3 fw-600 ${activeTab === 'virtual_tour' ? 'active text-warning border-bottom border-warning' : 'text-muted'}`}
+                  style={{ borderBottomWidth: '2px !important' }}
+                  onClick={() => setActiveTab('virtual_tour')}
+                >
+                  <i className="bi bi-vr text-warning me-1"></i> 360° Tour
+                </button>
+              </li>
             </ul>
 
             {/* Tab content */}
@@ -378,17 +410,38 @@ const PropertyDetail = () => {
             {activeTab === 'location' && (
               <div>
                 <h5 className="text-white fw-600 mb-3">Site Location Map</h5>
-                {property.map_embed_url ? (
+                {extractMapUrl(property.map_embed_url) ? (
                   <div className="ratio ratio-16x9 rounded overflow-hidden border border-secondary border-opacity-20">
                     <iframe 
-                      src={property.map_embed_url} 
+                      src={extractMapUrl(property.map_embed_url)} 
                       allowFullScreen="" 
                       loading="lazy" 
                       title="Location Map"
                     ></iframe>
                   </div>
                 ) : (
-                  <p className="text-muted small">Google location map embed URL not configured by branch administrators.</p>
+                  <p className="text-muted small">Google location map embed URL not configured or invalid.</p>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'virtual_tour' && (
+              <div>
+                <h5 className="text-white fw-600 mb-3"><i className="bi bi-vr text-warning me-2"></i>Interactive 360° Virtual Tour</h5>
+                {property.virtual_tour_url ? (
+                  <div className="ratio ratio-16x9 rounded overflow-hidden border border-secondary border-opacity-20">
+                    <iframe 
+                      src={property.virtual_tour_url} 
+                      allowFullScreen="" 
+                      loading="lazy" 
+                      title="360 Virtual Tour"
+                    ></iframe>
+                  </div>
+                ) : (
+                  <div className="p-4 bg-dark bg-opacity-20 rounded text-center text-muted small border border-secondary border-opacity-20">
+                    <i className="bi bi-vr fs-1 d-block mb-2 text-warning"></i>
+                    Interactive 360° Virtual Tour link is available upon request or can be embedded by editing this listing parameters.
+                  </div>
                 )}
               </div>
             )}

@@ -91,6 +91,23 @@ const PropertySearch = () => {
     }
   };
 
+  const handleDeleteProperty = async (propertyId, projectName) => {
+    if (!window.confirm(`Are you sure you want to delete "${projectName}"? This action cannot be undone.`)) {
+      return;
+    }
+    try {
+      try {
+        await api.delete(`/api/properties/${propertyId}`);
+      } catch (err1) {
+        await api.post(`/api/properties/delete.php?id=${propertyId}`);
+      }
+      alert('Property listing has been deleted successfully.');
+      fetchProperties();
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to delete property listing.');
+    }
+  };
+
   return (
     <div className="container-fluid py-2">
       {/* Header Banner */}
@@ -100,10 +117,10 @@ const PropertySearch = () => {
           <p className="text-muted mb-0">Search and filter internal real estate holdings. Staff can only access matching branch records.</p>
         </div>
         
-        {/* New draft shortcut button (Branch Admin only) */}
-        {user.role === 'branch_admin' && (
+        {/* New draft shortcut button (Admin roles) */}
+        {['super_admin', 'assistant_admin', 'branch_admin'].includes(user.role) && (
           <Link to="/properties/new" className="btn btn-premium py-2.5">
-            <i className="bi bi-plus-circle me-1"></i> Add Property Draft
+            <i className="bi bi-plus-circle me-1"></i> Add Property Listing
           </Link>
         )}
       </div>
@@ -288,6 +305,7 @@ const PropertySearch = () => {
               <PropertyCard 
                 property={p} 
                 onStatusSubmit={handleStatusSubmit} 
+                onDelete={handleDeleteProperty}
                 userRole={user.role} 
               />
             </div>

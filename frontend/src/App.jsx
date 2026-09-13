@@ -7,6 +7,7 @@ import { CustomizationProvider } from './context/CustomizationContext';
 // Layout Elements
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
+import MarqueeTicker from './components/MarqueeTicker';
 
 // Pages
 import Login from './pages/Login';
@@ -48,21 +49,26 @@ const AppLayout = ({ children }) => {
   }
 
   return (
-    <div className="d-flex" style={{ minHeight: '100vh', backgroundColor: 'var(--bg-primary)' }}>
-      {/* Mobile Drawer Overlay Backdrop */}
-      {sidebarOpen && (
-        <div className="sidebar-backdrop d-lg-none" onClick={closeSidebar}></div>
-      )}
+    <div className="d-flex flex-column" style={{ minHeight: '100vh', backgroundColor: 'var(--bg-primary)' }}>
+      {/* Top Targeted Marquee Announcement Ticker */}
+      <MarqueeTicker />
 
-      {/* Sidebar Drawer */}
-      <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} />
+      <div className="d-flex flex-grow-1" style={{ position: 'relative' }}>
+        {/* Mobile Drawer Overlay Backdrop */}
+        {sidebarOpen && (
+          <div className="sidebar-backdrop d-lg-none" onClick={closeSidebar}></div>
+        )}
 
-      {/* Main Panel Content Wrapper */}
-      <div className="main-content-wrapper">
-        <Navbar onToggleSidebar={toggleSidebar} />
-        <main className="main-content">
-          {children}
-        </main>
+        {/* Sidebar Drawer */}
+        <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} />
+
+        {/* Main Panel Content Wrapper */}
+        <div className="main-content-wrapper">
+          <Navbar onToggleSidebar={toggleSidebar} />
+          <main className="main-content">
+            {children}
+          </main>
+        </div>
       </div>
     </div>
   );

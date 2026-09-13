@@ -47,7 +47,7 @@ body {
 .text-light:not(.btn *):not(.bg-primary *):not(.bg-dark *):not(.bg-success *):not(.bg-danger *):not(.bg-warning *):not(.position-relative *):not(.badge-status *):not(.badge *):not(.btn) {
   color: var(--text-secondary) !important;
 }
-strong.text-white {
+strong.text-white, strong.text-light {
   color: var(--text-primary) !important;
 }
 
@@ -55,6 +55,36 @@ strong.text-white {
   background-color: var(--bg-tertiary) !important;
   color: var(--text-primary) !important;
   border-color: var(--border-color) !important;
+}
+
+/* Explicit Checkbox & Radio Label Visibility Fixes */
+.form-check-label {
+  color: #0f172a !important;
+  font-weight: 600 !important;
+  cursor: pointer;
+}
+
+.form-check-input {
+  border: 1px solid #94a3b8 !important;
+}
+
+.form-check-input:checked {
+  background-color: var(--accent-primary) !important;
+  border-color: var(--accent-primary) !important;
+}
+
+/* Badge Contrast Overrides */
+.badge.bg-secondary {
+  background-color: #e2e8f0 !important;
+  color: #0f172a !important;
+  border: 1px solid #cbd5e1 !important;
+  font-weight: 600 !important;
+}
+
+.badge.bg-primary {
+  background-color: #0284c7 !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
 }
 
 .glass-panel-hover:hover {

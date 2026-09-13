@@ -369,8 +369,8 @@ router.get('/detail/:slug', authenticate, async (req, res) => {
   }
 });
 
-// POST /api/properties (Add Property - Branch Admin only)
-router.post('/', authenticate, requireRole(['branch_admin']), propertyUploads, async (req, res) => {
+// POST /api/properties (Add Property - Admin roles)
+router.post('/', authenticate, requireRole(['super_admin', 'assistant_admin', 'branch_admin']), propertyUploads, async (req, res) => {
   const {
     project_name, property_type, location, city, address, survey_number,
     builder, rera_id, completion_date, project_status, highlights,
@@ -386,7 +386,11 @@ router.post('/', authenticate, requireRole(['branch_admin']), propertyUploads, a
     return res.status(400).json({ error: 'Required fields: project_name, location, city, address, builder.' });
   }
 
-  const branchId = req.user.branch_id;
+  let branchId = req.user.branch_id;
+  if (['super_admin', 'assistant_admin'].includes(req.user.role) && req.body.branch_id) {
+    branchId = parseInt(req.body.branch_id);
+  }
+  if (!branchId) branchId = 1;
   const dbConnection = await pool.getConnection();
 
   try {
@@ -758,6 +762,28 @@ router.post('/:id/share', authenticate, async (req, res) => {
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: 'Server error logging share action.' });
+  }
+// DELETE /api/properties/:id (Soft-delete property)
+router.delete('/:id', authenticate, requireRole(['super_admin', 'assistant_admin', 'branch_admin']), async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [rows] = await pool.query('SELECT branch_id FROM properties WHERE id = ? AND is_deleted = 0 LIMIT 1', [id]);
+    const property = rows[0];
+
+    if (!property) {
+      return res.status(404).json({ error: 'Property not found.' });
+    }
+
+    if (req.user.role === 'branch_admin') {
+      if (!enforceBranchIsolation(req, res, property.branch_id)) return;
+    }
+
+    await pool.query('UPDATE properties SET is_deleted = 1 WHERE id = ?', [id]);
+    return res.json({ message: 'Property listing deleted successfully.' });
+
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Server error deleting property.' });
   }
 });
 

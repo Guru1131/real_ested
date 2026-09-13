@@ -154,6 +154,22 @@ const BrokerManagement = () => {
     }
   };
 
+  const handleQuickResetPassword = async (brokerId, username) => {
+    const newPass = window.prompt(`Reset password for broker account "${username}":\nEnter new password:`);
+    if (!newPass) return;
+    if (newPass.length < 4) {
+      alert('Password must be at least 4 characters long.');
+      return;
+    }
+    try {
+      await api.put(`/api/users/${brokerId}`, { password: newPass });
+      alert(`Password for broker "${username}" updated successfully.`);
+      fetchData();
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to update password.');
+    }
+  };
+
   const fetchLogs = async (brokerId, brokerName) => {
     try {
       setLogsLoading(true);
@@ -278,14 +294,14 @@ const BrokerManagement = () => {
               <div className="mb-4">
                 <label className="form-label text-muted small fw-600">ASSIGN BRANCH ALLOWANCES *</label>
                 {currentUser.role === 'branch_admin' ? (
-                  <div className="form-check text-light">
+                  <div className="form-check p-2">
                     <input className="form-check-input text-primary" type="checkbox" checked disabled id="branchAdminCheck" />
-                    <label className="form-check-label small" htmlFor="branchAdminCheck">
+                    <label className="form-check-label small fw-600" htmlFor="branchAdminCheck" style={{ color: '#0f172a' }}>
                       Pune Kondhwa Branch (Your Branch)
                     </label>
                   </div>
                 ) : (
-                  <div className="bg-dark bg-opacity-20 p-3 rounded" style={{ maxHeight: '150px', overflowY: 'auto', border: '1px solid var(--border-color)' }}>
+                  <div className="p-3 rounded border" style={{ maxHeight: '150px', overflowY: 'auto', backgroundColor: '#ffffff', borderColor: '#cbd5e1' }}>
                     {branches.map(b => (
                       <div key={b.id} className="form-check mb-2">
                         <input 
@@ -295,7 +311,7 @@ const BrokerManagement = () => {
                           checked={formData.branchIds.includes(b.id)}
                           onChange={() => handleBranchCheckboxChange(b.id)}
                         />
-                        <label className="form-check-label small text-light" htmlFor={`branch_${b.id}`}>
+                        <label className="form-check-label small fw-600" htmlFor={`branch_${b.id}`} style={{ color: '#0f172a' }}>
                           {b.name}
                         </label>
                       </div>
@@ -408,6 +424,9 @@ const BrokerManagement = () => {
                             </div>
                           ) : (
                             <div className="d-flex justify-content-end gap-1 flex-wrap">
+                              <button className="btn btn-sm btn-outline-warning px-2.5" onClick={() => handleQuickResetPassword(b.id, b.username)} title="Reset Broker Password">
+                                <i className="bi bi-key"></i>
+                              </button>
                               <button className="btn btn-sm btn-outline-info px-2.5" onClick={() => fetchLogs(b.id, b.username)} title="View audit activity logs">
                                 <i className="bi bi-activity"></i>
                               </button>
