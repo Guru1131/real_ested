@@ -102,26 +102,26 @@ router.get('/brokers', authenticate, requireRole(['super_admin', 'assistant_admi
     let brokers;
     if (['super_admin', 'assistant_admin'].includes(req.user.role)) {
       const [rows] = await pool.query(
-        `SELECT id, username, email, phone, status, created_at 
+        `SELECT id, username, email, phone, status, sub_account_limit, created_at 
          FROM users 
-         WHERE role = "external_broker" AND is_deleted = 0 
+         WHERE role = "external_broker" AND parent_broker_id IS NULL AND is_deleted = 0 
          ORDER BY id DESC`
       );
       brokers = rows;
     } else {
       // Branch Admin Pune
       const [rows] = await pool.query(
-        `SELECT u.id, u.username, u.email, u.phone, u.status, u.created_at 
+        `SELECT u.id, u.username, u.email, u.phone, u.status, u.sub_account_limit, u.created_at 
          FROM users u 
          JOIN broker_branch_assignments ba ON u.id = ba.broker_id
-         WHERE u.role = "external_broker" AND u.is_deleted = 0 AND ba.branch_id = ?
+         WHERE u.role = "external_broker" AND u.parent_broker_id IS NULL AND u.is_deleted = 0 AND ba.branch_id = ?
          ORDER BY u.id DESC`,
         [req.user.branch_id]
       );
       brokers = rows;
     }
 
-    // Attach assignments to each broker
+    // Attach assignments & sub-account counts to each broker
     for (let broker of brokers) {
       const [assigns] = await pool.query(
         `SELECT b.id, b.name, b.code 
@@ -131,6 +131,9 @@ router.get('/brokers', authenticate, requireRole(['super_admin', 'assistant_admi
         [broker.id]
       );
       broker.branches = assigns;
+
+      const [counts] = await pool.query('SELECT COUNT(*) as cnt FROM users WHERE parent_broker_id = ? AND is_deleted = 0', [broker.id]);
+      broker.staff_count = counts[0] ? counts[0].cnt : 0;
     }
 
     return res.json(brokers);
@@ -354,6 +357,185 @@ router.get('/broker/:id/logs', authenticate, requireRole(['super_admin', 'assist
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: 'Server error retrieving logs.' });
+  // GET /api/users/broker-staff (List sub-account staff for a broker)
+router.get('/broker-staff', authenticate, async (req, res) => {
+  try {
+    let brokerId = 0;
+    if (req.user.role === 'external_broker') {
+      brokerId = req.user.parent_broker_id || req.user.id;
+    } else if (['super_admin', 'assistant_admin', 'branch_admin'].includes(req.user.role)) {
+      brokerId = req.query.broker_id ? parseInt(req.query.broker_id) : 0;
+    }
+
+    if (!brokerId) {
+      return res.status(400).json({ error: 'Valid broker ID is required.' });
+    }
+
+    const [brokers] = await pool.query('SELECT id, username, sub_account_limit FROM users WHERE id = ? AND role = "external_broker" AND is_deleted = 0 LIMIT 1', [brokerId]);
+    const broker = brokers[0];
+
+    if (!broker) {
+      return res.status(404).json({ error: 'Parent broker profile not found.' });
+    }
+
+    const [staff] = await pool.query('SELECT id, username, email, phone, status, created_at FROM users WHERE parent_broker_id = ? AND is_deleted = 0 ORDER BY id DESC', [brokerId]);
+    const limit = broker.sub_account_limit || 5;
+
+    return res.json({
+      broker_id: brokerId,
+      broker_username: broker.username,
+      sub_account_limit: limit,
+      sub_account_count: staff.length,
+      remaining_slots: Math.max(0, limit - staff.length),
+      staff
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Server error listing broker staff.' });
+  }
+});
+
+// POST /api/users/broker-staff (Create staff sub-account under broker limit)
+router.post('/broker-staff', authenticate, async (req, res) => {
+  const { username, email, password, phone } = req.body;
+  
+  let brokerId = 0;
+  if (req.user.role === 'external_broker') {
+    brokerId = req.user.parent_broker_id || req.user.id;
+  } else if (['super_admin', 'assistant_admin'].includes(req.user.role)) {
+    brokerId = req.body.broker_id ? parseInt(req.body.broker_id) : 0;
+  }
+
+  if (!brokerId) {
+    return res.status(400).json({ error: 'Parent broker ID required.' });
+  }
+
+  if (!username || !email || !password) {
+    return res.status(400).json({ error: 'Staff username, email, and password are required.' });
+  }
+
+  try {
+    const [brokers] = await pool.query('SELECT id, sub_account_limit FROM users WHERE id = ? AND role = "external_broker" AND is_deleted = 0 LIMIT 1', [brokerId]);
+    const broker = brokers[0];
+
+    if (!broker) {
+      return res.status(404).json({ error: 'Parent broker not found.' });
+    }
+
+    const limit = broker.sub_account_limit || 5;
+    const [cntRows] = await pool.query('SELECT COUNT(*) as cnt FROM users WHERE parent_broker_id = ? AND is_deleted = 0', [brokerId]);
+    const currentCount = cntRows[0] ? cntRows[0].cnt : 0;
+
+    if (currentCount >= limit) {
+      return res.status(400).json({ 
+        error: `Sub-account creation limit reached. You have used ${currentCount} of ${limit} allowed staff IDs. Please contact Super Admin to upgrade your account limit.` 
+      });
+    }
+
+    const [dups] = await pool.query('SELECT id FROM users WHERE (username = ? OR email = ?) AND is_deleted = 0 LIMIT 1', [username, email]);
+    if (dups.length > 0) {
+      return res.status(400).json({ error: 'Username or email already exists.' });
+    }
+
+    const passwordHash = bcrypt.hashSync(password, 10);
+    const [result] = await pool.query(
+      `INSERT INTO users (username, email, password_hash, role, branch_id, parent_broker_id, phone, status) 
+       VALUES (?, ?, ?, 'external_broker', NULL, ?, ?, 'active')`,
+      [username, email, passwordHash, brokerId, phone || '']
+    );
+
+    const newStaffId = result.insertId;
+
+    // Inherit branch assignments from parent broker
+    const [parentBranches] = await pool.query('SELECT branch_id FROM broker_branch_assignments WHERE broker_id = ?', [brokerId]);
+    for (let pBranch of parentBranches) {
+      await pool.query('INSERT INTO broker_branch_assignments (broker_id, branch_id) VALUES (?, ?)', [newStaffId, pBranch.branch_id]);
+    }
+
+    return res.json({
+      message: 'Staff sub-account ID created successfully.',
+      staff_id: newStaffId,
+      sub_account_count: currentCount + 1,
+      sub_account_limit: limit
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Server error creating staff sub-account.' });
+  }
+});
+
+// PUT /api/users/broker-staff/:id (Update password/status of sub-account)
+router.put('/broker-staff/:id', authenticate, async (req, res) => {
+  const { id } = req.params;
+  const { phone, status, password } = req.body;
+
+  try {
+    const [staffs] = await pool.query('SELECT id, parent_broker_id FROM users WHERE id = ? AND is_deleted = 0 LIMIT 1', [id]);
+    const staff = staffs[0];
+
+    if (!staff) {
+      return res.status(404).json({ error: 'Staff account not found.' });
+    }
+
+    if (req.user.role === 'external_broker') {
+      const myBrokerId = req.user.parent_broker_id || req.user.id;
+      if (staff.parent_broker_id != myBrokerId) {
+        return res.status(403).json({ error: 'You can only manage your own staff sub-accounts.' });
+      }
+    }
+
+    const updates = [];
+    const params = [];
+
+    if (phone !== undefined) {
+      updates.push('phone = ?');
+      params.push(phone);
+    }
+    if (status !== undefined) {
+      updates.push('status = ?');
+      params.push(status);
+    }
+    if (password) {
+      updates.push('password_hash = ?');
+      params.push(bcrypt.hashSync(password, 10));
+    }
+
+    if (updates.length > 0) {
+      params.push(id);
+      await pool.query(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`, params);
+    }
+
+    return res.json({ message: 'Staff sub-account updated successfully.' });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Server error updating staff account.' });
+  }
+});
+
+// DELETE /api/users/broker-staff/:id (Delete sub-account)
+router.delete('/broker-staff/:id', authenticate, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [staffs] = await pool.query('SELECT id, parent_broker_id FROM users WHERE id = ? AND is_deleted = 0 LIMIT 1', [id]);
+    const staff = staffs[0];
+
+    if (!staff) {
+      return res.status(404).json({ error: 'Staff account not found.' });
+    }
+
+    if (req.user.role === 'external_broker') {
+      const myBrokerId = req.user.parent_broker_id || req.user.id;
+      if (staff.parent_broker_id != myBrokerId) {
+        return res.status(403).json({ error: 'You can only delete your own staff sub-accounts.' });
+      }
+    }
+
+    await pool.query('UPDATE users SET is_deleted = 1, status = "inactive" WHERE id = ?', [id]);
+    return res.json({ message: 'Staff sub-account deleted successfully.' });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Server error deleting staff sub-account.' });
   }
 });
 

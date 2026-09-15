@@ -12,6 +12,7 @@ const PropertySearch = () => {
   const [error, setError] = useState('');
   
   const [filters, setFilters] = useState({
+    propertyCode: '',
     projectName: '',
     type: '',
     location: '',
@@ -21,6 +22,7 @@ const PropertySearch = () => {
     bhk: '',
     availability: '',
     status: '',
+    possessionTimeline: '',
     approvalStatus: user.role === 'branch_admin' ? '' : 'approved'
   });
 
@@ -63,6 +65,7 @@ const PropertySearch = () => {
 
   const handleResetFilters = () => {
     const defaultFilters = {
+      propertyCode: '',
       projectName: '',
       type: '',
       location: '',
@@ -72,6 +75,7 @@ const PropertySearch = () => {
       bhk: '',
       availability: '',
       status: '',
+      possessionTimeline: '',
       approvalStatus: user.role === 'branch_admin' ? '' : 'approved'
     };
     setFilters(defaultFilters);
@@ -131,6 +135,18 @@ const PropertySearch = () => {
         
         <form onSubmit={handleApplyFilters} className="row g-3">
           <div className="col-12 col-sm-6 col-md-3">
+            <label className="form-label text-muted small fw-600">SMART PROPERTY CODE / ID</label>
+            <input 
+              type="text" 
+              name="propertyCode"
+              value={filters.propertyCode}
+              onChange={handleFilterChange}
+              className="form-control form-premium-control" 
+              placeholder="e.g. PROP-PUN-9106"
+            />
+          </div>
+
+          <div className="col-12 col-sm-6 col-md-3">
             <label className="form-label text-muted small fw-600">PROJECT / KEYWORD</label>
             <input 
               type="text" 
@@ -157,6 +173,23 @@ const PropertySearch = () => {
               <option value="shop">Commercial Shop</option>
               <option value="office">Office Space</option>
               <option value="commercial">Commercial Complex</option>
+            </select>
+          </div>
+
+          <div className="col-12 col-sm-6 col-md-2">
+            <label className="form-label text-muted small fw-600">POSSESSION TIMELINE</label>
+            <select 
+              name="possessionTimeline" 
+              value={filters.possessionTimeline}
+              onChange={handleFilterChange}
+              className="form-select form-premium-control"
+            >
+              <option value="">All Timelines</option>
+              <option value="ready">Ready to Move</option>
+              <option value="1_month">In 1 Month</option>
+              <option value="3_months">In 3 Months</option>
+              <option value="6_months">In 6 Months</option>
+              <option value="12_months">In 12 Months</option>
             </select>
           </div>
 

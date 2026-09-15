@@ -7,8 +7,15 @@ require_once __DIR__ . '/../../middleware/AuthMiddleware.php';
 
 header('Content-Type: application/json');
 
-// Authenticate user
-$currentUser = AuthMiddleware::authenticate();
+// Check if public request
+$isPublic = (isset($_GET['public']) && $_GET['public'] == '1') || (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/api/properties/public/') !== false);
+
+if (!$isPublic) {
+    // Authenticate user
+    $currentUser = AuthMiddleware::authenticate();
+} else {
+    $currentUser = ['role' => 'public', 'id' => 0, 'branch_id' => 0];
+}
 
 $database = new Database();
 $db = $database->getConnection();
@@ -69,6 +76,14 @@ try {
 
     // 2. Enforce Isolation Policies
     switch ($currentUser['role']) {
+        case 'public':
+            if ($property['approval_status'] !== 'approved') {
+                http_response_code(403);
+                echo json_encode(["error" => "Access denied. Property is not approved."]);
+                exit();
+            }
+            break;
+
         case 'super_admin':
         case 'assistant_admin':
             break;
@@ -120,7 +135,7 @@ try {
     }
 
     // 3. Fetch configurations
-    $config_query = "SELECT bhk_type, carpet_area, price, estimated_emi FROM property_configurations WHERE property_id = :property_id";
+    $config_query = "SELECT bhk_type, carpet_area, price, estimated_emi, floor_plan_url FROM property_configurations WHERE property_id = :property_id";
     $config_stmt = $db->prepare($config_query);
     $config_stmt->bindParam(':property_id', $id);
     $config_stmt->execute();
@@ -167,12 +182,24 @@ try {
         }
     }
 
+    // 7. Fetch nearby projects in same city / location
+    $nearby_query = "SELECT p.id, p.property_slug, p.project_name, p.property_code, p.location, p.city, p.starting_price, p.bhk_details, p.main_image_url
+                     FROM properties p
+                     WHERE p.city = :city AND p.id != :current_id AND p.is_deleted = 0 AND p.approval_status = 'approved'
+                     LIMIT 4";
+    $nearby_stmt = $db->prepare($nearby_query);
+    $nearby_stmt->bindParam(':city', $property['city']);
+    $nearby_stmt->bindParam(':current_id', $property['id']);
+    $nearby_stmt->execute();
+    $nearby_projects = $nearby_stmt->fetchAll(PDO::FETCH_ASSOC);
+
     echo json_encode([
         "property" => $property,
         "configurations" => $configurations,
         "amenities" => $amenitiesList,
         "specifications" => $specifications,
-        "media" => $media_grouped
+        "media" => $media_grouped,
+        "nearby_projects" => $nearby_projects
     ]);
 
 } catch(PDOException $e) {

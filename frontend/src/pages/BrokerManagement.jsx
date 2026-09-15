@@ -348,6 +348,7 @@ const BrokerManagement = () => {
                       <th>BROKER DETS</th>
                       <th>PHONE</th>
                       <th>ALLOWED BRANCHES</th>
+                      <th>STAFF SUB-ACCOUNTS</th>
                       <th>STATUS</th>
                       <th className="text-end">ACTIONS</th>
                     </tr>
@@ -396,6 +397,34 @@ const BrokerManagement = () => {
                               {(!b.branches || b.branches.length === 0) && <span className="text-muted small">None</span>}
                             </div>
                           )}
+                        </td>
+                        <td>
+                          <div className="d-flex align-items-center gap-2">
+                            <span className="badge bg-warning text-dark fw-700 rounded-pill px-2.5 py-1" style={{ fontSize: '0.78rem' }}>
+                              {b.staff_count || 0} / {b.sub_account_limit || 5} IDs
+                            </span>
+                            {['super_admin', 'assistant_admin'].includes(currentUser.role) && (
+                              <button 
+                                onClick={async () => {
+                                  const val = window.prompt(`Set Staff Sub-Account Limit for "${b.username}":`, b.sub_account_limit || 5);
+                                  if (!val) return;
+                                  const num = parseInt(val);
+                                  if (isNaN(num) || num < 1) { alert('Limit must be a positive number.'); return; }
+                                  try {
+                                    await api.put(`/api/users/${b.id}`, { sub_account_limit: num });
+                                    alert(`Limit updated to ${num} IDs for ${b.username}.`);
+                                    fetchData();
+                                  } catch (err) {
+                                    alert(err.response?.data?.error || 'Failed to update sub-account limit.');
+                                  }
+                                }} 
+                                className="btn btn-xs btn-outline-warning py-0.5 px-1.5"
+                                title="Override sub-account limit"
+                              >
+                                <i className="bi bi-pencil-square"></i>
+                              </button>
+                            )}
+                          </div>
                         </td>
                         <td>{editingId === b.id ? (
                           <select 

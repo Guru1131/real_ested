@@ -71,6 +71,22 @@ try {
         $targetApprovalStatus = 'pending_approval';
     }
 
+    // Validate RERA ID Uniqueness if provided
+    if (!empty($rera_id)) {
+        $checkRera = "SELECT id, project_name FROM properties WHERE rera_id = :rera AND id != :id AND is_deleted = 0 LIMIT 1";
+        $crStmt = $db->prepare($checkRera);
+        $crStmt->bindParam(':rera', $rera_id);
+        $crStmt->bindParam(':id', $id);
+        $crStmt->execute();
+        $existingRera = $crStmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($existingRera) {
+            http_response_code(409);
+            echo json_encode(["error" => "Duplicate RERA ID! RERA ID '{$rera_id}' is already registered for property '{$existingRera['project_name']}'."]);
+            exit();
+        }
+    }
+
     $db->beginTransaction();
 
     $updateQuery = "UPDATE properties SET 
@@ -110,13 +126,15 @@ try {
             $delStmt->bindParam(':id', $id);
             $delStmt->execute();
 
-            $cStmt = $db->prepare("INSERT INTO property_configurations (property_id, bhk_type, carpet_area, price, estimated_emi) VALUES (:pid, :bhk, :area, :price, :emi)");
+            $cStmt = $db->prepare("INSERT INTO property_configurations (property_id, bhk_type, carpet_area, price, estimated_emi, floor_plan_url) VALUES (:pid, :bhk, :area, :price, :emi, :floor_plan)");
             foreach ($configs as $cfg) {
                 $cStmt->bindParam(':pid', $id);
                 $cStmt->bindParam(':bhk', $cfg['bhk_type']);
                 $cStmt->bindParam(':area', $cfg['carpet_area']);
                 $cStmt->bindParam(':price', $cfg['price']);
                 $cStmt->bindParam(':emi', $cfg['estimated_emi']);
+                $fpUrl = isset($cfg['floor_plan_url']) ? $cfg['floor_plan_url'] : (isset($cfg['floor_plan']) ? $cfg['floor_plan'] : null);
+                $cStmt->bindParam(':floor_plan', $fpUrl);
                 $cStmt->execute();
             }
         }

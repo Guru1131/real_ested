@@ -9,8 +9,11 @@ const { slugify, generatePropertyCode } = require('../utils/helpers');
 router.get('/public', async (req, res) => {
   const { 
     projectName, location, city, type, minPrice, maxPrice, 
-    bhk, availability, status 
+    bhk, availability, status, propertyCode, code, possessionTimeline, possession
   } = req.query;
+
+  const targetCode = propertyCode || code;
+  const targetPossession = possessionTimeline || possession;
 
   try {
     let query = `
@@ -27,6 +30,10 @@ router.get('/public', async (req, res) => {
     const params = [];
 
     // Apply Filters
+    if (targetCode) {
+      whereClauses.push('(p.property_code LIKE ? OR p.id = ?)');
+      params.push(`%${targetCode.trim()}%`, isNaN(targetCode) ? 0 : parseInt(targetCode));
+    }
     if (projectName) {
       whereClauses.push('p.project_name LIKE ?');
       params.push(`%${projectName}%`);
@@ -62,6 +69,19 @@ router.get('/public', async (req, res) => {
     if (status) {
       whereClauses.push('p.project_status = ?');
       params.push(status);
+    }
+    if (targetPossession) {
+      if (targetPossession === 'ready_to_move' || targetPossession === '0') {
+        whereClauses.push("(p.project_status = 'ready_possession' OR p.completion_date <= CURDATE())");
+      } else if (targetPossession === '1_month') {
+        whereClauses.push("p.completion_date <= DATE_ADD(CURDATE(), INTERVAL 1 MONTH)");
+      } else if (targetPossession === '3_months') {
+        whereClauses.push("p.completion_date <= DATE_ADD(CURDATE(), INTERVAL 3 MONTH)");
+      } else if (targetPossession === '6_months') {
+        whereClauses.push("p.completion_date <= DATE_ADD(CURDATE(), INTERVAL 6 MONTH)");
+      } else if (targetPossession === '12_months') {
+        whereClauses.push("p.completion_date <= DATE_ADD(CURDATE(), INTERVAL 12 MONTH)");
+      }
     }
 
     if (whereClauses.length > 0) {
@@ -111,7 +131,7 @@ router.get('/public/detail/:slug', async (req, res) => {
 
     // 2. Fetch BHK configurations
     const [configs] = await pool.query(
-      'SELECT bhk_type, carpet_area, price, estimated_emi FROM property_configurations WHERE property_id = ?',
+      'SELECT bhk_type, carpet_area, price, estimated_emi, floor_plan_url FROM property_configurations WHERE property_id = ?',
       [property.id]
     );
 
@@ -326,7 +346,7 @@ router.get('/detail/:slug', authenticate, async (req, res) => {
 
     // 3. Fetch BHK configurations
     const [configs] = await pool.query(
-      'SELECT bhk_type, carpet_area, price, estimated_emi FROM property_configurations WHERE property_id = ?',
+      'SELECT bhk_type, carpet_area, price, estimated_emi, floor_plan_url FROM property_configurations WHERE property_id = ?',
       [property.id]
     );
 
@@ -371,6 +391,36 @@ router.get('/detail/:slug', authenticate, async (req, res) => {
   }
 });
 
+// GET /api/properties/check-rera (Check RERA ID Uniqueness)
+router.get('/check-rera', async (req, res) => {
+  const { rera_id, exclude_id } = req.query;
+  if (!rera_id || !rera_id.trim()) {
+    return res.json({ exists: false });
+  }
+
+  const trimmed = rera_id.trim();
+  const excludeIdNum = exclude_id ? parseInt(exclude_id) : 0;
+
+  try {
+    let query = 'SELECT id, project_name FROM properties WHERE rera_id = ? AND is_deleted = 0';
+    const params = [trimmed];
+    if (excludeIdNum > 0) {
+      query += ' AND id != ?';
+      params.push(excludeIdNum);
+    }
+    query += ' LIMIT 1';
+
+    const [rows] = await pool.query(query, params);
+    if (rows.length > 0) {
+      return res.json({ exists: true, property_id: rows[0].id, project_name: rows[0].project_name });
+    }
+    return res.json({ exists: false });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Server error checking RERA ID.' });
+  }
+});
+
 // POST /api/properties (Add Property - Admin roles)
 router.post('/', authenticate, requireRole(['super_admin', 'assistant_admin', 'branch_admin']), propertyUploads, async (req, res) => {
   const {
@@ -386,6 +436,19 @@ router.post('/', authenticate, requireRole(['super_admin', 'assistant_admin', 'b
 
   if (!project_name || !location || !city || !address || !builder) {
     return res.status(400).json({ error: 'Required fields: project_name, location, city, address, builder.' });
+  }
+
+  // Validate RERA ID Uniqueness if provided
+  if (rera_id && rera_id.trim()) {
+    const [existingRera] = await pool.query(
+      'SELECT id, project_name FROM properties WHERE rera_id = ? AND is_deleted = 0 LIMIT 1',
+      [rera_id.trim()]
+    );
+    if (existingRera.length > 0) {
+      return res.status(409).json({
+        error: `Duplicate RERA ID! RERA ID '${rera_id.trim()}' is already registered for property '${existingRera[0].project_name}'.`
+      });
+    }
   }
 
   let branchId = req.user.branch_id;
@@ -419,13 +482,13 @@ router.post('/', authenticate, requireRole(['super_admin', 'assistant_admin', 'b
 
     const propertyId = propResult.insertId;
 
-    // Insert Configurations
+    // Insert configurations
     const configurations = JSON.parse(configurationsRaw);
     if (Array.isArray(configurations)) {
       for (let config of configurations) {
         await dbConnection.query(
-          'INSERT INTO property_configurations (property_id, bhk_type, carpet_area, price, estimated_emi) VALUES (?, ?, ?, ?, ?)',
-          [propertyId, config.bhk_type, config.carpet_area, config.price, config.estimated_emi || null]
+          'INSERT INTO property_configurations (property_id, bhk_type, carpet_area, price, estimated_emi, floor_plan_url) VALUES (?, ?, ?, ?, ?, ?)',
+          [propertyId, config.bhk_type, config.carpet_area, config.price, config.estimated_emi || null, config.floor_plan_url || config.floor_plan || null]
         );
       }
     }
@@ -530,7 +593,7 @@ router.get('/detail-by-id/:id', authenticate, async (req, res) => {
       if (!enforceBranchIsolation(req, res, property.branch_id)) return;
     }
 
-    const [configs] = await pool.query('SELECT bhk_type, carpet_area, price, estimated_emi FROM property_configurations WHERE property_id = ?', [id]);
+    const [configs] = await pool.query('SELECT bhk_type, carpet_area, price, estimated_emi, floor_plan_url FROM property_configurations WHERE property_id = ?', [id]);
     const [amenities] = await pool.query('SELECT amenity_name FROM property_amenities WHERE property_id = ?', [id]);
     const amenitiesList = amenities.map(a => a.amenity_name);
     const [specifications] = await pool.query('SELECT title, details FROM property_specifications WHERE property_id = ?', [id]);
@@ -578,6 +641,20 @@ router.put('/:id', authenticate, requireRole(['branch_admin', 'super_admin', 'as
     if (!existingProperty) {
       dbConnection.release();
       return res.status(404).json({ error: 'Property not found.' });
+    }
+
+    // Validate RERA ID Uniqueness if provided
+    if (rera_id && rera_id.trim()) {
+      const [existingRera] = await dbConnection.query(
+        'SELECT id, project_name FROM properties WHERE rera_id = ? AND id != ? AND is_deleted = 0 LIMIT 1',
+        [rera_id.trim(), id]
+      );
+      if (existingRera.length > 0) {
+        dbConnection.release();
+        return res.status(409).json({
+          error: `Duplicate RERA ID! RERA ID '${rera_id.trim()}' is already registered for property '${existingRera[0].project_name}'.`
+        });
+      }
     }
 
     if (req.user.role === 'branch_admin') {
@@ -631,8 +708,8 @@ router.put('/:id', authenticate, requireRole(['branch_admin', 'super_admin', 'as
         await dbConnection.query('DELETE FROM property_configurations WHERE property_id = ?', [id]);
         for (let config of configurations) {
           await dbConnection.query(
-            'INSERT INTO property_configurations (property_id, bhk_type, carpet_area, price, estimated_emi) VALUES (?, ?, ?, ?, ?)',
-            [id, config.bhk_type, config.carpet_area, config.price, config.estimated_emi || null]
+            'INSERT INTO property_configurations (property_id, bhk_type, carpet_area, price, estimated_emi, floor_plan_url) VALUES (?, ?, ?, ?, ?, ?)',
+            [id, config.bhk_type, config.carpet_area, config.price, config.estimated_emi || null, config.floor_plan_url || config.floor_plan || null]
           );
         }
       }

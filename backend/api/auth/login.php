@@ -23,7 +23,7 @@ $db = $database->getConnection();
 
 try {
     // Fetch active and non-deleted user
-    $query = "SELECT id, username, email, password_hash, role, branch_id, status, is_deleted 
+    $query = "SELECT id, username, email, password_hash, role, branch_id, parent_broker_id, sub_account_limit, status, is_deleted 
               FROM users 
               WHERE username = :username AND is_deleted = 0 LIMIT 1";
     
@@ -48,14 +48,16 @@ try {
     
     // Log login event if role is external broker
     if ($user['role'] === 'external_broker') {
+        $effectiveBrokerId = !empty($user['parent_broker_id']) ? (int)$user['parent_broker_id'] : (int)$user['id'];
         $log_query = "INSERT INTO broker_activity_logs (broker_id, activity_type, metadata) 
                       VALUES (:broker_id, 'login', :metadata)";
         $log_stmt = $db->prepare($log_query);
         $metadata = json_encode([
             "ip" => $_SERVER['REMOTE_ADDR'],
-            "user_agent" => isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : 'Unknown'
+            "user_agent" => isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : 'Unknown',
+            "is_staff" => !empty($user['parent_broker_id'])
         ]);
-        $log_stmt->bindParam(':broker_id', $user['id']);
+        $log_stmt->bindParam(':broker_id', $effectiveBrokerId);
         $log_stmt->bindParam(':metadata', $metadata);
         $log_stmt->execute();
     }
@@ -66,7 +68,9 @@ try {
         "username" => $user['username'],
         "email" => $user['email'],
         "role" => $user['role'],
-        "branch_id" => $user['branch_id'] ? (int)$user['branch_id'] : null
+        "branch_id" => $user['branch_id'] ? (int)$user['branch_id'] : null,
+        "parent_broker_id" => $user['parent_broker_id'] ? (int)$user['parent_broker_id'] : null,
+        "sub_account_limit" => (int)($user['sub_account_limit'] ?? 5)
     ];
     
     $token = JwtHelper::generateToken($payload);
@@ -79,7 +83,9 @@ try {
             "username" => $user['username'],
             "email" => $user['email'],
             "role" => $user['role'],
-            "branch_id" => $user['branch_id'] ? (int)$user['branch_id'] : null
+            "branch_id" => $user['branch_id'] ? (int)$user['branch_id'] : null,
+            "parent_broker_id" => $user['parent_broker_id'] ? (int)$user['parent_broker_id'] : null,
+            "sub_account_limit" => (int)($user['sub_account_limit'] ?? 5)
         ]
     ]);
 

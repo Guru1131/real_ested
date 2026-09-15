@@ -22,21 +22,21 @@ switch ($method) {
     case 'GET':
         try {
             if (in_array($currentUser['role'], ['super_admin', 'assistant_admin'])) {
-                // Fetch all external brokers
-                $query = "SELECT u.id, u.username, u.email, u.phone, u.status, u.created_at 
+                // Fetch all external master brokers (parent_broker_id IS NULL)
+                $query = "SELECT u.id, u.username, u.email, u.phone, u.status, u.sub_account_limit, u.created_at 
                           FROM users u 
-                          WHERE u.role = 'external_broker' AND u.is_deleted = 0 
+                          WHERE u.role = 'external_broker' AND u.parent_broker_id IS NULL AND u.is_deleted = 0 
                           ORDER BY u.id DESC";
                 $stmt = $db->prepare($query);
                 $stmt->execute();
                 $brokers = $stmt->fetchAll();
             } else {
-                // Branch Admin: only brokers assigned to their branch
+                // Branch Admin: only master brokers assigned to their branch
                 $branch_id = $currentUser['branch_id'];
-                $query = "SELECT u.id, u.username, u.email, u.phone, u.status, u.created_at 
+                $query = "SELECT u.id, u.username, u.email, u.phone, u.status, u.sub_account_limit, u.created_at 
                           FROM users u 
                           JOIN broker_branch_assignments ba ON u.id = ba.broker_id
-                          WHERE u.role = 'external_broker' AND u.is_deleted = 0 AND ba.branch_id = :branch_id
+                          WHERE u.role = 'external_broker' AND u.parent_broker_id IS NULL AND u.is_deleted = 0 AND ba.branch_id = :branch_id
                           ORDER BY u.id DESC";
                 $stmt = $db->prepare($query);
                 $stmt->bindParam(':branch_id', $branch_id);
@@ -44,7 +44,7 @@ switch ($method) {
                 $brokers = $stmt->fetchAll();
             }
 
-            // Fetch assignments for each broker
+            // Fetch assignments & sub-account count for each broker
             foreach ($brokers as &$broker) {
                 $assign_query = "SELECT b.id, b.name, b.code 
                                  FROM branches b
@@ -54,6 +54,13 @@ switch ($method) {
                 $assign_stmt->bindParam(':broker_id', $broker['id']);
                 $assign_stmt->execute();
                 $broker['branches'] = $assign_stmt->fetchAll();
+
+                // Staff count
+                $count_stmt = $db->prepare("SELECT COUNT(*) as cnt FROM users WHERE parent_broker_id = :broker_id AND is_deleted = 0");
+                $count_stmt->bindParam(':broker_id', $broker['id']);
+                $count_stmt->execute();
+                $cRow = $count_stmt->fetch();
+                $broker['staff_count'] = (int)($cRow['cnt'] ?? 0);
             }
 
             echo json_encode($brokers);
@@ -106,14 +113,17 @@ switch ($method) {
 
             $db->beginTransaction();
 
+            $sub_account_limit = isset($input['sub_account_limit']) ? (int)$input['sub_account_limit'] : 5;
+
             // Insert broker user (branch_id is null for brokers, mappings are in assignments)
-            $query = "INSERT INTO users (username, email, password_hash, role, branch_id, phone, status) 
-                      VALUES (:username, :email, :password_hash, 'external_broker', NULL, :phone, 'active')";
+            $query = "INSERT INTO users (username, email, password_hash, role, branch_id, phone, status, sub_account_limit) 
+                      VALUES (:username, :email, :password_hash, 'external_broker', NULL, :phone, 'active', :limit)";
             $stmt = $db->prepare($query);
             $stmt->bindParam(':username', $username);
             $stmt->bindParam(':email', $email);
             $stmt->bindParam(':password_hash', $password_hash);
             $stmt->bindParam(':phone', $phone);
+            $stmt->bindParam(':limit', $sub_account_limit);
             $stmt->execute();
 
             $broker_id = $db->lastInsertId();
@@ -186,6 +196,7 @@ switch ($method) {
 
             $phone = isset($input['phone']) ? trim($input['phone']) : null;
             $status = isset($input['status']) ? trim($input['status']) : null;
+            $sub_account_limit = isset($input['sub_account_limit']) ? (int)$input['sub_account_limit'] : null;
             $branchIds = isset($input['branchIds']) ? $input['branchIds'] : null; // Array of branch IDs
 
             $db->beginTransaction();
@@ -200,6 +211,10 @@ switch ($method) {
             if ($status !== null) {
                 $update_fields[] = "status = :status";
                 $params[':status'] = $status;
+            }
+            if ($sub_account_limit !== null && in_array($currentUser['role'], ['super_admin', 'assistant_admin'])) {
+                $update_fields[] = "sub_account_limit = :limit";
+                $params[':limit'] = $sub_account_limit;
             }
 
             if (!empty($update_fields)) {

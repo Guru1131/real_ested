@@ -102,6 +102,17 @@ const Sidebar = ({ isOpen, onClose }) => {
             </NavLink>
           )}
 
+          {/* Broker role: Manage Staff Sub-Accounts */}
+          {user.role === 'external_broker' && (
+            <NavLink 
+              to="/broker-staff" 
+              className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+              onClick={handleLinkClick}
+            >
+              <i className="bi bi-people-fill text-warning"></i> My Staff Sub-Accounts
+            </NavLink>
+          )}
+
           {/* Leads: All roles (content filtered per role) */}
           <NavLink 
             to="/leads" 

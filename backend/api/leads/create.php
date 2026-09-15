@@ -7,11 +7,17 @@ require_once __DIR__ . '/../../middleware/AuthMiddleware.php';
 
 header('Content-Type: application/json');
 
-// Authenticate user
-$currentUser = AuthMiddleware::authenticate();
+// Check if public lead submission request
+$isPublic = (isset($_GET['public']) && $_GET['public'] == '1') || (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/api/leads/public') !== false);
 
-// External Brokers or Branch Executives only
-AuthMiddleware::requireRole($currentUser, ['external_broker', 'branch_executive', 'branch_admin']);
+if (!$isPublic) {
+    // Authenticate user
+    $currentUser = AuthMiddleware::authenticate();
+    // External Brokers or Branch Executives only
+    AuthMiddleware::requireRole($currentUser, ['external_broker', 'branch_executive', 'branch_admin', 'super_admin', 'assistant_admin']);
+} else {
+    $currentUser = ['role' => 'public', 'id' => 0];
+}
 
 $database = new Database();
 $db = $database->getConnection();

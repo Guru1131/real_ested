@@ -17,7 +17,7 @@ router.post('/login', async (req, res) => {
 
   try {
     const [rows] = await pool.query(
-      'SELECT id, username, email, password_hash, role, branch_id, status FROM users WHERE username = ? AND is_deleted = 0 LIMIT 1',
+      'SELECT id, username, email, password_hash, role, branch_id, parent_broker_id, sub_account_limit, status FROM users WHERE username = ? AND is_deleted = 0 LIMIT 1',
       [username]
     );
 
@@ -32,13 +32,15 @@ router.post('/login', async (req, res) => {
 
     // Log login activity if user is a broker
     if (user.role === 'external_broker') {
+      const effectiveBrokerId = user.parent_broker_id || user.id;
       const metadata = JSON.stringify({
         ip: req.ip,
-        user_agent: req.headers['user-agent']
+        user_agent: req.headers['user-agent'],
+        is_staff: Boolean(user.parent_broker_id)
       });
       await pool.query(
         'INSERT INTO broker_activity_logs (broker_id, activity_type, metadata) VALUES (?, "login", ?)',
-        [user.id, metadata]
+        [effectiveBrokerId, metadata]
       );
     }
 
@@ -48,7 +50,9 @@ router.post('/login', async (req, res) => {
       username: user.username,
       email: user.email,
       role: user.role,
-      branch_id: user.branch_id
+      branch_id: user.branch_id,
+      parent_broker_id: user.parent_broker_id || null,
+      sub_account_limit: user.sub_account_limit || 5
     };
 
     const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '24h' });

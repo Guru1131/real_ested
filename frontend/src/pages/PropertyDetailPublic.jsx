@@ -6,6 +6,8 @@ import api from '../services/api';
 import CustomizationModal from '../components/CustomizationModal';
 import { formatImageUrl, handleImageError } from '../utils/imageHelper';
 import { extractMapUrl } from '../utils/mapHelper';
+import { getAmenityIcon } from '../utils/amenityIcons';
+import { generateClientCatalog } from '../utils/catalogGenerator';
 
 const PropertyDetailPublic = () => {
   const { slug } = useParams();
@@ -203,11 +205,20 @@ const PropertyDetailPublic = () => {
 
       {/* Main Body container */}
       <div className="container my-4 flex-grow-1">
-        {/* Back navigation & Edit action */}
+        {/* Back navigation & Catalog action */}
         <div className="mb-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
-          <Link to="/" className="btn px-3 py-2 fw-600 shadow-sm" style={{ border: '1px solid rgba(25, 41, 81, 0.1)', color: '#192951', borderRadius: '12px', fontSize: '0.85rem', backgroundColor: '#ffffff' }}>
-            <i className="bi bi-arrow-left me-1"></i> Back to Homepage
-          </Link>
+          <div className="d-flex align-items-center gap-2 flex-wrap">
+            <Link to="/" className="btn px-3 py-2 fw-600 shadow-sm" style={{ border: '1px solid rgba(25, 41, 81, 0.1)', color: '#192951', borderRadius: '12px', fontSize: '0.85rem', backgroundColor: '#ffffff' }}>
+              <i className="bi bi-arrow-left me-1"></i> Back to Homepage
+            </Link>
+            <button 
+              onClick={() => generateClientCatalog(property, configurations, amenities, specifications, media)} 
+              className="btn px-3 py-2 fw-700 text-dark shadow-sm bg-warning" 
+              style={{ borderRadius: '12px', fontSize: '0.85rem', border: 'none' }}
+            >
+              <i className="bi bi-file-earmark-pdf-fill me-1.5"></i> Download White-Label Catalog PDF
+            </button>
+          </div>
           {user && (user.role === 'super_admin' || user.role === 'branch_admin') && (
             <Link to={`/properties/edit/${property.id}`} className="btn px-4 py-2 fw-600 text-white shadow-sm" style={{ backgroundColor: '#0284c7', borderRadius: '12px', fontSize: '0.85rem' }}>
               <i className="bi bi-pencil-square me-1"></i> Edit Property Listing
@@ -312,6 +323,7 @@ const PropertyDetailPublic = () => {
                             <th>Carpet Area</th>
                             <th>Starting Price</th>
                             <th>Estimated EMI</th>
+                            <th>Floor Plan</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -321,6 +333,15 @@ const PropertyDetailPublic = () => {
                               <td>{c.carpet_area} sq.ft.</td>
                               <td className="text-success fw-700">₹{parseFloat(c.price).toLocaleString('en-IN')}</td>
                               <td>{c.estimated_emi ? `₹${parseFloat(c.estimated_emi).toLocaleString('en-IN')}` : 'Price on Request'}</td>
+                              <td>
+                                {c.floor_plan_url || c.floor_plan ? (
+                                  <a href={formatImageUrl(c.floor_plan_url || c.floor_plan)} target="_blank" rel="noreferrer" className="btn btn-xs btn-outline-primary py-1 px-2.5 fw-600">
+                                    <i className="bi bi-image me-1"></i> Floor Plan Link
+                                  </a>
+                                ) : (
+                                  <span className="text-muted small">N/A</span>
+                                )}
+                              </td>
                             </tr>
                           ))}
                         </tbody>
@@ -377,14 +398,19 @@ const PropertyDetailPublic = () => {
                   <h5 className="fw-800 text-dark mb-4">Amenities Offered</h5>
                   {amenities && amenities.length > 0 ? (
                     <div className="row g-3">
-                      {amenities.map((amenity, index) => (
-                        <div key={index} className="col-sm-6 col-md-4">
-                          <div className="d-flex align-items-center gap-2 p-2.5 bg-light rounded" style={{ borderRadius: '12px' }}>
-                            <i className="bi bi-patch-check-fill text-warning"></i>
-                            <span className="small text-dark fw-600">{amenity}</span>
+                      {amenities.map((amenity, index) => {
+                        const iconInfo = getAmenityIcon(amenity);
+                        return (
+                          <div key={index} className="col-sm-6 col-md-4">
+                            <div className="d-flex align-items-center gap-3 p-3 rounded-4 bg-light border border-light shadow-sm h-100 transition-up">
+                              <div className="d-flex align-items-center justify-content-center flex-shrink-0 rounded-circle shadow-sm" style={{ width: '42px', height: '42px', backgroundColor: `${iconInfo.color}15`, color: iconInfo.color }}>
+                                <i className={`bi ${iconInfo.icon} fs-5`}></i>
+                              </div>
+                              <span className="small text-dark fw-700">{amenity}</span>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   ) : (
                     <p className="text-muted small">No amenities specified for this project.</p>

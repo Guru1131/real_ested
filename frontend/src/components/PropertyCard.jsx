@@ -1,12 +1,18 @@
 import React, { useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import { generateClientCatalog } from '../utils/catalogGenerator';
 
 const PropertyCard = ({ property, onStatusSubmit, onDelete, userRole }) => {
   const { user } = useContext(AuthContext);
   const effectiveRole = userRole || user?.role;
   const canEdit = ['super_admin', 'assistant_admin', 'branch_admin'].includes(effectiveRole);
   const canDelete = ['super_admin', 'assistant_admin', 'branch_admin'].includes(effectiveRole);
+
+  const handleDownloadCatalog = (e) => {
+    e.preventDefault();
+    generateClientCatalog(property);
+  };
   // Format price to Indian Rupees (Lakhs / Crores) or standard format
   const formatPrice = (value) => {
     return new Intl.NumberFormat('en-IN', {
@@ -87,6 +93,15 @@ const PropertyCard = ({ property, onStatusSubmit, onDelete, userRole }) => {
           <Link to={`/property/${property.property_slug}`} className="btn btn-premium-outline flex-grow-1 text-center py-2 px-3" style={{ fontSize: '0.85rem' }}>
             <i className="bi bi-eye me-1"></i> View Details
           </Link>
+          
+          <button 
+            onClick={handleDownloadCatalog}
+            className="btn btn-outline-warning text-dark fw-600 py-2 px-2.5" 
+            style={{ fontSize: '0.85rem' }} 
+            title="Download White-Label Client PDF Catalog (Omits builder & project name)"
+          >
+            <i className="bi bi-file-earmark-pdf-fill me-1"></i> Catalog
+          </button>
           
           {canEdit && (
             <Link to={`/properties/edit/${property.id}`} className="btn btn-premium-outline py-2 px-3" style={{ fontSize: '0.85rem' }} title="Edit Property Details">

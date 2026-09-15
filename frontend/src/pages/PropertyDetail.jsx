@@ -5,6 +5,8 @@ import api from '../services/api';
 import LeadFormModal from '../components/LeadFormModal';
 import { formatImageUrl } from '../utils/imageHelper';
 import { extractMapUrl } from '../utils/mapHelper';
+import { getAmenityIcon } from '../utils/amenityIcons';
+import { generateClientCatalog } from '../utils/catalogGenerator';
 
 const PropertyDetail = () => {
   const { slug } = useParams();
@@ -17,6 +19,9 @@ const PropertyDetail = () => {
   
   const [activeTab, setActiveTab] = useState('overview');
   const [showLeadModal, setShowLeadModal] = useState(false);
+
+  // Gallery Lightbox Modal State
+  const [lightboxImageIndex, setLightboxImageIndex] = useState(null);
 
   // Sharing states
   const [shareRecipient, setShareRecipient] = useState('');
@@ -189,8 +194,14 @@ const PropertyDetail = () => {
           )}
         </div>
 
-        {/* Share buttons */}
+        {/* Share & Catalog Download buttons */}
         <div className="d-flex align-items-center gap-2 flex-wrap">
+          <button 
+            className="btn btn-warning text-dark font-weight-bold btn-sm px-3 py-2 d-flex align-items-center gap-1.5 shadow-sm"
+            onClick={() => generateClientCatalog(property, configurations, amenities, specifications, media)}
+          >
+            <i className="bi bi-file-earmark-pdf-fill"></i> Download White-Label Catalog
+          </button>
           <button 
             className="btn btn-outline-success btn-sm px-3 py-2 d-flex align-items-center gap-1.5" 
             onClick={() => { setShowShareMenu(true); setShareChannel('whatsapp'); }}
@@ -274,6 +285,7 @@ const PropertyDetail = () => {
                           <th style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}>Carpet Area</th>
                           <th style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}>Price (INR)</th>
                           <th style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}>Est. Monthly EMI</th>
+                          <th style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}>Floor Plan</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -283,6 +295,15 @@ const PropertyDetail = () => {
                             <td>{c.carpet_area} sq.ft.</td>
                             <td className="text-success fw-700">₹{parseFloat(c.price).toLocaleString('en-IN')}</td>
                             <td>{c.estimated_emi ? `₹${parseFloat(c.estimated_emi).toLocaleString('en-IN')}` : 'Price on Request'}</td>
+                            <td>
+                              {c.floor_plan_url || c.floor_plan ? (
+                                <a href={formatImageUrl(c.floor_plan_url || c.floor_plan)} target="_blank" rel="noreferrer" className="btn btn-xs btn-outline-primary py-1 px-2.5 fw-600">
+                                  <i className="bi bi-image me-1"></i> Floor Plan Link
+                                </a>
+                              ) : (
+                                <span className="text-muted small">N/A</span>
+                              )}
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -339,14 +360,19 @@ const PropertyDetail = () => {
                 <h5 className="fw-800 mb-4" style={{ color: 'var(--text-primary)' }}>Project Amenities</h5>
                 {amenities && amenities.length > 0 ? (
                   <div className="row g-3">
-                    {amenities.map((amenity, index) => (
-                      <div key={index} className="col-sm-6 col-md-4">
-                        <div className="d-flex align-items-center gap-2 p-3 rounded border" style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)' }}>
-                          <i className="bi bi-patch-check-fill text-success fs-5"></i>
-                          <span className="small fw-700" style={{ color: 'var(--text-primary)' }}>{amenity}</span>
+                    {amenities.map((amenity, index) => {
+                      const iconInfo = getAmenityIcon(amenity);
+                      return (
+                        <div key={index} className="col-sm-6 col-md-4">
+                          <div className="d-flex align-items-center gap-3 p-3 rounded-3 border shadow-sm h-100 transition-up" style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)' }}>
+                            <div className="d-flex align-items-center justify-content-center flex-shrink-0 rounded-circle shadow-sm" style={{ width: '42px', height: '42px', backgroundColor: `${iconInfo.color}18`, color: iconInfo.color }}>
+                              <i className={`bi ${iconInfo.icon} fs-5`}></i>
+                            </div>
+                            <span className="small fw-700" style={{ color: 'var(--text-primary)' }}>{amenity}</span>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <p className="text-muted small">No amenities specified for this project.</p>

@@ -22,6 +22,7 @@ import PropertyApprovalQueue from './pages/PropertyApprovalQueue';
 import LeadList from './pages/LeadList';
 import Landing from './pages/Landing';
 import PropertyDetailPublic from './pages/PropertyDetailPublic';
+import BrokerStaffManagement from './pages/BrokerStaffManagement';
 
 // Layout wrapper to inject sidebar and navbar on authenticated pages
 const AppLayout = ({ children }) => {
@@ -121,6 +122,16 @@ const App = () => {
               element={
                 <ProtectedRoute allowedRoles={['super_admin', 'assistant_admin', 'branch_admin']}>
                   <BrokerManagement />
+                </ProtectedRoute>
+              } 
+            />
+
+            {/* Broker Staff Sub-Account Management */}
+            <Route 
+              path="/broker-staff" 
+              element={
+                <ProtectedRoute allowedRoles={['external_broker', 'super_admin', 'assistant_admin', 'branch_admin']}>
+                  <BrokerStaffManagement />
                 </ProtectedRoute>
               } 
             />

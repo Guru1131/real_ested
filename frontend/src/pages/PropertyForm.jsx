@@ -3,6 +3,7 @@ import { useNavigate, Link, useParams } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import api from '../services/api';
 import { extractMapUrl } from '../utils/mapHelper';
+import { getAmenityIcon } from '../utils/amenityIcons';
 
 const PropertyForm = () => {
   const { id } = useParams();
@@ -47,7 +48,7 @@ const PropertyForm = () => {
   const [customAmenityInput, setCustomAmenityInput] = useState('');
 
   // Temp states for sub-forms
-  const [tempConfig, setTempConfig] = useState({ bhk_type: '', carpet_area: '', price: '', estimated_emi: '' });
+  const [tempConfig, setTempConfig] = useState({ bhk_type: '', carpet_area: '', price: '', estimated_emi: '', floor_plan_url: '' });
   const [tempSpec, setTempSpec] = useState({ title: '', details: '' });
 
   // File upload state bindings
@@ -63,6 +64,40 @@ const PropertyForm = () => {
   const [approvalStatus, setApprovalStatus] = useState('draft');
 
   const [notFoundError, setNotFoundError] = useState(false);
+  const [reraWarning, setReraWarning] = useState('');
+  const [checkingRera, setCheckingRera] = useState(false);
+
+  // Real-time RERA ID Uniqueness check hook
+  useEffect(() => {
+    if (!formData.rera_id || !formData.rera_id.trim()) {
+      setReraWarning('');
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      try {
+        setCheckingRera(true);
+        const excludeParam = id ? `&exclude_id=${id}` : '';
+        let res;
+        try {
+          res = await api.get(`/api/properties/check-rera?rera_id=${encodeURIComponent(formData.rera_id.trim())}${excludeParam}`);
+        } catch (e1) {
+          res = await api.get(`/api/properties/check_rera.php?rera_id=${encodeURIComponent(formData.rera_id.trim())}${excludeParam}`);
+        }
+        if (res.data && res.data.exists) {
+          setReraWarning(`Warning: RERA ID "${formData.rera_id.trim()}" is already registered for property "${res.data.project_name}"! Duplicate RERA IDs are not allowed.`);
+        } else {
+          setReraWarning('');
+        }
+      } catch (err) {
+        console.error('Error checking RERA ID uniqueness', err);
+      } finally {
+        setCheckingRera(false);
+      }
+    }, 450);
+
+    return () => clearTimeout(timer);
+  }, [formData.rera_id, id]);
 
   // Load existing property data if in Edit Mode
   useEffect(() => {
@@ -195,7 +230,7 @@ const PropertyForm = () => {
       return;
     }
     setConfigurations([...configurations, { ...tempConfig, price: parseFloat(tempConfig.price), estimated_emi: tempConfig.estimated_emi ? parseFloat(tempConfig.estimated_emi) : null }]);
-    setTempConfig({ bhk_type: '', carpet_area: '', price: '', estimated_emi: '' });
+    setTempConfig({ bhk_type: '', carpet_area: '', price: '', estimated_emi: '', floor_plan_url: '' });
   };
 
   // Remove BHK Configuration item
@@ -225,6 +260,11 @@ const PropertyForm = () => {
 
     if (!formData.project_name || !formData.location || !formData.city || !formData.address || !formData.builder) {
       setError('Please fill in all required fields (Project name, location, city, address, builder).');
+      return;
+    }
+
+    if (reraWarning) {
+      setError(reraWarning);
       return;
     }
 
@@ -365,6 +405,8 @@ const PropertyForm = () => {
       </div>
     );
   }
+
+  const isCommercialType = ['commercial', 'shop', 'office'].includes(formData.property_type);
 
   return (
     <div className="container-fluid py-2 animate-fade-in">
@@ -574,16 +616,30 @@ const PropertyForm = () => {
               />
             </div>
 
-            <div className="col-md-2">
-              <label className="form-label small fw-700" style={{ color: 'var(--text-primary)' }}>RERA ID</label>
+            <div className="col-md-3">
+              <label className="form-label small fw-700 d-flex justify-content-between align-items-center" style={{ color: 'var(--text-primary)' }}>
+                <span>RERA ID</span>
+                {checkingRera && <span className="spinner-border spinner-border-sm text-primary" role="status"></span>}
+              </label>
               <input 
                 type="text" 
                 name="rera_id"
                 value={formData.rera_id}
                 onChange={handleTextChange}
-                className="form-control form-premium-control" 
+                className={`form-control form-premium-control ${reraWarning ? 'is-invalid border-danger' : ''}`} 
                 placeholder="e.g. P52100024567"
               />
+              {reraWarning ? (
+                <div className="alert alert-danger p-2 mt-1 mb-0 small fw-700 d-flex align-items-start gap-1.5" style={{ fontSize: '0.78rem', borderRadius: '8px' }}>
+                  <i className="bi bi-exclamation-triangle-fill flex-shrink-0 mt-0.5"></i>
+                  <span>{reraWarning}</span>
+                </div>
+              ) : formData.rera_id && !checkingRera ? (
+                <div className="text-success small fw-600 mt-1 d-flex align-items-center gap-1" style={{ fontSize: '0.78rem' }}>
+                  <i className="bi bi-check-circle-fill"></i>
+                  <span>RERA ID available & unique</span>
+                </div>
+              ) : null}
             </div>
           </div>
 
@@ -708,7 +764,7 @@ const PropertyForm = () => {
           </h6>
 
           <div className="row g-2 mb-3 align-items-end p-3 rounded border" style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)' }}>
-            <div className="col-12 col-sm-6 col-md-3">
+            <div className="col-12 col-sm-6 col-md-2">
               <label className="form-label small fw-700" style={{ color: 'var(--text-primary)' }}>BHK / UNIT TYPE</label>
               <input 
                 type="text" 
@@ -718,7 +774,7 @@ const PropertyForm = () => {
                 className="form-control form-premium-control"
               />
             </div>
-            <div className="col-12 col-sm-6 col-md-3">
+            <div className="col-12 col-sm-6 col-md-2">
               <label className="form-label small fw-700" style={{ color: 'var(--text-primary)' }}>CARPET AREA (SQ. FT.)</label>
               <input 
                 type="number" 
@@ -728,7 +784,7 @@ const PropertyForm = () => {
                 className="form-control form-premium-control"
               />
             </div>
-            <div className="col-12 col-sm-6 col-md-3">
+            <div className="col-12 col-sm-6 col-md-2">
               <label className="form-label small fw-700" style={{ color: 'var(--text-primary)' }}>TOTAL PRICE (INR)</label>
               <input 
                 type="number" 
@@ -748,6 +804,16 @@ const PropertyForm = () => {
                 className="form-control form-premium-control"
               />
             </div>
+            <div className="col-12 col-sm-6 col-md-3">
+              <label className="form-label small fw-700" style={{ color: 'var(--text-primary)' }}>FLOOR PLAN IMAGE / LINK</label>
+              <input 
+                type="text" 
+                placeholder="e.g. https://... or /uploads/fp1.jpg"
+                value={tempConfig.floor_plan_url || ''} 
+                onChange={(e) => setTempConfig({ ...tempConfig, floor_plan_url: e.target.value })}
+                className="form-control form-premium-control"
+              />
+            </div>
             <div className="col-12 col-md-1 mt-2 mt-md-0">
               <button type="button" onClick={addConfiguration} className="btn btn-premium w-100 py-2">Add</button>
             </div>
@@ -763,6 +829,7 @@ const PropertyForm = () => {
                     <th style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}>Carpet Area</th>
                     <th style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}>Price</th>
                     <th style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}>Est. EMI</th>
+                    <th style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}>Floor Plan</th>
                     <th className="text-center" style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}>Action</th>
                   </tr>
                 </thead>
@@ -773,6 +840,15 @@ const PropertyForm = () => {
                       <td>{c.carpet_area} sq.ft.</td>
                       <td className="text-success fw-700">₹{Number(c.price).toLocaleString('en-IN')}</td>
                       <td>{c.estimated_emi ? `₹${Number(c.estimated_emi).toLocaleString('en-IN')}` : 'N/A'}</td>
+                      <td>
+                        {c.floor_plan_url || c.floor_plan ? (
+                          <a href={c.floor_plan_url || c.floor_plan} target="_blank" rel="noreferrer" className="btn btn-xs btn-outline-primary py-0.5 px-2">
+                            <i className="bi bi-image me-1"></i> View Plan
+                          </a>
+                        ) : (
+                          <span className="text-muted small">No Plan</span>
+                        )}
+                      </td>
                       <td className="text-center">
                         <button type="button" onClick={() => removeConfiguration(i)} className="btn btn-sm btn-outline-danger py-0 px-2"><i className="bi bi-trash"></i></button>
                       </td>
@@ -836,22 +912,26 @@ const PropertyForm = () => {
 
             {/* Checkbox Preset Grid */}
             <div className="row g-2 p-3 rounded border mb-3" style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)' }}>
-              {defaultAmenitiesList.map(a => (
-                <div key={a} className="col-md-3 col-sm-4 col-6">
-                  <div className="form-check">
-                    <input 
-                      type="checkbox" 
-                      className="form-check-input"
-                      id={`form_amenity_${a}`}
-                      checked={selectedAmenities.includes(a)}
-                      onChange={() => handleAmenityToggle(a)}
-                    />
-                    <label className="form-check-label small" htmlFor={`form_amenity_${a}`} style={{ color: 'var(--text-primary)' }}>
-                      {a}
-                    </label>
+              {defaultAmenitiesList.map(a => {
+                const iconInfo = getAmenityIcon(a);
+                return (
+                  <div key={a} className="col-md-3 col-sm-4 col-6">
+                    <div className="form-check d-flex align-items-center gap-1.5">
+                      <input 
+                        type="checkbox" 
+                        className="form-check-input mt-0"
+                        id={`form_amenity_${a}`}
+                        checked={selectedAmenities.includes(a)}
+                        onChange={() => handleAmenityToggle(a)}
+                      />
+                      <label className="form-check-label small d-flex align-items-center gap-1.5 cursor-pointer text-truncate" htmlFor={`form_amenity_${a}`} style={{ color: 'var(--text-primary)' }}>
+                        <i className={`bi ${iconInfo.icon}`} style={{ color: iconInfo.color }}></i>
+                        <span>{a}</span>
+                      </label>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Dynamic Custom Amenity Input */}
@@ -878,21 +958,30 @@ const PropertyForm = () => {
 
               {/* Custom Added Amenity Pills */}
               {selectedAmenities.length > 0 && (
-                <div className="mt-3 d-flex flex-wrap gap-2">
+                <div className="mt-3 d-flex flex-wrap gap-2 align-items-center">
                   <span className="small text-muted fw-600 me-1">Selected Amenities ({selectedAmenities.length}):</span>
-                  {selectedAmenities.map(amenity => (
-                    <span 
-                      key={amenity}
-                      className="badge bg-primary text-white px-2.5 py-1.5 rounded-pill d-flex align-items-center gap-1.5"
-                    >
-                      {amenity}
-                      <i 
-                        className="bi bi-x-circle-fill cursor-pointer" 
-                        onClick={() => handleAmenityToggle(amenity)}
-                        title="Remove amenity"
-                      ></i>
-                    </span>
-                  ))}
+                  {selectedAmenities.map(amenity => {
+                    const iconInfo = getAmenityIcon(amenity);
+                    return (
+                      <span 
+                        key={amenity}
+                        className="badge px-3 py-2 rounded-pill d-flex align-items-center gap-2 shadow-sm"
+                        style={{
+                          backgroundColor: `${iconInfo.color}15`,
+                          color: iconInfo.color,
+                          border: `1px solid ${iconInfo.color}35`
+                        }}
+                      >
+                        <i className={`bi ${iconInfo.icon}`}></i>
+                        <span className="fw-700">{amenity}</span>
+                        <i 
+                          className="bi bi-x-circle-fill cursor-pointer ms-1 opacity-75 hover-opacity-100" 
+                          onClick={() => handleAmenityToggle(amenity)}
+                          title="Remove amenity"
+                        ></i>
+                      </span>
+                    );
+                  })}
                 </div>
               )}
             </div>
