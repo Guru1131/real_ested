@@ -55,11 +55,6 @@ const LeadList = () => {
     }
   };
 
-  const handleFilterToggle = (status) => {
-    setStatusFilter(status);
-    fetchLeads(status);
-  };
-
   const statusBadges = {
     new: 'badge bg-primary text-light',
     in_progress: 'badge bg-warning text-dark',
@@ -104,24 +99,32 @@ const LeadList = () => {
       <div className="glass-panel p-4 mb-4">
         <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
           <div>
-            <h2 className="fw-700 text-white mb-1">
+            <h2 className="fw-700 mb-1" style={{ color: 'var(--text-primary)' }}>
               <i className="bi bi-diagram-3-fill text-primary me-2"></i>Lead Referral & Commission Tracking Pipeline
             </h2>
-            <p className="text-muted mb-0">
+            <p className="text-muted mb-0" style={{ color: 'var(--text-secondary)' }}>
               Manage client referrals, verify site visit QR codes, and monitor estimated commission payouts.
             </p>
           </div>
           
           <div className="d-flex gap-2 align-items-center">
             <button 
-              className={`btn btn-sm ${viewMode === 'kanban' ? 'btn-primary' : 'btn-outline-secondary text-white'}`}
+              className={`btn btn-sm fw-700 ${viewMode === 'kanban' ? 'btn-primary text-white shadow-sm' : 'btn-outline-secondary'}`}
               onClick={() => setViewMode('kanban')}
+              style={{
+                color: viewMode === 'kanban' ? '#ffffff' : 'var(--text-primary)',
+                borderColor: viewMode === 'kanban' ? 'var(--accent-primary)' : 'var(--border-color)'
+              }}
             >
               <i className="bi bi-kanban-fill me-1"></i> Kanban Board
             </button>
             <button 
-              className={`btn btn-sm ${viewMode === 'table' ? 'btn-primary' : 'btn-outline-secondary text-white'}`}
+              className={`btn btn-sm fw-700 ${viewMode === 'table' ? 'btn-primary text-white shadow-sm' : 'btn-outline-secondary'}`}
               onClick={() => setViewMode('table')}
+              style={{
+                color: viewMode === 'table' ? '#ffffff' : 'var(--text-primary)',
+                borderColor: viewMode === 'table' ? 'var(--accent-primary)' : 'var(--border-color)'
+              }}
             >
               <i className="bi bi-table me-1"></i> Table View
             </button>
@@ -157,7 +160,7 @@ const LeadList = () => {
           <div className="glass-panel p-3.5 border-start border-4 border-info d-flex align-items-center justify-content-between">
             <div>
               <small className="text-muted fw-600 text-uppercase d-block" style={{ fontSize: '0.75rem' }}>TOTAL INQUIRIES ROUTED</small>
-              <h4 className="fw-700 text-white mb-0">{leads.length} Referrals</h4>
+              <h4 className="fw-700 mb-0" style={{ color: 'var(--text-primary)' }}>{leads.length} Referrals</h4>
               <small className="text-muted">100% Verified Tracking</small>
             </div>
             <div className="p-3 bg-info bg-opacity-10 text-info rounded-circle"><i className="bi bi-people-fill fs-3"></i></div>
@@ -181,12 +184,12 @@ const LeadList = () => {
         <div className="row g-2 align-items-center">
           <div className="col-md-7">
             <div className="input-group">
-              <span className="input-group-text bg-dark border-secondary text-warning">
+              <span className="input-group-text bg-light border-end-0 text-warning" style={{ borderColor: 'var(--border-color)' }}>
                 <i className="bi bi-qr-code-scan"></i>
               </span>
               <input 
                 type="text" 
-                className="form-control form-premium-control"
+                className="form-control form-premium-control border-start-0"
                 placeholder="Scan or enter Referral Code / Client Phone (e.g. REF-LEAD-1 or 9988776655)..."
                 value={verifySearch}
                 onChange={(e) => setVerifySearch(e.target.value)}
@@ -213,7 +216,7 @@ const LeadList = () => {
               <div key={col.key} className="col-12 col-md-6 col-xl-3">
                 <div className={`glass-panel p-3 h-100 border-top border-4 ${col.color}`}>
                   <div className="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2" style={{ borderColor: 'var(--border-color)' }}>
-                    <h6 className="fw-700 text-white mb-0" style={{ fontSize: '0.9rem' }}>{col.label}</h6>
+                    <h6 className="fw-700 mb-0" style={{ fontSize: '0.9rem', color: 'var(--text-primary)' }}>{col.label}</h6>
                     <span className="badge bg-secondary text-light rounded-pill small">{columnLeads.length}</span>
                   </div>
 
@@ -222,11 +225,11 @@ const LeadList = () => {
                   ) : (
                     <div className="d-flex flex-column gap-3">
                       {columnLeads.map(lead => (
-                        <div key={lead.id} className="p-3 bg-dark bg-opacity-40 rounded border border-secondary border-opacity-30 shadow-sm">
+                        <div key={lead.id} className="p-3 rounded border shadow-sm" style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}>
                           <div className="d-flex justify-content-between align-items-start mb-2">
-                            <h6 className="fw-700 text-white mb-0" style={{ fontSize: '0.95rem' }}>{lead.lead_name}</h6>
+                            <h6 className="fw-700 mb-0" style={{ fontSize: '0.95rem', color: 'var(--text-primary)' }}>{lead.lead_name}</h6>
                             <button 
-                              className="btn btn-xs btn-outline-info p-1 px-2"
+                              className="btn btn-xs btn-outline-info p-1 px-2 fw-600"
                               style={{ fontSize: '0.7rem' }}
                               onClick={() => setQrModalLead(lead)}
                               title="Show QR Code for Site Visit"
@@ -235,36 +238,36 @@ const LeadList = () => {
                             </button>
                           </div>
 
-                          <div className="small text-muted mb-2">
+                          <div className="small mb-2" style={{ color: 'var(--text-secondary)' }}>
                             <div><i className="bi bi-building text-primary me-1"></i> {lead.project_name}</div>
                             <div><i className="bi bi-telephone me-1"></i> {lead.lead_phone}</div>
                             {lead.broker_name && <div><i className="bi bi-person-badge text-warning me-1"></i> Broker: {lead.broker_name}</div>}
                           </div>
 
-                          <div className="p-2 bg-dark bg-opacity-60 rounded small mb-2 text-muted" style={{ fontSize: '0.78rem' }}>
+                          <div className="p-2 rounded small mb-2" style={{ fontSize: '0.78rem', backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}>
                             {lead.notes || 'No custom notes provided.'}
                           </div>
 
                           {/* Quick Stage Transitions */}
                           {['branch_executive', 'branch_admin', 'super_admin'].includes(user.role) && (
-                            <div className="d-flex gap-1 flex-wrap mt-2 pt-2 border-top border-secondary border-opacity-20">
+                            <div className="d-flex gap-1 flex-wrap mt-2 pt-2 border-top" style={{ borderColor: 'var(--border-color)' }}>
                               {col.key !== 'new' && (
-                                <button className="btn btn-xs btn-outline-secondary" style={{ fontSize: '0.7rem' }} onClick={() => handleStatusChange(lead.id, 'new')}>
+                                <button className="btn btn-xs btn-outline-primary fw-700 px-2 py-1" style={{ fontSize: '0.72rem' }} onClick={() => handleStatusChange(lead.id, 'new')}>
                                   ← New
                                 </button>
                               )}
                               {col.key !== 'in_progress' && (
-                                <button className="btn btn-xs btn-outline-warning text-dark fw-600" style={{ fontSize: '0.7rem' }} onClick={() => handleStatusChange(lead.id, 'in_progress')}>
+                                <button className="btn btn-xs btn-warning text-dark fw-700 px-2 py-1 shadow-sm" style={{ fontSize: '0.72rem' }} onClick={() => handleStatusChange(lead.id, 'in_progress')}>
                                   Visit Scheduled
                                 </button>
                               )}
                               {col.key !== 'converted' && (
-                                <button className="btn btn-xs btn-outline-success" style={{ fontSize: '0.7rem' }} onClick={() => handleStatusChange(lead.id, 'converted')}>
+                                <button className="btn btn-xs btn-success text-white fw-700 px-2 py-1 shadow-sm" style={{ fontSize: '0.72rem' }} onClick={() => handleStatusChange(lead.id, 'converted')}>
                                   Token Paid
                                 </button>
                               )}
                               {col.key !== 'closed' && (
-                                <button className="btn btn-xs btn-outline-light" style={{ fontSize: '0.7rem' }} onClick={() => handleStatusChange(lead.id, 'closed')}>
+                                <button className="btn btn-xs btn-dark text-white fw-700 px-2 py-1 shadow-sm" style={{ fontSize: '0.72rem' }} onClick={() => handleStatusChange(lead.id, 'closed')}>
                                   Close Deal
                                 </button>
                               )}
@@ -285,9 +288,9 @@ const LeadList = () => {
       {viewMode === 'table' && (
         <div className="glass-panel p-4">
           <div className="table-responsive">
-            <table className="table-premium">
+            <table className="table align-middle">
               <thead>
-                <tr>
+                <tr className="text-muted small">
                   <th>REFERRAL ID & CLIENT</th>
                   <th>PROPERTY REFERENCE</th>
                   <th>SOURCE BROKER</th>
@@ -300,12 +303,12 @@ const LeadList = () => {
                 {filteredLeads.map((lead) => (
                   <tr key={lead.id}>
                     <td>
-                      <div className="fw-700 text-white">{lead.lead_name}</div>
+                      <div className="fw-700" style={{ color: 'var(--text-primary)' }}>{lead.lead_name}</div>
                       <span className="badge bg-secondary text-light small me-1">REF-LEAD-{lead.id}</span>
                       <div className="text-muted small mt-1"><i className="bi bi-telephone"></i> {lead.lead_phone}</div>
                     </td>
                     <td>
-                      <div className="fw-500 text-white">{lead.project_name}</div>
+                      <div className="fw-500" style={{ color: 'var(--text-primary)' }}>{lead.project_name}</div>
                       <span className="text-muted small">{lead.property_code}</span>
                     </td>
                     <td className="small text-primary fw-500">
@@ -315,7 +318,7 @@ const LeadList = () => {
                         <span className="text-muted">Internal Direct</span>
                       )}
                     </td>
-                    <td className="small fw-500 text-white">
+                    <td className="small fw-500" style={{ color: 'var(--text-primary)' }}>
                       {lead.executive_name ? (
                         <span><i className="bi bi-person-workspace text-info"></i> {lead.executive_name}</span>
                       ) : (
@@ -325,8 +328,8 @@ const LeadList = () => {
                     <td>
                       {['branch_executive', 'branch_admin', 'super_admin'].includes(user.role) ? (
                         <select 
-                          className="form-select form-premium-control py-1 px-2 text-white" 
-                          style={{ fontSize: '0.85rem', width: '140px' }}
+                          className="form-select py-1 px-2 fw-600" 
+                          style={{ fontSize: '0.85rem', width: '150px', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', borderColor: 'var(--border-color)' }}
                           value={lead.status}
                           onChange={(e) => handleStatusChange(lead.id, e.target.value)}
                         >
@@ -343,7 +346,7 @@ const LeadList = () => {
                     </td>
                     <td>
                       <button 
-                        className="btn btn-sm btn-outline-info"
+                        className="btn btn-sm btn-outline-info fw-600"
                         onClick={() => setQrModalLead(lead)}
                       >
                         <i className="bi bi-qr-code me-1"></i> View QR
@@ -361,30 +364,30 @@ const LeadList = () => {
       {qrModalLead && (
         <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0, 0, 0, 0.75)', zIndex: 1060 }}>
           <div className="modal-dialog modal-dialog-centered text-center">
-            <div className="modal-content glass-panel text-light border-secondary">
-              <div className="modal-header border-secondary">
-                <h5 className="modal-title fw-700 text-white">
+            <div className="modal-content text-dark border-0 shadow-lg" style={{ borderRadius: '24px', backgroundColor: '#ffffff' }}>
+              <div className="modal-header border-bottom py-3 px-4">
+                <h5 className="modal-title fw-700 text-dark">
                   <i className="bi bi-qr-code-scan text-warning me-2"></i>Site Visit Referral QR Pass
                 </h5>
-                <button type="button" className="btn-close btn-close-white" onClick={() => setQrModalLead(null)}></button>
+                <button type="button" className="btn-close" onClick={() => setQrModalLead(null)}></button>
               </div>
               <div className="modal-body p-4">
-                <div className="mb-3 d-inline-block" dangerouslySetInnerHTML={{ __html: generateQRCodeSVG(`REF-LEAD-${qrModalLead.id}-${qrModalLead.lead_phone}`, 180) }} />
+                <div className="mb-3 d-inline-block p-3 bg-white rounded shadow-sm border" dangerouslySetInnerHTML={{ __html: generateQRCodeSVG(`REF-LEAD-${qrModalLead.id}-${qrModalLead.lead_phone}`, 180) }} />
                 
-                <h5 className="fw-700 text-white mb-1">{qrModalLead.lead_name}</h5>
-                <div className="text-warning fw-600 mb-2">Ref Code: REF-LEAD-{qrModalLead.id}</div>
+                <h5 className="fw-700 text-dark mb-1">{qrModalLead.lead_name}</h5>
+                <div className="text-warning fw-700 mb-2">Ref Code: REF-LEAD-{qrModalLead.id}</div>
                 <div className="small text-muted mb-3">
                   <div><strong>Property:</strong> {qrModalLead.project_name} ({qrModalLead.property_code})</div>
                   <div><strong>Referring Broker:</strong> {qrModalLead.broker_name || 'Direct Referral'}</div>
                   <div><strong>Client Phone:</strong> {qrModalLead.lead_phone}</div>
                 </div>
 
-                <div className="alert alert-info py-2 small mb-0">
+                <div className="alert alert-info py-2 small mb-0" style={{ borderRadius: '12px' }}>
                   <i className="bi bi-shield-check me-1"></i> Present this QR code to the site sales executive upon arrival to verify referral commission ownership.
                 </div>
               </div>
-              <div className="modal-footer border-secondary justify-content-center">
-                <button type="button" className="btn btn-secondary btn-sm" onClick={() => setQrModalLead(null)}>Close</button>
+              <div className="modal-footer border-top py-3 px-4 justify-content-center">
+                <button type="button" className="btn btn-secondary btn-sm rounded-pill px-4" onClick={() => setQrModalLead(null)}>Close</button>
               </div>
             </div>
           </div>

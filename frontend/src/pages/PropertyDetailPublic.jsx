@@ -3,7 +3,6 @@ import { useParams, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { CustomizationContext } from '../context/CustomizationContext';
 import api from '../services/api';
-import CustomizationModal from '../components/CustomizationModal';
 import { formatImageUrl, handleImageError } from '../utils/imageHelper';
 import { extractMapUrl } from '../utils/mapHelper';
 import { getAmenityIcon } from '../utils/amenityIcons';
@@ -20,9 +19,6 @@ const PropertyDetailPublic = () => {
   
   const [activeTab, setActiveTab] = useState('overview');
 
-  // Customization Modal trigger
-  const [showAdminModal, setShowAdminModal] = useState(false);
-
   // Lead inquiry form state
   const [leadForm, setLeadForm] = useState({
     lead_name: '',
@@ -33,18 +29,6 @@ const PropertyDetailPublic = () => {
   const [submittingLead, setSubmittingLead] = useState(false);
   const [leadSuccessMsg, setLeadSuccessMsg] = useState('');
   const [leadError, setLeadError] = useState('');
-
-  // Shortcut key listener for Ctrl + Shift + A
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'a') {
-        e.preventDefault();
-        setShowAdminModal(true);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -640,9 +624,6 @@ const PropertyDetailPublic = () => {
           </div>
         </div>
       </footer>
-
-      {/* Hidden customization modal */}
-      <CustomizationModal show={showAdminModal} onClose={() => setShowAdminModal(false)} />
     </div>
   );
 };

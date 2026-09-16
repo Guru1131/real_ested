@@ -357,7 +357,10 @@ router.get('/broker/:id/logs', authenticate, requireRole(['super_admin', 'assist
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: 'Server error retrieving logs.' });
-  // GET /api/users/broker-staff (List sub-account staff for a broker)
+  }
+});
+
+// GET /api/users/broker-staff (List sub-account staff for a broker)
 router.get('/broker-staff', authenticate, async (req, res) => {
   try {
     let brokerId = 0;

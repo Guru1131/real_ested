@@ -1,6 +1,7 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import { CustomizationContext } from '../context/CustomizationContext';
 
 const Login = () => {
   const [username, setUsername] = useState('');
@@ -8,6 +9,7 @@ const Login = () => {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const { login, user } = useContext(AuthContext);
+  const { config } = useContext(CustomizationContext);
   const navigate = useNavigate();
 
   // Redirect to dashboard if already logged in
@@ -44,10 +46,14 @@ const Login = () => {
         {/* Logo/Icon Area */}
         <div className="text-center mb-4">
           <div className="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary rounded-circle mb-3" style={{ width: '70px', height: '70px', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
-            <i className="bi bi-building-fill" style={{ fontSize: '2.2rem' }}></i>
+            {config.logoUrl ? (
+              <img src={config.logoUrl} alt="Logo" style={{ maxHeight: '42px', maxWidth: '42px', objectFit: 'contain' }} />
+            ) : (
+              <i className="bi bi-building-fill" style={{ fontSize: '2.2rem' }}></i>
+            )}
           </div>
-          <h3 className="fw-700 text-white mb-1">PROP-MANAGER</h3>
-          <p className="text-muted small">Internal Enterprise System Log In</p>
+          <h3 className="fw-700 text-white mb-1">{config.brandName || 'PROP-MANAGER'}</h3>
+          <p className="text-muted small">{config.brandTagline || 'Internal Enterprise System Log In'}</p>
         </div>
 
         {/* Central Card */}

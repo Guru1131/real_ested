@@ -1,12 +1,17 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import { CustomizationContext } from '../context/CustomizationContext';
 import api from '../services/api';
 import PropertyCard from '../components/PropertyCard';
 
 const Dashboard = () => {
   const { user } = useContext(AuthContext);
+  const { config } = useContext(CustomizationContext);
   const navigate = useNavigate();
+
+  const brokerPortalTitle = config?.brokerPortalName || `Welcome to ${config?.brandName || 'PROP-MANAGER'} Partner Portal`;
+
   const [stats, setStats] = useState({
     branchesCount: 0,
     pendingApprovals: 0,
@@ -154,7 +159,7 @@ const Dashboard = () => {
   }
 
   // ----------------------------------------------------
-  // RENDER BROKER BEYONDWALLS-INSPIRED CATEGORIZED VIEW
+  // RENDER BROKER CATEGORIZED VIEW
   // ----------------------------------------------------
   if (user.role === 'external_broker') {
     // Dynamically partition properties into categories
@@ -179,7 +184,7 @@ const Dashboard = () => {
         {/* Header Hero */}
         <div className="glass-panel p-4 p-md-5 mb-4 animate-fade-in text-center text-md-start d-md-flex align-items-center justify-content-between" style={{ background: 'linear-gradient(135deg, rgba(17, 24, 39, 0.9) 0%, rgba(59, 130, 246, 0.1) 100%)' }}>
           <div>
-            <h2 className="fw-700 text-white mb-2">Welcome to BeyondWalls Broker Portal</h2>
+            <h2 className="fw-700 text-white mb-2">{brokerPortalTitle}</h2>
             <p className="text-muted mb-0">Search premium projects, download PDF brochures, share listings, and submit leads directly to developers.</p>
             <div className="mt-3 d-flex flex-wrap gap-2 gap-sm-3 justify-content-center justify-content-md-start">
               <span className="badge bg-secondary text-light rounded-pill px-3 py-1.5 small"><i className="bi bi-person-circle"></i> Broker: {user.username}</span>

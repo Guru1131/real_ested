@@ -2,29 +2,66 @@ import React, { createContext, useState, useEffect } from 'react';
 
 export const CustomizationContext = createContext();
 
+export const defaultConfig = {
+  // Branding & Visual Systems
+  brandName: 'PROP-MANAGER',
+  brandTagline: 'Enterprise Property Sales & Rental System',
+  logoUrl: '',
+  primaryColor: '#0f172a', // Slate Navy
+  accentColor: '#d97706',  // Amber Gold
+  accentColorSecondary: '#b45309', // Darker Amber
+  headerStyle: 'standard', // 'standard' or 'glass'
+  footerBgColor: '#0f172a',
+  themeMode: 'light', // 'light' or 'dark'
+
+  // Business & Contact Information
+  businessName: 'PROP-MANAGER Real Estate & Management Systems',
+  contactEmail: 'support@propmanager.com',
+  contactPhone: '+91 98765 43210',
+  officeAddress: 'Suite 500, Financial District, Mumbai',
+  reraNumber: 'A041262501974',
+  taxId: '27AAACA1234A1Z5',
+  currencySymbol: '₹',
+  currencyCode: 'INR',
+
+  // Whitelabeling & Portal Customizations
+  brokerPortalName: 'Partner Broker Portal',
+  heroTitle: 'Curated Premium Living Spaces',
+  heroSubtitle: 'Explore and compare verified premium properties across regional branches with absolute transparency.',
+  licenseText: 'Copyright © 2026 PROP-MANAGER Systems. All rights reserved. MAHARERA Registration No: A041262501974.',
+  
+  // Feature Toggles
+  featureToggles: {
+    brokerPortal: true,
+    leadTracker: true,
+    vr360: true,
+    whatsappShare: true,
+    publicLanding: true
+  }
+};
+
 export const CustomizationProvider = ({ children }) => {
-  // Load configuration with default Slate-Gold values & themeMode
+  // Hidden modal visibility state
+  const [showHiddenModal, setShowHiddenModal] = useState(false);
+
+  // Load configuration with fallback to defaultConfig
   const [config, setConfig] = useState(() => {
     const saved = localStorage.getItem('custom_config');
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        return {
+          ...defaultConfig,
+          ...parsed,
+          featureToggles: {
+            ...defaultConfig.featureToggles,
+            ...(parsed.featureToggles || {})
+          }
+        };
       } catch (e) {
         console.error('Error parsing stored customization config', e);
       }
     }
-    return {
-      brandName: 'Apex Estates',
-      primaryColor: '#0f172a', // Slate Navy
-      accentColor: '#d97706',  // Amber Gold
-      accentColorSecondary: '#b45309', // Darker Amber
-      heroTitle: 'Curated Premium Living Spaces',
-      heroSubtitle: 'Explore and compare verified premium properties across regional branches with absolute transparency.',
-      licenseText: 'Copyright © 2026 Apex Estates. All rights reserved. MAHARERA Registration No: A041262501974.',
-      headerStyle: 'standard', // 'standard' or 'glass'
-      footerBgColor: '#0f172a',
-      themeMode: 'light' // 'light' or 'dark'
-    };
   });
 
   // Apply CSS variables dynamically to the document head root
@@ -54,7 +91,7 @@ export const CustomizationProvider = ({ children }) => {
     root.style.setProperty('--accent-secondary', config.accentColorSecondary);
     root.style.setProperty('--accent-gradient', `linear-gradient(135deg, ${config.accentColor} 0%, ${config.accentColorSecondary} 100%)`);
     
-    // Also save config
+    // Save updated config to localStorage
     localStorage.setItem('custom_config', JSON.stringify(config));
   }, [config]);
 
@@ -73,22 +110,25 @@ export const CustomizationProvider = ({ children }) => {
   };
 
   const resetConfig = () => {
-    setConfig({
-      brandName: 'Apex Estates',
-      primaryColor: '#0f172a',
-      accentColor: '#d97706',
-      accentColorSecondary: '#b45309',
-      heroTitle: 'Curated Premium Living Spaces',
-      heroSubtitle: 'Explore and compare verified premium properties across regional branches with absolute transparency.',
-      licenseText: 'Copyright © 2026 Apex Estates. All rights reserved. MAHARERA Registration No: A041262501974.',
-      headerStyle: 'standard',
-      footerBgColor: '#0f172a',
-      themeMode: 'light'
-    });
+    setConfig(defaultConfig);
+    localStorage.setItem('custom_config', JSON.stringify(defaultConfig));
   };
 
+  const openHiddenModal = () => setShowHiddenModal(true);
+  const closeHiddenModal = () => setShowHiddenModal(false);
+  const toggleHiddenModal = () => setShowHiddenModal(prev => !prev);
+
   return (
-    <CustomizationContext.Provider value={{ config, updateConfig, toggleThemeMode, resetConfig }}>
+    <CustomizationContext.Provider value={{
+      config,
+      updateConfig,
+      toggleThemeMode,
+      resetConfig,
+      showHiddenModal,
+      openHiddenModal,
+      closeHiddenModal,
+      toggleHiddenModal
+    }}>
       {children}
     </CustomizationContext.Provider>
   );

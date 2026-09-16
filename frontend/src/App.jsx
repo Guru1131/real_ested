@@ -2,7 +2,8 @@ import React, { useContext } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, AuthContext } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
-import { CustomizationProvider } from './context/CustomizationContext';
+import { CustomizationProvider, CustomizationContext } from './context/CustomizationContext';
+import CustomizationModal from './components/CustomizationModal';
 
 // Layout Elements
 import Navbar from './components/Navbar';
@@ -23,6 +24,33 @@ import LeadList from './pages/LeadList';
 import Landing from './pages/Landing';
 import PropertyDetailPublic from './pages/PropertyDetailPublic';
 import BrokerStaffManagement from './pages/BrokerStaffManagement';
+
+// Global Hidden Customization Modal Wrapper (Super Admin Only)
+const GlobalHiddenModalContainer = () => {
+  const { user } = useContext(AuthContext);
+  const { showHiddenModal, openHiddenModal, closeHiddenModal } = useContext(CustomizationContext);
+
+  React.useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'a' || e.key === 'A' || e.code === 'KeyA')) {
+        // Strict access check: only trigger shortcut if logged in as super_admin
+        if (user && user.role === 'super_admin') {
+          e.preventDefault();
+          openHiddenModal();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [user, openHiddenModal]);
+
+  if (!user || user.role !== 'super_admin') {
+    return null;
+  }
+
+  return <CustomizationModal show={showHiddenModal} onClose={closeHiddenModal} />;
+};
 
 // Layout wrapper to inject sidebar and navbar on authenticated pages
 const AppLayout = ({ children }) => {
@@ -81,128 +109,129 @@ const App = () => {
     <CustomizationProvider>
       <AuthProvider>
         <Router>
-        <AppLayout>
-          <Routes>
-            {/* Public Route */}
-            <Route path="/login" element={<Login />} />
+          <GlobalHiddenModalContainer />
+          <AppLayout>
+            <Routes>
+              {/* Public Route */}
+              <Route path="/login" element={<Login />} />
 
-            {/* Authenticated Dashboard */}
-            <Route 
-              path="/dashboard" 
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              } 
-            />
+              {/* Authenticated Dashboard */}
+              <Route 
+                path="/dashboard" 
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                } 
+              />
 
-            {/* Branches Management */}
-            <Route 
-              path="/branches" 
-              element={
-                <ProtectedRoute allowedRoles={['super_admin']}>
-                  <BranchManagement />
-                </ProtectedRoute>
-              } 
-            />
+              {/* Branches Management */}
+              <Route 
+                path="/branches" 
+                element={
+                  <ProtectedRoute allowedRoles={['super_admin']}>
+                    <BranchManagement />
+                  </ProtectedRoute>
+                } 
+              />
 
-            {/* Staff Directory */}
-            <Route 
-              path="/users" 
-              element={
-                <ProtectedRoute allowedRoles={['super_admin', 'assistant_admin', 'branch_admin']}>
-                  <UserManagement />
-                </ProtectedRoute>
-              } 
-            />
+              {/* Staff Directory */}
+              <Route 
+                path="/users" 
+                element={
+                  <ProtectedRoute allowedRoles={['super_admin', 'assistant_admin', 'branch_admin']}>
+                    <UserManagement />
+                  </ProtectedRoute>
+                } 
+              />
 
-            {/* Broker Management Sub-module */}
-            <Route 
-              path="/brokers" 
-              element={
-                <ProtectedRoute allowedRoles={['super_admin', 'assistant_admin', 'branch_admin']}>
-                  <BrokerManagement />
-                </ProtectedRoute>
-              } 
-            />
+              {/* Broker Management Sub-module */}
+              <Route 
+                path="/brokers" 
+                element={
+                  <ProtectedRoute allowedRoles={['super_admin', 'assistant_admin', 'branch_admin']}>
+                    <BrokerManagement />
+                  </ProtectedRoute>
+                } 
+              />
 
-            {/* Broker Staff Sub-Account Management */}
-            <Route 
-              path="/broker-staff" 
-              element={
-                <ProtectedRoute allowedRoles={['external_broker', 'super_admin', 'assistant_admin', 'branch_admin']}>
-                  <BrokerStaffManagement />
-                </ProtectedRoute>
-              } 
-            />
+              {/* Broker Staff Sub-Account Management */}
+              <Route 
+                path="/broker-staff" 
+                element={
+                  <ProtectedRoute allowedRoles={['external_broker', 'super_admin', 'assistant_admin', 'branch_admin']}>
+                    <BrokerStaffManagement />
+                  </ProtectedRoute>
+                } 
+              />
 
-            {/* Properties Searching Catalog */}
-            <Route 
-              path="/properties" 
-              element={
-                <ProtectedRoute>
-                  <PropertySearch />
-                </ProtectedRoute>
-              } 
-            />
+              {/* Properties Searching Catalog */}
+              <Route 
+                path="/properties" 
+                element={
+                  <ProtectedRoute>
+                    <PropertySearch />
+                  </ProtectedRoute>
+                } 
+              />
 
-            {/* New Property Creator & Editor */}
-            <Route 
-              path="/properties/new" 
-              element={
-                <ProtectedRoute allowedRoles={['branch_admin', 'super_admin']}>
-                  <PropertyForm />
-                </ProtectedRoute>
-              } 
-            />
+              {/* New Property Creator & Editor */}
+              <Route 
+                path="/properties/new" 
+                element={
+                  <ProtectedRoute allowedRoles={['branch_admin', 'super_admin']}>
+                    <PropertyForm />
+                  </ProtectedRoute>
+                } 
+              />
 
-            <Route 
-              path="/properties/edit/:id" 
-              element={
-                <ProtectedRoute allowedRoles={['branch_admin', 'super_admin']}>
-                  <PropertyForm />
-                </ProtectedRoute>
-              } 
-            />
+              <Route 
+                path="/properties/edit/:id" 
+                element={
+                  <ProtectedRoute allowedRoles={['branch_admin', 'super_admin']}>
+                    <PropertyForm />
+                  </ProtectedRoute>
+                } 
+              />
 
-            {/* Property Detail page */}
-            <Route 
-              path="/property/:slug" 
-              element={
-                <ProtectedRoute>
-                  <PropertyDetail />
-                </ProtectedRoute>
-              } 
-            />
+              {/* Property Detail page */}
+              <Route 
+                path="/property/:slug" 
+                element={
+                  <ProtectedRoute>
+                    <PropertyDetail />
+                  </ProtectedRoute>
+                } 
+              />
 
-            {/* Super Admin Review Approvals Queue */}
-            <Route 
-              path="/approvals" 
-              element={
-                <ProtectedRoute allowedRoles={['super_admin']}>
-                  <PropertyApprovalQueue />
-                </ProtectedRoute>
-              } 
-            />
+              {/* Super Admin Review Approvals Queue */}
+              <Route 
+                path="/approvals" 
+                element={
+                  <ProtectedRoute allowedRoles={['super_admin']}>
+                    <PropertyApprovalQueue />
+                  </ProtectedRoute>
+                } 
+              />
 
-            {/* Leads referral inbox */}
-            <Route 
-              path="/leads" 
-              element={
-                <ProtectedRoute>
-                  <LeadList />
-                </ProtectedRoute>
-              } 
-            />
+              {/* Leads referral inbox */}
+              <Route 
+                path="/leads" 
+                element={
+                  <ProtectedRoute>
+                    <LeadList />
+                  </ProtectedRoute>
+                } 
+              />
 
-            {/* Public Routes */}
-            <Route path="/" element={<Landing />} />
-            <Route path="/property-public/:slug" element={<PropertyDetailPublic />} />
+              {/* Public Routes */}
+              <Route path="/" element={<Landing />} />
+              <Route path="/property-public/:slug" element={<PropertyDetailPublic />} />
 
-            {/* Fallbacks */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </AppLayout>
+              {/* Fallbacks */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </AppLayout>
         </Router>
       </AuthProvider>
     </CustomizationProvider>

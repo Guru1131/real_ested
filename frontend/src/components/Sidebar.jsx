@@ -1,9 +1,11 @@
 import React, { useContext } from 'react';
 import { NavLink } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import { CustomizationContext } from '../context/CustomizationContext';
 
 const Sidebar = ({ isOpen, onClose }) => {
   const { user } = useContext(AuthContext);
+  const { config } = useContext(CustomizationContext);
 
   if (!user) return null;
 
@@ -17,8 +19,12 @@ const Sidebar = ({ isOpen, onClose }) => {
         {/* Brand/Header */}
         <div className="px-3 mb-4 d-flex align-items-center justify-content-between">
           <div className="d-flex align-items-center gap-2">
-            <i className="bi bi-building-fill text-primary" style={{ fontSize: '1.75rem' }}></i>
-            <span className="sidebar-brand">PROP-MANAGER</span>
+            {config.logoUrl ? (
+              <img src={config.logoUrl} alt="Logo" style={{ height: '32px', objectFit: 'contain' }} />
+            ) : (
+              <i className="bi bi-building-fill text-primary" style={{ fontSize: '1.75rem' }}></i>
+            )}
+            <span className="sidebar-brand">{config.brandName || 'PROP-MANAGER'}</span>
           </div>
           {/* Close button for mobile drawer */}
           <button 

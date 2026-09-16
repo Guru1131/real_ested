@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { CustomizationContext } from '../context/CustomizationContext';
 import api from '../services/api';
-import CustomizationModal from '../components/CustomizationModal';
 import { formatImageUrl } from '../utils/imageHelper';
 
 const Landing = () => {
@@ -14,9 +13,6 @@ const Landing = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   
-  // Customization Modal trigger
-  const [showAdminModal, setShowAdminModal] = useState(false);
-
   // Active Category Tab: 'all', 'residential', 'commercial', 'new_launches'
   const [activeCategoryTab, setActiveCategoryTab] = useState('all');
 
@@ -39,18 +35,6 @@ const Landing = () => {
     minPrice: '',
     maxPrice: ''
   });
-
-  // Shortcut key listener for Ctrl + Shift + A
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'a') {
-        e.preventDefault();
-        setShowAdminModal(true);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
 
   const fetchPublicProperties = async (currentFilters = filters, categoryTab = activeCategoryTab) => {
     try {
@@ -886,9 +870,6 @@ const Landing = () => {
           </div>
         </div>
       </footer>
-
-      {/* Hidden customization modal */}
-      <CustomizationModal show={showAdminModal} onClose={() => setShowAdminModal(false)} />
     </div>
   );
 };
