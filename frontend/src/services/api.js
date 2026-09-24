@@ -206,7 +206,12 @@ api.interceptors.response.use(
         originalRequest.url = nextUrl;
         
         try {
-          return await api.request(originalRequest);
+          const retryRes = await api.request(originalRequest);
+          // If the fallback returns HTML (e.g. default cPanel page) instead of JSON, treat it as a failure
+          if (typeof retryRes.data === 'string' && retryRes.data.toLowerCase().includes('<!doctype html>')) {
+             throw { response: { status: 404 } };
+          }
+          return retryRes;
         } catch (retryErr) {
           // Continue loop if next retry also fails
           if (retryErr.response && retryErr.response.status === 404) {
