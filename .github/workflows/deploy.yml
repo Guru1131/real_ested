@@ -45,8 +45,10 @@ jobs:
           scp -P $PORT -o StrictHostKeyChecking=no backend.zip ${HOST_USER}@${HOST_IP}:~/backend.zip
           ssh -p $PORT -o StrictHostKeyChecking=no ${HOST_USER}@${HOST_IP} 'bash -s' << 'EOF'
             set -e
-            mkdir -p ~/real_ested/backend
-            unzip -o ~/backend.zip -d ~/real_ested/backend/
+            mkdir -p ~/public_html/real_ested/backend
+            unzip -o ~/backend.zip -d ~/public_html/real_ested/backend/
             rm -f ~/backend.zip
-            echo "✅ Backend deployment completed successfully on Hostycare server."
+            mkdir -p ~/public_html/real_ested/backend/tmp
+            touch ~/public_html/real_ested/backend/tmp/restart.txt
+            echo "✅ Backend deployment and Node server restart completed successfully on Hostycare server."
           EOF
