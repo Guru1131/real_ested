@@ -72,7 +72,7 @@ const BrokerStaffManagement = () => {
         res = await api.post('/api/users/broker_staff.php', newStaff);
       }
 
-      setSuccess(res.data.message || 'Staff sub-account ID created successfully!');
+      setSuccess(res.data?.message || 'Staff sub-account ID created successfully!');
       setShowAddModal(false);
       setNewStaff({ username: '', email: '', password: '', phone: '' });
       fetchStaffData();

@@ -1,7 +1,7 @@
 <IfModule mod_rewrite.c>
   RewriteEngine On
 
-  # Route /uploads/ requests to backend/uploads/
+  # Route /uploads/ requests to backend/uploads/ or uploads/
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteRule ^uploads/(.*)$ backend/uploads/$1 [L]
 
@@ -22,7 +22,10 @@
   RewriteRule ^api/properties/([0-9]+)/?$ backend/api/properties/index.php?id=$1 [QSA,L]
   RewriteRule ^api/properties/?$ backend/api/properties/index.php [QSA,L]
 
-  RewriteRule ^api/announcements/admin/?$ backend/api/announcements/index.php?action=admin [QSA,L]
+  RewriteRule ^api/announcements/admin/?$ backend/api/announcements/admin.php?action=admin [QSA,L]
+  RewriteRule ^api/announcements/create\.php$ backend/api/announcements/create.php [QSA,L]
+  RewriteRule ^api/announcements/update\.php$ backend/api/announcements/update.php [QSA,L]
+  RewriteRule ^api/announcements/delete\.php$ backend/api/announcements/delete.php [QSA,L]
   RewriteRule ^api/announcements/index\.php$ backend/api/announcements/index.php [QSA,L]
   RewriteRule ^api/announcements/([0-9]+)/?$ backend/api/announcements/index.php?id=$1 [QSA,L]
   RewriteRule ^api/announcements/?$ backend/api/announcements/index.php [QSA,L]

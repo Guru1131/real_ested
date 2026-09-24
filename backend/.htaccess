@@ -18,7 +18,10 @@
   RewriteRule ^properties/([0-9]+)/?$ api/properties/index.php?id=$1 [QSA,L]
   RewriteRule ^properties/?$ api/properties/index.php [QSA,L]
 
-  RewriteRule ^announcements/admin/?$ api/announcements/index.php?action=admin [QSA,L]
+  RewriteRule ^announcements/admin/?$ api/announcements/admin.php?action=admin [QSA,L]
+  RewriteRule ^announcements/create\.php$ api/announcements/create.php [QSA,L]
+  RewriteRule ^announcements/update\.php$ api/announcements/update.php [QSA,L]
+  RewriteRule ^announcements/delete\.php$ api/announcements/delete.php [QSA,L]
   RewriteRule ^announcements/([0-9]+)/?$ api/announcements/index.php?id=$1 [QSA,L]
   RewriteRule ^announcements/?$ api/announcements/index.php [QSA,L]
 
@@ -26,6 +29,8 @@
   RewriteRule ^branches/?$ api/branches/index.php [QSA,L]
 
   RewriteRule ^users/brokers/?$ api/users/brokers.php [QSA,L]
+  RewriteRule ^users/broker-staff/?$ api/users/broker_staff.php [QSA,L]
+  RewriteRule ^users/broker_staff\.php$ api/users/broker_staff.php [QSA,L]
   RewriteRule ^users/broker/([0-9]+)/logs/?$ api/users/broker_logs.php?broker_id=$1 [QSA,L]
   RewriteRule ^users/([0-9]+)/?$ api/users/index.php?id=$1 [QSA,L]
   RewriteRule ^users/?$ api/users/index.php [QSA,L]
@@ -37,4 +42,9 @@
 
   RewriteRule ^auth/login/?$ api/auth/login.php [QSA,L]
   RewriteRule ^auth/profile/?$ api/auth/profile.php [QSA,L]
+
+  # Catch-all rule for any unhandled routes to api/
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^(.*)$ api/$1 [QSA,L]
 </IfModule>

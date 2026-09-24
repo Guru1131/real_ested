@@ -69,7 +69,7 @@ const PropertyDetailPublic = () => {
         ...leadForm
       });
       
-      setLeadSuccessMsg(res.data.message || 'Inquiry submitted successfully!');
+      setLeadSuccessMsg(res.data?.message || 'Inquiry submitted successfully!');
       setLeadForm({
         lead_name: '',
         lead_email: '',

@@ -323,7 +323,7 @@ const PropertyForm = () => {
             headers: { 'Content-Type': 'multipart/form-data' }
           });
         }
-        setSuccess(res.data.message || 'Property updated successfully.');
+        setSuccess(res.data?.message || 'Property updated successfully.');
       } else {
         let res;
         try {
@@ -335,7 +335,7 @@ const PropertyForm = () => {
             headers: { 'Content-Type': 'multipart/form-data' }
           });
         }
-        setSuccess(res.data.message || `Property draft registered successfully with code: ${res.data.property_code || ''}.`);
+        setSuccess(res.data?.message || `Property draft registered successfully with code: ${res.data?.property_code || ''}.`);
       }
       
       setTimeout(() => {

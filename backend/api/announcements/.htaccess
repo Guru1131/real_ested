@@ -3,8 +3,13 @@
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
 
-    # Route /admin to index.php?action=admin
-    RewriteRule ^admin/?$ index.php?action=admin [QSA,L]
+    # Route /admin to admin.php?action=admin
+    RewriteRule ^admin/?$ admin.php?action=admin [QSA,L]
+
+    # Route methods
+    RewriteRule ^create\.php$ create.php [QSA,L]
+    RewriteRule ^update\.php$ update.php [QSA,L]
+    RewriteRule ^delete\.php$ delete.php [QSA,L]
 
     # Route /:id to index.php?id=$1
     RewriteRule ^([0-9]+)/?$ index.php?id=$1 [QSA,L]
