@@ -15,8 +15,18 @@ const getFallbackUrls = (rawUrl, method = 'get') => {
   if (!rawUrl) return [];
   const fallbacks = [];
   const methodLower = method ? method.toLowerCase() : 'get';
-  const [path, query] = rawUrl.split('?');
+  let [path, query] = rawUrl.split('?');
   const qStr = query ? `?${query}` : '';
+  
+  try {
+    if (path.startsWith('http')) {
+      path = new URL(path).pathname;
+    }
+  } catch(e) {}
+  
+  if (!path.startsWith('/')) {
+    path = '/' + path;
+  }
 
   // 1. Specific mapping rules for REST routes -> PHP files
   if (path === '/api/announcements/admin' || path === 'api/announcements/admin') {
