@@ -17,7 +17,7 @@ const MarqueeTicker = () => {
         } catch (e1) {
           res = await api.get('/api/announcements/index.php');
         }
-        setAnnouncements(res.data || []);
+        setAnnouncements(Array.isArray(res.data) ? res.data : []);
       } catch (err) {
         console.error('Error fetching marquee announcements', err);
       }

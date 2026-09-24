@@ -39,25 +39,30 @@ const Dashboard = () => {
             api.get('/api/leads')
           ]);
 
-          const pending = propertiesRes.data.filter(p => p.approval_status === 'pending_approval').length;
-          const brokers = usersRes.data.filter(u => u.role === 'external_broker' && u.status === 'active').length;
-          const staff = usersRes.data.filter(u => u.role !== 'external_broker').length;
+          const propertiesData = Array.isArray(propertiesRes.data) ? propertiesRes.data : [];
+          const usersData = Array.isArray(usersRes.data) ? usersRes.data : [];
+          const branchesData = Array.isArray(branchesRes.data) ? branchesRes.data : [];
+          const leadsData = Array.isArray(leadsRes.data) ? leadsRes.data : [];
+
+          const pending = propertiesData.filter(p => p.approval_status === 'pending_approval').length;
+          const brokers = usersData.filter(u => u.role === 'external_broker' && u.status === 'active').length;
+          const staff = usersData.filter(u => u.role !== 'external_broker').length;
 
           setStats({
-            branchesCount: branchesRes.data.length,
+            branchesCount: branchesData.length,
             pendingApprovals: pending,
             activeBrokers: brokers,
             activeStaff: staff,
-            leadsCount: leadsRes.data.length,
-            propertiesCount: propertiesRes.data.length,
-            draftCount: propertiesRes.data.filter(p => p.approval_status === 'draft').length
+            leadsCount: leadsData.length,
+            propertiesCount: propertiesData.length,
+            draftCount: propertiesData.filter(p => p.approval_status === 'draft').length
           });
 
           // Fetch recent activity logs of the first active broker if any exists
-          const firstBroker = usersRes.data.find(u => u.role === 'external_broker');
+          const firstBroker = usersData.find(u => u.role === 'external_broker');
           if (firstBroker) {
             const logsRes = await api.get(`/api/users/broker/${firstBroker.id}/logs`);
-            setRecentLogs(logsRes.data.logs.slice(0, 5));
+            setRecentLogs(Array.isArray(logsRes.data?.logs) ? logsRes.data.logs.slice(0, 5) : []);
           }
 
         } else if (user.role === 'branch_admin') {
@@ -67,20 +72,24 @@ const Dashboard = () => {
             api.get('/api/leads')
           ]);
 
+          const propertiesData = Array.isArray(propertiesRes.data) ? propertiesRes.data : [];
+          const usersData = Array.isArray(usersRes.data) ? usersRes.data : [];
+          const leadsData = Array.isArray(leadsRes.data) ? leadsRes.data : [];
+
           setStats({
-            propertiesCount: propertiesRes.data.length,
-            draftCount: propertiesRes.data.filter(p => p.approval_status === 'draft').length,
-            pendingApprovals: propertiesRes.data.filter(p => p.approval_status === 'pending_approval').length,
-            activeBrokers: usersRes.data.filter(u => u.role === 'external_broker' && u.status === 'active').length,
-            activeStaff: usersRes.data.filter(u => u.role === 'branch_executive' && u.status === 'active').length,
-            leadsCount: leadsRes.data.length
+            propertiesCount: propertiesData.length,
+            draftCount: propertiesData.filter(p => p.approval_status === 'draft').length,
+            pendingApprovals: propertiesData.filter(p => p.approval_status === 'pending_approval').length,
+            activeBrokers: usersData.filter(u => u.role === 'external_broker' && u.status === 'active').length,
+            activeStaff: usersData.filter(u => u.role === 'branch_executive' && u.status === 'active').length,
+            leadsCount: leadsData.length
           });
 
           // Get logs of first assigned broker
-          const brokersList = usersRes.data.filter(u => u.role === 'external_broker');
+          const brokersList = usersData.filter(u => u.role === 'external_broker');
           if (brokersList.length > 0) {
             const logsRes = await api.get(`/api/users/broker/${brokersList[0].id}/logs`);
-            setRecentLogs(logsRes.data.logs.slice(0, 5));
+            setRecentLogs(Array.isArray(logsRes.data?.logs) ? logsRes.data.logs.slice(0, 5) : []);
           }
 
         } else if (user.role === 'branch_executive') {
@@ -89,9 +98,12 @@ const Dashboard = () => {
             api.get('/api/leads')
           ]);
 
+          const propertiesData = Array.isArray(propertiesRes.data) ? propertiesRes.data : [];
+          const leadsData = Array.isArray(leadsRes.data) ? leadsRes.data : [];
+
           setStats({
-            propertiesCount: propertiesRes.data.length, // Only approved properties
-            leadsCount: leadsRes.data.length, // Only leads assigned to them
+            propertiesCount: propertiesData.length, // Only approved properties
+            leadsCount: leadsData.length, // Only leads assigned to them
           });
 
         } else if (user.role === 'external_broker') {
@@ -100,10 +112,13 @@ const Dashboard = () => {
             api.get('/api/leads')
           ]);
 
-          setProperties(propertiesRes.data); // Save listings for categorized grouping
+          const propertiesData = Array.isArray(propertiesRes.data) ? propertiesRes.data : [];
+          const leadsData = Array.isArray(leadsRes.data) ? leadsRes.data : [];
+
+          setProperties(propertiesData); // Save listings for categorized grouping
           setStats({
-            propertiesCount: propertiesRes.data.length, // Only assigned, approved properties
-            leadsCount: leadsRes.data.length, // Only leads submitted by them
+            propertiesCount: propertiesData.length, // Only assigned, approved properties
+            leadsCount: leadsData.length, // Only leads submitted by them
           });
         }
 
