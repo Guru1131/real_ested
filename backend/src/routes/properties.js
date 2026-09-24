@@ -131,7 +131,7 @@ router.get('/public/detail/:slug', async (req, res) => {
 
     // 2. Fetch BHK configurations
     const [configs] = await pool.query(
-      'SELECT bhk_type, carpet_area, price, estimated_emi, floor_plan_url FROM property_configurations WHERE property_id = ?',
+      'SELECT bhk_type, carpet_area, price, estimated_emi FROM property_configurations WHERE property_id = ?',
       [property.id]
     );
 
@@ -346,7 +346,7 @@ router.get('/detail/:slug', authenticate, async (req, res) => {
 
     // 3. Fetch BHK configurations
     const [configs] = await pool.query(
-      'SELECT bhk_type, carpet_area, price, estimated_emi, floor_plan_url FROM property_configurations WHERE property_id = ?',
+      'SELECT bhk_type, carpet_area, price, estimated_emi FROM property_configurations WHERE property_id = ?',
       [property.id]
     );
 
@@ -487,8 +487,8 @@ router.post('/', authenticate, requireRole(['super_admin', 'assistant_admin', 'b
     if (Array.isArray(configurations)) {
       for (let config of configurations) {
         await dbConnection.query(
-          'INSERT INTO property_configurations (property_id, bhk_type, carpet_area, price, estimated_emi, floor_plan_url) VALUES (?, ?, ?, ?, ?, ?)',
-          [propertyId, config.bhk_type, config.carpet_area, config.price, config.estimated_emi || null, config.floor_plan_url || config.floor_plan || null]
+          'INSERT INTO property_configurations (property_id, bhk_type, carpet_area, price, estimated_emi) VALUES (?, ?, ?, ?, ?)',
+          [propertyId, config.bhk_type, config.carpet_area, config.price, config.estimated_emi || null]
         );
       }
     }
@@ -593,7 +593,7 @@ router.get('/detail-by-id/:id', authenticate, async (req, res) => {
       if (!enforceBranchIsolation(req, res, property.branch_id)) return;
     }
 
-    const [configs] = await pool.query('SELECT bhk_type, carpet_area, price, estimated_emi, floor_plan_url FROM property_configurations WHERE property_id = ?', [id]);
+    const [configs] = await pool.query('SELECT bhk_type, carpet_area, price, estimated_emi FROM property_configurations WHERE property_id = ?', [id]);
     const [amenities] = await pool.query('SELECT amenity_name FROM property_amenities WHERE property_id = ?', [id]);
     const amenitiesList = amenities.map(a => a.amenity_name);
     const [specifications] = await pool.query('SELECT title, details FROM property_specifications WHERE property_id = ?', [id]);
@@ -708,8 +708,8 @@ router.put('/:id', authenticate, requireRole(['branch_admin', 'super_admin', 'as
         await dbConnection.query('DELETE FROM property_configurations WHERE property_id = ?', [id]);
         for (let config of configurations) {
           await dbConnection.query(
-            'INSERT INTO property_configurations (property_id, bhk_type, carpet_area, price, estimated_emi, floor_plan_url) VALUES (?, ?, ?, ?, ?, ?)',
-            [id, config.bhk_type, config.carpet_area, config.price, config.estimated_emi || null, config.floor_plan_url || config.floor_plan || null]
+            'INSERT INTO property_configurations (property_id, bhk_type, carpet_area, price, estimated_emi) VALUES (?, ?, ?, ?, ?)',
+            [id, config.bhk_type, config.carpet_area, config.price, config.estimated_emi || null]
           );
         }
       }
