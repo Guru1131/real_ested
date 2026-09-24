@@ -260,16 +260,19 @@ const PropertyForm = () => {
 
     if (!formData.project_name || !formData.location || !formData.city || !formData.address || !formData.builder) {
       setError('Please fill in all required fields (Project name, location, city, address, builder).');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
     if (reraWarning) {
       setError(reraWarning);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
     if (configurations.length === 0) {
       setError('Please add at least one BHK Unit Configuration.');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
@@ -344,6 +347,7 @@ const PropertyForm = () => {
 
     } catch (err) {
       setError(err.response?.data?.error || err.message || 'Failed to save property. Please check server constraints.');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setLoading(false);
     }
