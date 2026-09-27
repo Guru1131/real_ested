@@ -86,6 +86,7 @@ CREATE TABLE IF NOT EXISTS property_configurations (
     carpet_area INT NOT NULL, -- in sq. ft.
     price DECIMAL(15, 2) NOT NULL,
     estimated_emi DECIMAL(15, 2) NULL,
+    floor_plan_url TEXT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (property_id) REFERENCES properties(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
