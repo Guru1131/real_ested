@@ -297,6 +297,36 @@ router.get('/', authenticate, async (req, res) => {
 });
 
 // GET /api/properties/detail/:slug (Retrieve dynamic property content by Slug URL or numeric ID)
+// GET /api/properties/check-rera (Check RERA ID Uniqueness)
+router.get('/check-rera', async (req, res) => {
+  const { rera_id, exclude_id } = req.query;
+  if (!rera_id || !rera_id.trim()) {
+    return res.json({ exists: false });
+  }
+
+  const trimmed = rera_id.trim();
+  const excludeIdNum = exclude_id ? parseInt(exclude_id, 10) : 0;
+
+  try {
+    let query = 'SELECT id, project_name FROM properties WHERE rera_id = ? AND is_deleted = 0';
+    const params = [trimmed];
+    if (excludeIdNum > 0) {
+      query += ' AND id != ?';
+      params.push(excludeIdNum);
+    }
+    query += ' LIMIT 1';
+
+    const [rows] = await pool.query(query, params);
+    if (rows.length > 0) {
+      return res.json({ exists: true, property_id: rows[0].id, project_name: rows[0].project_name });
+    }
+    return res.json({ exists: false });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Server error checking RERA ID.' });
+  }
+});
+
 router.get('/detail/:slug', authenticate, async (req, res) => {
   const { slug } = req.params;
   const isNumericId = !isNaN(slug) && !isNaN(parseInt(slug));
@@ -391,35 +421,6 @@ router.get('/detail/:slug', authenticate, async (req, res) => {
   }
 });
 
-// GET /api/properties/check-rera (Check RERA ID Uniqueness)
-router.get('/check-rera', async (req, res) => {
-  const { rera_id, exclude_id } = req.query;
-  if (!rera_id || !rera_id.trim()) {
-    return res.json({ exists: false });
-  }
-
-  const trimmed = rera_id.trim();
-  const excludeIdNum = exclude_id ? parseInt(exclude_id) : 0;
-
-  try {
-    let query = 'SELECT id, project_name FROM properties WHERE rera_id = ? AND is_deleted = 0';
-    const params = [trimmed];
-    if (excludeIdNum > 0) {
-      query += ' AND id != ?';
-      params.push(excludeIdNum);
-    }
-    query += ' LIMIT 1';
-
-    const [rows] = await pool.query(query, params);
-    if (rows.length > 0) {
-      return res.json({ exists: true, property_id: rows[0].id, project_name: rows[0].project_name });
-    }
-    return res.json({ exists: false });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: 'Server error checking RERA ID.' });
-  }
-});
 
 // POST /api/properties (Add Property - Admin roles)
 router.post('/', authenticate, requireRole(['super_admin', 'assistant_admin', 'branch_admin']), propertyUploads, async (req, res) => {
@@ -652,9 +653,10 @@ router.put('/:id', authenticate, requireRole(['branch_admin', 'super_admin', 'as
 
     // Validate RERA ID Uniqueness if provided
     if (rera_id && rera_id.trim()) {
+      const propId = parseInt(id, 10);
       const [existingRera] = await dbConnection.query(
         'SELECT id, project_name FROM properties WHERE rera_id = ? AND id != ? AND is_deleted = 0 LIMIT 1',
-        [rera_id.trim(), id]
+        [rera_id.trim(), propId]
       );
       if (existingRera.length > 0) {
         dbConnection.release();
