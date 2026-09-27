@@ -7,15 +7,61 @@ const csv = require('csv-parser');
 const { Parser } = require('json2csv');
 const fs = require('fs');
 const path = require('path');
+const ExcelJS = require('exceljs');
 
-// Multer setup for CSV uploads (memory storage is fine for small/medium CSVs)
+// Multer setup for CSV/Excel uploads (memory storage is fine for small/medium files)
 const upload = multer({ storage: multer.memoryStorage() });
 
-// 1. Download CSV Template
-router.get('/properties/template', authenticate, requireRole(['super_admin', 'assistant_admin', 'branch_admin']), (req, res) => {
-  const template = [
-    {
-      property_code: 'PROP-TEST-001 (Optional - auto generated if blank)',
+// 1. Download Excel Template
+router.get('/properties/template', authenticate, requireRole(['super_admin', 'assistant_admin', 'branch_admin']), async (req, res) => {
+  try {
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('Properties');
+
+    // Add headers matching the Property Display page exactly
+    sheet.columns = [
+      { header: 'property_code', key: 'property_code', width: 18 },
+      { header: 'project_name', key: 'project_name', width: 25 },
+      { header: 'property_type', key: 'property_type', width: 18 },
+      { header: 'location', key: 'location', width: 20 },
+      { header: 'address', key: 'address', width: 25 },
+      { header: 'survey_number', key: 'survey_number', width: 15 },
+      { header: 'city', key: 'city', width: 15 },
+      { header: 'builder', key: 'builder', width: 20 },
+      { header: 'rera_id', key: 'rera_id', width: 15 },
+      { header: 'completion_date', key: 'completion_date', width: 15 },
+      { header: 'project_status', key: 'project_status', width: 20 },
+      { header: 'highlights', key: 'highlights', width: 30 },
+      { header: 'map_embed_url', key: 'map_embed_url', width: 25 },
+      { header: 'virtual_tour_url', key: 'virtual_tour_url', width: 25 },
+      { header: 'developer_legacy', key: 'developer_legacy', width: 25 },
+      { header: 'availability_status', key: 'availability_status', width: 20 },
+      { header: 'branch_code', key: 'branch_code', width: 15 }
+    ];
+
+    sheet.getRow(1).font = { bold: true };
+
+    // Add Data Validations (Dropdowns)
+    for (let i = 2; i <= 200; i++) {
+      sheet.getCell(`C${i}`).dataValidation = {
+        type: 'list',
+        allowBlank: true,
+        formulae: ['"flat,bungalow,villa,shop,office,commercial"']
+      };
+      sheet.getCell(`K${i}`).dataValidation = {
+        type: 'list',
+        allowBlank: true,
+        formulae: ['"new_launch,under_construction,ready_possession"']
+      };
+      sheet.getCell(`P${i}`).dataValidation = {
+        type: 'list',
+        allowBlank: true,
+        formulae: ['"available,booked,sold_out"']
+      };
+    }
+
+    sheet.addRow({
+      property_code: 'PROP-TEST-001',
       project_name: 'Test Project',
       property_type: 'flat',
       location: 'Andheri West',
@@ -31,19 +77,16 @@ router.get('/properties/template', authenticate, requireRole(['super_admin', 'as
       virtual_tour_url: '',
       developer_legacy: '',
       availability_status: 'available',
-      branch_code: 'Leave blank for your branch'
-    }
-  ];
-  
-  try {
-    const json2csvParser = new Parser();
-    const csvData = json2csvParser.parse(template);
-    res.header('Content-Type', 'text/csv');
-    res.attachment('property_import_template.csv');
-    return res.send(csvData);
+      branch_code: ''
+    });
+    
+    res.header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.attachment('property_import_template.xlsx');
+    await workbook.xlsx.write(res);
+    res.end();
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ error: 'Failed to generate template.' });
+    return res.status(500).json({ error: 'Failed to generate Excel template.' });
   }
 });
 
@@ -136,28 +179,59 @@ const slugify = (text) => {
     .replace(/-+$/, '');
 };
 
-// 4. Import Properties via CSV
+// 4. Import Properties via CSV or Excel
 router.post('/properties/import', authenticate, requireRole(['super_admin', 'assistant_admin', 'branch_admin']), upload.single('file'), async (req, res) => {
   if (!req.file) {
-    return res.status(400).json({ error: 'No CSV file uploaded.' });
+    return res.status(400).json({ error: 'No file uploaded.' });
   }
 
   const results = [];
   const errors = [];
   
   try {
-    // Parse CSV from buffer
-    const stream = require('stream');
-    const bufferStream = new stream.PassThrough();
-    bufferStream.end(req.file.buffer);
+    const isExcel = req.file.originalname.toLowerCase().endsWith('.xlsx');
 
-    await new Promise((resolve, reject) => {
-      bufferStream
-        .pipe(csv())
-        .on('data', (data) => results.push(data))
-        .on('end', resolve)
-        .on('error', reject);
-    });
+    if (isExcel) {
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.load(req.file.buffer);
+      const worksheet = workbook.worksheets[0];
+      
+      const headers = [];
+      worksheet.getRow(1).eachCell({ includeEmpty: true }, (cell, colNumber) => {
+        headers[colNumber] = cell.value ? cell.value.toString().trim() : '';
+      });
+
+      worksheet.eachRow((row, rowNumber) => {
+        if (rowNumber === 1) return; // Skip header
+        const rowData = {};
+        row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+          if (headers[colNumber]) {
+            let val = cell.value;
+            if (val && typeof val === 'object' && val.result) val = val.result;
+            if (val && typeof val === 'object' && val.text) val = val.text;
+            rowData[headers[colNumber]] = val !== null && val !== undefined ? val.toString().trim() : '';
+          }
+        });
+        
+        // Only push if there's at least one non-empty value
+        if (Object.values(rowData).some(v => v !== '')) {
+          results.push(rowData);
+        }
+      });
+    } else {
+      // Parse CSV from buffer
+      const stream = require('stream');
+      const bufferStream = new stream.PassThrough();
+      bufferStream.end(req.file.buffer);
+
+      await new Promise((resolve, reject) => {
+        bufferStream
+          .pipe(csv())
+          .on('data', (data) => results.push(data))
+          .on('end', resolve)
+          .on('error', reject);
+      });
+    }
 
     if (results.length === 0) {
       return res.status(400).json({ error: 'CSV file is empty or invalid.' });

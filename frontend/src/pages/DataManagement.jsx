@@ -67,7 +67,7 @@ const DataManagement = () => {
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `property_import_template.csv`);
+      link.setAttribute('download', `property_import_template.xlsx`);
       document.body.appendChild(link);
       link.click();
       link.parentNode.removeChild(link);
@@ -238,12 +238,12 @@ const DataManagement = () => {
         {/* CSV Bulk Import Section */}
         <div className="col-12">
           <div className="glass-panel p-4">
-            <h5 className="fw-600 text-white mb-3"><i className="bi bi-cloud-upload text-warning me-2"></i>Bulk Property Import (CSV)</h5>
-            <p className="small text-muted mb-3">Upload a CSV file to bulk-import properties. The system will pre-validate rows before inserting.</p>
+            <h5 className="fw-600 text-white mb-3"><i className="bi bi-cloud-upload text-warning me-2"></i>Bulk Property Import (Excel/CSV)</h5>
+            <p className="small text-muted mb-3">Upload an Excel (.xlsx) or CSV file to bulk-import properties. The system will pre-validate rows before inserting.</p>
             
             <div className="mb-4">
               <button onClick={handleDownloadTemplate} className="btn btn-sm btn-outline-secondary">
-                <i className="bi bi-file-earmark-arrow-down me-1"></i> Download CSV Template
+                <i className="bi bi-file-earmark-arrow-down me-1"></i> Download Excel Template (with Dropdowns)
               </button>
               <small className="text-muted ms-2 d-block d-sm-inline mt-2 mt-sm-0">
                 Please follow the column headers exactly as provided in the template.
@@ -252,11 +252,11 @@ const DataManagement = () => {
 
             <form onSubmit={handleImport} className="d-flex flex-column flex-md-row gap-3 align-items-md-end border-top border-secondary pt-4 mt-2">
               <div className="flex-grow-1">
-                <label className="small text-muted mb-1">Select CSV File</label>
+                <label className="small text-muted mb-1">Select Excel (.xlsx) or CSV File</label>
                 <input 
                   type="file" 
                   id="csvFileInput"
-                  accept=".csv" 
+                  accept=".csv, .xlsx" 
                   className="form-control bg-dark text-white border-secondary" 
                   onChange={(e) => setImportFile(e.target.files[0])}
                 />
