@@ -536,7 +536,7 @@ router.post('/', authenticate, requireRole(['super_admin', 'assistant_admin', 'b
   } catch (err) {
     await dbConnection.rollback();
     console.error(err);
-    return res.status(500).json({ error: 'Server error saving property draft.' });
+    return res.status(500).json({ error: 'Server error saving property draft. Details: ' + err.message });
   } finally {
     dbConnection.release();
   }
@@ -770,7 +770,7 @@ router.put('/:id', authenticate, requireRole(['branch_admin', 'super_admin', 'as
   } catch (err) {
     await dbConnection.rollback();
     console.error(err);
-    return res.status(500).json({ error: 'Server error updating property details.' });
+    return res.status(500).json({ error: 'Server error updating property details. Details: ' + err.message });
   } finally {
     dbConnection.release();
   }

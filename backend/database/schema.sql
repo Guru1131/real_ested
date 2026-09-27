@@ -64,6 +64,7 @@ CREATE TABLE IF NOT EXISTS properties (
     project_status ENUM('new_launch', 'under_construction', 'ready_possession') DEFAULT 'under_construction',
     highlights TEXT NULL, -- Project highlights
     map_embed_url TEXT NULL, -- Google Maps iframe source link
+    virtual_tour_url TEXT NULL, -- 360 Virtual Tour Link
     developer_legacy TEXT NULL, -- Developer legacy history details
     availability_status ENUM('available', 'booked', 'sold_out') DEFAULT 'available',
     approval_status ENUM('draft', 'pending_approval', 'approved', 'rejected') DEFAULT 'draft',
