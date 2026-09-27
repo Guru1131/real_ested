@@ -3,7 +3,7 @@
 -- Default password for all seeded users: password123
 -- Password hash: $2y$10$1U9YzC9MogdnXE1vQis/pu/nLTTM1nN3EM.OK2HJijmwAgVPpSOwS
 
-USE property_mgmt_db;
+-- USE property_mgmt_db; -- Commented out for cPanel compatibility
 
 -- Clear previous mock records
 DELETE FROM broker_activity_logs;

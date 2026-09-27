@@ -3,9 +3,9 @@
 
 class Database {
     private $host = "localhost";
-    private $db_name = "property_mgmt_db";
-    private $username = "root";
-    private $password = ""; // Default XAMPP password is empty
+    private $db_name = "appteche_prop_mgmt";
+    private $username = "appteche_admin";
+    private $password = "Yiyi1131512@amol*db"; 
     public $conn;
 
     public function getConnection() {
