@@ -253,7 +253,7 @@ const PropertyForm = () => {
     setSpecifications(specifications.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = async (e, submitForApproval = false) => {
+  const handleSubmit = async (e, submitForApproval = true) => {
     if (e) e.preventDefault();
     setError('');
     setSuccess('');
@@ -322,9 +322,13 @@ const PropertyForm = () => {
             headers: { 'Content-Type': 'multipart/form-data' }
           });
         } catch (putErr) {
-          res = await api.post(`/api/properties/update.php?id=${id}`, payload, {
-            headers: { 'Content-Type': 'multipart/form-data' }
-          });
+          if (putErr.response && putErr.response.status === 404) {
+            res = await api.post(`/api/properties/update.php?id=${id}`, payload, {
+              headers: { 'Content-Type': 'multipart/form-data' }
+            });
+          } else {
+            throw putErr;
+          }
         }
         setSuccess(res.data?.message || 'Property updated successfully.');
       } else {
@@ -334,9 +338,13 @@ const PropertyForm = () => {
             headers: { 'Content-Type': 'multipart/form-data' }
           });
         } catch (postErr) {
-          res = await api.post('/api/properties/create.php', payload, {
-            headers: { 'Content-Type': 'multipart/form-data' }
-          });
+          if (postErr.response && postErr.response.status === 404) {
+            res = await api.post('/api/properties/create.php', payload, {
+              headers: { 'Content-Type': 'multipart/form-data' }
+            });
+          } else {
+            throw postErr;
+          }
         }
         setSuccess(res.data?.message || `Property draft registered successfully with code: ${res.data?.property_code || ''}.`);
       }

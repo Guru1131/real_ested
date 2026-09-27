@@ -467,16 +467,18 @@ router.post('/', authenticate, requireRole(['super_admin', 'assistant_admin', 'b
     const property_code = generatePropertyCode(branchCode);
     const property_slug = slugify(`${city}-${location}-${project_name}`);
 
+    const initialApprovalStatus = action === 'submit' ? 'pending_approval' : 'draft';
+
     // Insert main properties record
     const [propResult] = await dbConnection.query(
       `INSERT INTO properties 
        (property_code, property_slug, project_name, property_type, branch_id, location, address, survey_number, city, builder, rera_id, completion_date, project_status, highlights, map_embed_url, virtual_tour_url, developer_legacy, availability_status, approval_status, created_by)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         property_code, property_slug, project_name, property_type, branchId, location, address, survey_number || null,
         city, builder, rera_id || null, completion_date || null, project_status || 'under_construction',
         highlights || null, map_embed_url || null, virtual_tour_url || null, developer_legacy || null, availability_status || 'available',
-        req.user.id
+        initialApprovalStatus, req.user.id
       ]
     );
 
@@ -531,7 +533,12 @@ router.post('/', authenticate, requireRole(['super_admin', 'assistant_admin', 'b
     }
 
     await dbConnection.commit();
-    return res.json({ message: 'Property draft created successfully.', propertyId, property_code, property_slug });
+    return res.json({ 
+      message: initialApprovalStatus === 'pending_approval' ? 'Property submitted for Super Admin review & approval.' : 'Property draft created successfully.', 
+      propertyId, 
+      property_code, 
+      property_slug 
+    });
 
   } catch (err) {
     await dbConnection.rollback();
