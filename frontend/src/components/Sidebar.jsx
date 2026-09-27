@@ -127,6 +127,17 @@ const Sidebar = ({ isOpen, onClose }) => {
           >
             <i className="bi bi-funnel"></i> Lead Referral Tracker
           </NavLink>
+
+          {/* Data Management Module */}
+          {['super_admin', 'assistant_admin'].includes(user.role) && (
+            <NavLink 
+              to="/data-management" 
+              className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+              onClick={handleLinkClick}
+            >
+              <i className="bi bi-database-check"></i> Data Management
+            </NavLink>
+          )}
         </div>
       </div>
 

@@ -7,6 +7,7 @@ const userRoutes = require('./routes/users');
 const propertyRoutes = require('./routes/properties');
 const leadRoutes = require('./routes/leads');
 const announcementRoutes = require('./routes/announcements');
+const dataRoutes = require('./routes/data');
 
 const app = express();
 
@@ -25,6 +26,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/properties', propertyRoutes);
 app.use('/api/leads', leadRoutes);
 app.use('/api/announcements', announcementRoutes);
+app.use('/api/data', dataRoutes);
 
 // Base Health Check
 app.get('/', (req, res) => {

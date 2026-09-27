@@ -24,6 +24,7 @@ import LeadList from './pages/LeadList';
 import Landing from './pages/Landing';
 import PropertyDetailPublic from './pages/PropertyDetailPublic';
 import BrokerStaffManagement from './pages/BrokerStaffManagement';
+import DataManagement from './pages/DataManagement';
 
 // Global Hidden Customization Modal Wrapper (Super Admin Only)
 const GlobalHiddenModalContainer = () => {
@@ -141,6 +142,16 @@ const App = () => {
                 element={
                   <ProtectedRoute allowedRoles={['super_admin', 'assistant_admin', 'branch_admin']}>
                     <UserManagement />
+                  </ProtectedRoute>
+                } 
+              />
+
+              {/* Data Management Module */}
+              <Route 
+                path="/data-management" 
+                element={
+                  <ProtectedRoute allowedRoles={['super_admin', 'assistant_admin', 'branch_admin']}>
+                    <DataManagement />
                   </ProtectedRoute>
                 } 
               />
