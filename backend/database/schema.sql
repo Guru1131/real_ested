@@ -24,12 +24,15 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash VARCHAR(255) NOT NULL,
     role ENUM('super_admin', 'assistant_admin', 'branch_admin', 'branch_executive', 'external_broker') NOT NULL,
     branch_id INT NULL,
+    parent_broker_id INT NULL,
+    sub_account_limit INT DEFAULT 5,
     phone VARCHAR(20),
     status ENUM('active', 'inactive') DEFAULT 'active',
     is_deleted TINYINT(1) DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (branch_id) REFERENCES branches(id) ON DELETE SET NULL
+    FOREIGN KEY (branch_id) REFERENCES branches(id) ON DELETE SET NULL,
+    FOREIGN KEY (parent_broker_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
 -- 3. Broker Branch Assignment Table (Many-to-Many)
