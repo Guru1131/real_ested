@@ -105,7 +105,7 @@ const Navbar = ({ onToggleSidebar }) => {
             {/* Theme Toggle Button */}
             <button
               onClick={toggleThemeMode}
-              className={`btn btn-sm rounded-pill px-2.5 py-1 fw-600 border transition ${isDarkMode ? 'btn-outline-warning text-warning' : 'btn-outline-dark text-dark'}`}
+              className={`btn btn-sm rounded-pill px-2.5 py-1 fw-600 border transition ${isDarkMode ? 'btn-outline-warning' : 'btn-outline-dark'}`}
               title={isDarkMode ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
               style={{ fontSize: '0.8rem' }}
             >

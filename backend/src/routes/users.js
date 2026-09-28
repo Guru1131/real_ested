@@ -196,7 +196,7 @@ router.post('/brokers', authenticate, requireRole(['super_admin', 'assistant_adm
 // PUT /api/users/:id (Edit Profile details & Status)
 router.put('/:id', authenticate, requireRole(['super_admin', 'assistant_admin', 'branch_admin']), async (req, res) => {
   const { id } = req.params;
-  const { phone, status, password, branchIds } = req.body;
+  const { phone, status, password, branchIds, sub_account_limit } = req.body;
 
   try {
     const [rows] = await pool.query('SELECT id, role, branch_id FROM users WHERE id = ? AND is_deleted = 0 LIMIT 1', [id]);
@@ -247,6 +247,10 @@ router.put('/:id', authenticate, requireRole(['super_admin', 'assistant_admin', 
     if (password) {
       updates.push('password_hash = ?');
       params.push(bcrypt.hashSync(password, 10));
+    }
+    if (sub_account_limit !== undefined) {
+      updates.push('sub_account_limit = ?');
+      params.push(sub_account_limit);
     }
 
     if (updates.length > 0) {

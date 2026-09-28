@@ -427,7 +427,7 @@ router.post('/', authenticate, requireRole(['super_admin', 'assistant_admin', 'b
   const {
     project_name, property_type, location, city, address, survey_number,
     builder, rera_id, completion_date, project_status, highlights,
-    map_embed_url, virtual_tour_url, developer_legacy, availability_status
+    map_embed_url, virtual_tour_url, developer_legacy, availability_status, action
   } = req.body;
 
   // JSON strings to parse

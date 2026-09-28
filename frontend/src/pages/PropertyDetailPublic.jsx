@@ -195,13 +195,15 @@ const PropertyDetailPublic = () => {
             <Link to="/" className="btn px-3 py-2 fw-600 shadow-sm" style={{ border: '1px solid rgba(25, 41, 81, 0.1)', color: '#192951', borderRadius: '12px', fontSize: '0.85rem', backgroundColor: '#ffffff' }}>
               <i className="bi bi-arrow-left me-1"></i> Back to Homepage
             </Link>
-            <button 
-              onClick={() => generateClientCatalog(property, configurations, amenities, specifications, media)} 
-              className="btn px-3 py-2 fw-700 text-dark shadow-sm bg-warning" 
-              style={{ borderRadius: '12px', fontSize: '0.85rem', border: 'none' }}
-            >
-              <i className="bi bi-file-earmark-pdf-fill me-1.5"></i> Download White-Label Catalog PDF
-            </button>
+            {user && (
+              <button 
+                onClick={() => generateClientCatalog(property, configurations, amenities, specifications, media)} 
+                className="btn px-3 py-2 fw-700 text-dark shadow-sm bg-warning" 
+                style={{ borderRadius: '12px', fontSize: '0.85rem', border: 'none' }}
+              >
+                <i className="bi bi-file-earmark-pdf-fill me-1.5"></i> Download White-Label Catalog PDF
+              </button>
+            )}
           </div>
           {user && (user.role === 'super_admin' || user.role === 'branch_admin') && (
             <Link to={`/properties/edit/${property.id}`} className="btn px-4 py-2 fw-600 text-white shadow-sm" style={{ backgroundColor: '#0284c7', borderRadius: '12px', fontSize: '0.85rem' }}>
@@ -336,13 +338,15 @@ const PropertyDetailPublic = () => {
                   )}
 
                   <div className="row g-3">
-                    <div className="col-sm-6">
-                      <div className="p-3 bg-light rounded border border-light" style={{ borderRadius: '16px' }}>
-                        <span className="text-muted small d-block mb-1">BUILDER GROUP</span>
-                        <strong className="text-dark fs-6">{property.builder}</strong>
+                    {user && (
+                      <div className="col-sm-6">
+                        <div className="p-3 bg-light rounded border border-light" style={{ borderRadius: '16px' }}>
+                          <span className="text-muted small d-block mb-1">BUILDER GROUP</span>
+                          <strong className="text-dark fs-6">{property.builder}</strong>
+                        </div>
                       </div>
-                    </div>
-                    <div className="col-sm-6">
+                    )}
+                    <div className={user ? "col-sm-6" : "col-12"}>
                       <div className="p-3 bg-light rounded border border-light" style={{ borderRadius: '16px' }}>
                         <span className="text-muted small d-block mb-1">ESTIMATED COMPLETION</span>
                         <strong className="text-dark fs-6">{property.completion_date ? new Date(property.completion_date).toLocaleDateString() : 'N/A'}</strong>

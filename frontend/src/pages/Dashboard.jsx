@@ -217,7 +217,7 @@ const Dashboard = () => {
         {/* Category 1: Residential Launches */}
         <div className="mb-5">
           <div className="d-flex justify-content-between align-items-center mb-3">
-            <h4 className="fw-700 text-white mb-0 fs-5 fs-md-4"><i className="bi bi-house-door text-primary me-2"></i>Premium Residential Launches</h4>
+            <h4 className="fw-700 mb-0 fs-5 fs-md-4"><i className="bi bi-house-door text-primary me-2"></i>Premium Residential Launches</h4>
             <span className="text-muted small">{residential.length} Projects</span>
           </div>
           {residential.length === 0 ? (
@@ -254,7 +254,7 @@ const Dashboard = () => {
 
         {/* Category 3: Geographic collections (Dynamic Cities) */}
         <div className="mb-5">
-          <h4 className="fw-700 text-white mb-3 fs-5 fs-md-4 border-bottom pb-2" style={{ borderColor: 'var(--border-color)' }}>
+          <h4 className="fw-700 mb-3 fs-5 fs-md-4 border-bottom pb-2" style={{ borderColor: 'var(--border-color)' }}>
             <i className="bi bi-geo-alt-fill text-danger me-2"></i>Projects by Location & City Market
           </h4>
           

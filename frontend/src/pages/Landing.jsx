@@ -392,107 +392,52 @@ const Landing = () => {
           )}
         </div>
 
-        <div className="row g-4">
-          {/* Left Filter Pane */}
-          <div className="col-lg-3">
-            <div className="p-4 shadow-sm border border-light sticky-top animate-fade-in" style={{ top: '100px', borderRadius: '24px', backgroundColor: '#fdfdfd' }}>
-              <h5 className="fw-700 text-dark mb-4 d-flex align-items-center gap-2">
-                <i className="bi bi-funnel-fill text-warning"></i> Filter Search
-              </h5>
-              
-              <form onSubmit={handleApplyFilters} className="d-flex flex-column gap-3">
-                <div>
-                  <label className="form-label text-muted small fw-600">PROJECT KEYWORD</label>
-                  <input
-                    type="text"
-                    name="projectName"
-                    value={filters.projectName}
-                    onChange={handleFilterChange}
-                    className="form-control form-premium-control w-100"
-                    placeholder="e.g. Sai Sanskruti"
-                  />
-                </div>
-
-                <div>
-                  <label className="form-label text-muted small fw-600">PROPERTY TYPE</label>
-                  <select
-                    name="type"
-                    value={filters.type}
-                    onChange={handleFilterChange}
-                    className="form-select form-premium-control w-100 text-capitalize"
-                  >
-                    <option value="">All Types</option>
-                    <option value="flat">Flat/Apartment</option>
-                    <option value="villa">Villa</option>
-                    <option value="bungalow">Bungalow</option>
-                    <option value="shop">Commercial Shop</option>
-                    <option value="office">Office Space</option>
-                    <option value="commercial">Commercial Complex</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="form-label text-muted small fw-600">CITY</label>
-                  <input
-                    type="text"
-                    name="city"
-                    value={filters.city}
-                    onChange={handleFilterChange}
-                    className="form-control form-premium-control w-100"
-                    placeholder="e.g. Pune, Mumbai, Thane"
-                  />
-                </div>
-
-                <div>
-                  <label className="form-label text-muted small fw-600">LOCATION / LOCALITY</label>
-                  <input
-                    type="text"
-                    name="location"
-                    value={filters.location}
-                    onChange={handleFilterChange}
-                    className="form-control form-premium-control w-100"
-                    placeholder="e.g. Kondhwa, Baner"
-                  />
-                </div>
-
-                <div>
-                  <label className="form-label text-muted small fw-600">MIN PRICE (INR)</label>
-                  <input
-                    type="number"
-                    name="minPrice"
-                    value={filters.minPrice}
-                    onChange={handleFilterChange}
-                    className="form-control form-premium-control w-100"
-                    placeholder="Min Value"
-                  />
-                </div>
-
-                <div>
-                  <label className="form-label text-muted small fw-600">MAX PRICE (INR)</label>
-                  <input
-                    type="number"
-                    name="maxPrice"
-                    value={filters.maxPrice}
-                    onChange={handleFilterChange}
-                    className="form-control form-premium-control w-100"
-                    placeholder="Max Value"
-                  />
-                </div>
-
-                <div className="d-flex gap-2 mt-2 pt-2 border-top" style={{ borderColor: 'var(--border-color)' }}>
-                  <button type="button" className="btn btn-premium-outline flex-grow-1" onClick={handleResetFilters}>
-                    Reset
-                  </button>
-                  <button type="submit" className="btn btn-premium flex-grow-1">
-                    Apply
-                  </button>
-                </div>
-              </form>
+        <div className="p-4 shadow-sm border border-light mb-4 animate-fade-in" style={{ borderRadius: '24px', backgroundColor: '#fdfdfd' }}>
+          <h5 className="fw-700 text-dark mb-4 d-flex align-items-center gap-2">
+            <i className="bi bi-funnel-fill text-warning"></i> Filter Search
+          </h5>
+          <form onSubmit={handleApplyFilters} className="row g-3 align-items-end">
+            <div className="col-md-2">
+              <label className="form-label text-muted small fw-600">KEYWORD</label>
+              <input type="text" name="projectName" value={filters.projectName} onChange={handleFilterChange} className="form-control form-premium-control w-100" placeholder="e.g. Sai Sanskruti" />
             </div>
-          </div>
+            <div className="col-md-2">
+              <label className="form-label text-muted small fw-600">TYPE</label>
+              <select name="type" value={filters.type} onChange={handleFilterChange} className="form-select form-premium-control w-100 text-capitalize">
+                <option value="">All Types</option>
+                <option value="flat">Flat/Apartment</option>
+                <option value="villa">Villa</option>
+                <option value="bungalow">Bungalow</option>
+                <option value="shop">Shop</option>
+                <option value="office">Office</option>
+                <option value="commercial">Commercial</option>
+              </select>
+            </div>
+            <div className="col-md-2">
+              <label className="form-label text-muted small fw-600">CITY</label>
+              <input type="text" name="city" value={filters.city} onChange={handleFilterChange} className="form-control form-premium-control w-100" placeholder="e.g. Pune" />
+            </div>
+            <div className="col-md-2">
+              <label className="form-label text-muted small fw-600">LOCATION</label>
+              <input type="text" name="location" value={filters.location} onChange={handleFilterChange} className="form-control form-premium-control w-100" placeholder="e.g. Baner" />
+            </div>
+            <div className="col-md-2">
+              <label className="form-label text-muted small fw-600">PRICE RANGE</label>
+              <div className="d-flex gap-1">
+                <input type="number" name="minPrice" value={filters.minPrice} onChange={handleFilterChange} className="form-control form-premium-control w-100" placeholder="Min" />
+                <input type="number" name="maxPrice" value={filters.maxPrice} onChange={handleFilterChange} className="form-control form-premium-control w-100" placeholder="Max" />
+              </div>
+            </div>
+            <div className="col-md-2 d-flex gap-2">
+              <button type="button" className="btn btn-premium-outline flex-grow-1" onClick={handleResetFilters}>Reset</button>
+              <button type="submit" className="btn btn-premium flex-grow-1">Apply</button>
+            </div>
+          </form>
+        </div>
 
-          {/* Right Listings Grid */}
-          <div className="col-lg-9">
+        <div className="row g-4">
+          {/* Main Listings Grid */}
+          <div className="col-12">
             {error && (
               <div className="alert alert-danger p-3 animate-fade-in mb-4">
                 <i className="bi bi-exclamation-triangle-fill me-2"></i> {error}
