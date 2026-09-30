@@ -327,11 +327,7 @@ const PropertyForm = () => {
       return;
     }
 
-    if (reraWarning) {
-      setError(reraWarning);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
-    }
+      // Note: We no longer block submission on reraWarning to allow updating existing duplicate listings.
 
     if (configurations.length === 0) {
       setError('Please add at least one BHK Unit Configuration.');

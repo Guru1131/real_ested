@@ -534,20 +534,8 @@ router.post('/', authenticate, requireRole(['super_admin', 'assistant_admin', 'b
     return res.status(400).json({ error: 'Required fields: project_name, location, city, address, builder.' });
   }
 
-  // Validate RERA ID Uniqueness if provided
-  if (rera_id && rera_id.trim()) {
-    const [existingRera] = await pool.query(
-      'SELECT id, project_name FROM properties WHERE rera_id = ? AND is_deleted = 0 LIMIT 1',
-      [rera_id.trim()]
-    );
-    if (existingRera.length > 0) {
-      return res.status(409).json({
-        error: `Duplicate RERA ID! RERA ID '${rera_id.trim()}' is already registered for property '${existingRera[0].project_name}'.`
-      });
-    }
-  }
-
-  let branchId = req.user.branch_id;
+  /*  */
+  
   if (['super_admin', 'assistant_admin'].includes(req.user.role) && req.body.branch_id) {
     branchId = parseInt(req.body.branch_id);
   }
@@ -805,22 +793,8 @@ router.put('/:id', authenticate, requireRole(['branch_admin', 'super_admin', 'as
       return res.status(404).json({ error: 'Property not found.' });
     }
 
-    // Validate RERA ID Uniqueness if provided
-    if (rera_id && rera_id.trim()) {
-      const propId = parseInt(id, 10);
-      const [existingRera] = await dbConnection.query(
-        'SELECT id, project_name FROM properties WHERE rera_id = ? AND id != ? AND is_deleted = 0 LIMIT 1',
-        [rera_id.trim(), propId]
-      );
-      if (existingRera.length > 0) {
-        dbConnection.release();
-        return res.status(409).json({
-          error: `Duplicate RERA ID! RERA ID '${rera_id.trim()}' is already registered for property '${existingRera[0].project_name}'.`
-        });
-      }
-    }
-
-    if (req.user.role === 'branch_admin') {
+    /*  */
+     {
       if (!enforceBranchIsolation(req, res, existingProperty.branch_id)) {
         dbConnection.release();
         return;

@@ -73,6 +73,8 @@ CREATE TABLE IF NOT EXISTS properties (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     is_deleted TINYINT(1) DEFAULT 0,
+    total_units INT DEFAULT 0,
+    available_units INT DEFAULT 0,
     FOREIGN KEY (branch_id) REFERENCES branches(id),
     FOREIGN KEY (created_by) REFERENCES users(id),
     FOREIGN KEY (approved_by) REFERENCES users(id)
