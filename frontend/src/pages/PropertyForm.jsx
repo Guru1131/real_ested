@@ -9,6 +9,13 @@ import MediaLibraryModal from '../components/MediaLibraryModal';
 const PropertyForm = () => {
   const { id } = useParams();
   const isEditMode = Boolean(id);
+
+  const baseSpecs = ['Structure', 'Flooring', 'Doors', 'Windows', 'Kitchen', 'Bathrooms', 'Electrical', 'Painting', 'Plumbing', 'Lift'];
+  const [customSpecsList, setCustomSpecsList] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('customSpecs')) || []; } catch(e) { return []; }
+  });
+  const allSpecTitles = Array.from(new Set([...baseSpecs, ...customSpecsList]));
+
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -268,14 +275,22 @@ const PropertyForm = () => {
   };
 
   // Add Specification item to list
-  const addSpecification = () => {
+  
+    const addSpecification = () => {
     if (!tempSpec.title || !tempSpec.details) {
       alert('Please specify both Title (e.g. Structure) and details.');
       return;
     }
     setSpecifications([...specifications, { ...tempSpec }]);
+    
+    if (!allSpecTitles.includes(tempSpec.title.trim())) {
+      const updatedCustom = [...customSpecsList, tempSpec.title.trim()];
+      setCustomSpecsList(updatedCustom);
+      localStorage.setItem('customSpecs', JSON.stringify(updatedCustom));
+    }
     setTempSpec({ title: '', details: '' });
   };
+
 
   // Remove Specification item
   const removeSpecification = (index) => {
@@ -880,7 +895,32 @@ const PropertyForm = () => {
           <h6 className="fw-800 mb-3 mt-4 border-bottom pb-2" style={{ color: 'var(--text-primary)', borderColor: 'var(--border-color)' }}>
             <i className="bi bi-clock-history text-primary me-1"></i>Project Phases & RERA IDs
           </h6>
-          <div className="row g-2 mb-3 align-items-end p-3 rounded border" style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)' }}>
+          
+            {/* Quick Spec Presets */}
+            <div className="mb-2">
+              <label className="form-label small fw-700 text-muted mb-2">QUICK SELECT PRESET:</label>
+              <div className="d-flex flex-wrap gap-2">
+                {allSpecTitles.map(spec => (
+                  <button
+                    key={spec}
+                    type="button"
+                    onClick={() => setTempSpec({ ...tempSpec, title: spec })}
+                    className="badge rounded-pill cursor-pointer shadow-sm border-0"
+                    style={{ 
+                      backgroundColor: tempSpec.title === spec ? 'var(--text-primary)' : 'var(--bg-secondary)', 
+                      color: tempSpec.title === spec ? '#fff' : 'var(--text-primary)',
+                      border: '1px solid var(--border-color) !important',
+                      padding: '8px 12px',
+                      fontSize: '0.75rem'
+                    }}
+                  >
+                    {spec}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="row g-2 mb-3 align-items-end p-3 rounded border" style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)' }}>
             <div className="col-12 col-md-5">
               <label className="form-label small fw-700" style={{ color: 'var(--text-primary)' }}>PHASE NAME</label>
               <input 

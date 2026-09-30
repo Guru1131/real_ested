@@ -175,7 +175,7 @@ const CustomizationModal = ({ show, onClose }) => {
                       type="password"
                       value={passcode}
                       onChange={(e) => setPasscode(e.target.value)}
-                      placeholder="Enter passcode (1131512)"
+                      placeholder="Enter passcode"
                       className="form-control border-start-0 text-center py-2.5 fw-700"
                       style={{ borderRadius: '0 12px 12px 0', letterSpacing: '3px', fontSize: '1.1rem' }}
                       required
