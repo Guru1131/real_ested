@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import api from '../services/api';
@@ -22,6 +22,14 @@ const PropertyDetail = () => {
 
   // Gallery Lightbox Modal State
   const [lightboxImageIndex, setLightboxImageIndex] = useState(null);
+  const galleryRef = useRef(null);
+
+  const scrollGallery = (direction) => {
+    if (galleryRef.current) {
+      const scrollAmount = direction === 'left' ? -300 : 300;
+      galleryRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
 
   // Sharing states
   const [shareRecipient, setShareRecipient] = useState('');
@@ -104,11 +112,11 @@ const PropertyDetail = () => {
     );
   }
 
-  const { property, configurations, amenities, specifications, media } = data;
+  const { property, configurations, amenities, specifications, media, phases, videos } = data;
 
-  const mainPhoto = media.images && media.images.length > 0 
-    ? formatImageUrl(media.images[0].url)
-    : 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=80';
+  const topBanner = media.top_banners && media.top_banners.length > 0 
+    ? formatImageUrl(media.top_banners[0].url)
+    : (media.images && media.images.length > 0 ? formatImageUrl(media.images[0].url) : 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=80');
 
   const statusLabels = {
     new_launch: 'New Launch',
@@ -154,7 +162,7 @@ const PropertyDetail = () => {
       </div>
 
       {/* Main Banner layout */}
-      <div className="position-relative rounded-4 overflow-hidden mb-4 shadow-sm" style={{ minHeight: '280px', backgroundImage: `linear-gradient(rgba(0,0,0,0.3), rgba(15,23,42,0.92)), url(${mainPhoto})`, backgroundSize: 'cover', backgroundPosition: 'center', border: '1px solid var(--border-color)' }}>
+      <div className="position-relative rounded-4 overflow-hidden mb-4 shadow-sm" style={{ minHeight: '280px', backgroundImage: `linear-gradient(rgba(0,0,0,0.3), rgba(15,23,42,0.92)), url(${topBanner})`, backgroundSize: 'cover', backgroundPosition: 'center', border: '1px solid var(--border-color)' }}>
         <div className="position-absolute bottom-0 left-0 p-3 p-md-4 w-100 d-flex justify-content-between align-items-end flex-wrap gap-3">
           <div>
             <span className="text-light small fw-700 tracking-wide text-uppercase d-block mb-1 opacity-90">{property.property_code}</span>
@@ -253,6 +261,14 @@ const PropertyDetail = () => {
               </li>
               <li className="nav-item">
                 <button 
+                  className={`nav-link bg-transparent border-0 py-2 px-3 fw-700 ${activeTab === 'gallery' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('gallery')}
+                >
+                  Gallery
+                </button>
+              </li>
+              <li className="nav-item">
+                <button 
                   className={`nav-link bg-transparent border-0 py-2 px-3 fw-700 ${activeTab === 'location' ? 'active' : ''}`}
                   onClick={() => setActiveTab('location')}
                 >
@@ -275,6 +291,19 @@ const PropertyDetail = () => {
                 <h5 className="fw-800 mb-3" style={{ color: 'var(--text-primary)' }}>Project Summary</h5>
                 <p className="text-muted mb-4">{property.highlights || 'No highlights summary details recorded yet.'}</p>
                 
+                {property.total_units > 0 && (
+                  <div className="bg-primary bg-opacity-10 border border-primary border-opacity-25 rounded p-3 mb-4 d-flex align-items-center justify-content-around text-center flex-wrap gap-2">
+                    <div>
+                      <h6 className="text-muted small fw-700 mb-1">TOTAL INVENTORY</h6>
+                      <h4 className="fw-800 text-primary mb-0">{property.total_units}</h4>
+                    </div>
+                    <div>
+                      <h6 className="text-muted small fw-700 mb-1">AVAILABLE UNITS</h6>
+                      <h4 className="fw-800 text-success mb-0">{property.available_units}</h4>
+                    </div>
+                  </div>
+                )}
+
                 <h5 className="fw-800 mb-3" style={{ color: 'var(--text-primary)' }}>BHK Configurations & Pricing</h5>
                 {configurations && configurations.length > 0 ? (
                   <div className="table-responsive mb-4">
@@ -311,6 +340,30 @@ const PropertyDetail = () => {
                   </div>
                 ) : (
                   <p className="text-muted small mb-4">No BHK configurations listed for this project.</p>
+                )}
+
+                {phases && phases.length > 0 && (
+                  <div className="mb-4">
+                    <h5 className="fw-800 mb-3" style={{ color: 'var(--text-primary)' }}>Project Phases & RERA IDs</h5>
+                    <div className="table-responsive">
+                      <table className="table table-bordered align-middle small" style={{ color: 'var(--text-primary)' }}>
+                        <thead>
+                          <tr className="table-light text-muted">
+                            <th style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}>Phase Name</th>
+                            <th style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}>RERA ID</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {phases.map((p, idx) => (
+                            <tr key={idx}>
+                              <td className="fw-600">{p.phase_name}</td>
+                              <td className="font-monospace text-primary fw-600">{p.rera_id}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
                 )}
 
                 <div className="row g-3">
@@ -351,6 +404,67 @@ const PropertyDetail = () => {
                   </div>
                 ) : (
                   <p className="text-muted small">No custom technical specifications listed.</p>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'gallery' && (
+              <div>
+                <h5 className="fw-800 mb-4" style={{ color: 'var(--text-primary)' }}>Property Gallery</h5>
+                {media.images && media.images.length > 0 ? (
+                  <div className="gallery-slider position-relative">
+                    <button 
+                      className="btn btn-dark position-absolute start-0 top-50 translate-middle-y z-3 rounded-circle shadow"
+                      style={{ width: '40px', height: '40px', marginLeft: '-10px', opacity: 0.8 }}
+                      onClick={() => scrollGallery('left')}
+                    >
+                      <i className="bi bi-chevron-left"></i>
+                    </button>
+                    <div ref={galleryRef} className="d-flex overflow-auto gap-3 pb-3" style={{ scrollSnapType: 'x mandatory', scrollBehavior: 'smooth', WebkitOverflowScrolling: 'touch' }}>
+                      {media.images.map((img, idx) => (
+                        <div key={idx} className="flex-shrink-0" style={{ width: '80%', scrollSnapAlign: 'center' }}>
+                          <div className="ratio ratio-16x9 rounded overflow-hidden shadow-sm" style={{ border: '1px solid var(--border-color)' }}>
+                            <img src={formatImageUrl(img.url)} alt={`Gallery ${idx + 1}`} className="w-100 h-100" style={{ objectFit: 'cover' }} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <button 
+                      className="btn btn-dark position-absolute end-0 top-50 translate-middle-y z-3 rounded-circle shadow"
+                      style={{ width: '40px', height: '40px', marginRight: '-10px', opacity: 0.8 }}
+                      onClick={() => scrollGallery('right')}
+                    >
+                      <i className="bi bi-chevron-right"></i>
+                    </button>
+                    <div className="text-center mt-2 small text-muted">
+                      <i className="bi bi-arrows-expand me-1"></i> Swipe or use arrows to see more images
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-muted small">No gallery images uploaded for this project.</p>
+                )}
+
+                {videos && videos.length > 0 && (
+                  <div className="mt-5">
+                    <h5 className="fw-800 mb-3" style={{ color: 'var(--text-primary)' }}>Video Gallery</h5>
+                    <div className="row g-3">
+                      {videos.map((vid, idx) => (
+                        <div key={idx} className="col-12 col-md-6 col-lg-4">
+                          <a href={vid.video_url} target="_blank" rel="noreferrer" className="d-block text-decoration-none">
+                            <div className="position-relative rounded overflow-hidden shadow-sm border border-secondary" style={{ aspectRatio: '16/9' }}>
+                              <img src={formatImageUrl(vid.thumbnail_url || '/assets/default-video.png')} alt={vid.title} className="w-100 h-100 object-fit-cover" />
+                              <div className="position-absolute top-50 start-50 translate-middle">
+                                <i className="bi bi-play-circle-fill text-white fs-1 shadow-sm" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}></i>
+                              </div>
+                            </div>
+                            <div className="mt-2 text-center text-truncate small fw-600" style={{ color: 'var(--text-primary)' }}>
+                              {vid.title || 'Video Tour'}
+                            </div>
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </div>
             )}

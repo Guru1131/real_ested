@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { CustomizationContext } from '../context/CustomizationContext';
@@ -14,10 +14,20 @@ const PropertyDetailPublic = () => {
   const { config } = useContext(CustomizationContext);
 
   const [data, setData] = useState(null);
+  const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   
   const [activeTab, setActiveTab] = useState('overview');
+
+  const galleryRef = useRef(null);
+
+  const scrollGallery = (direction) => {
+    if (galleryRef.current) {
+      const scrollAmount = direction === 'left' ? -300 : 300;
+      galleryRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
 
   // Lead inquiry form state
   const [leadForm, setLeadForm] = useState({
@@ -36,6 +46,14 @@ const PropertyDetailPublic = () => {
         setLoading(true);
         const res = await api.get(`/api/properties/public/detail/${slug}`);
         setData(res.data);
+        
+        try {
+          const recRes = await api.get(`/api/properties/public/recommendations/${slug}`);
+          setRecommendations(recRes.data || []);
+        } catch (recErr) {
+          console.error("Failed to load recommendations");
+        }
+        
       } catch (err) {
         setError(err.response?.data?.error || 'Failed to retrieve property details.');
       } finally {
@@ -127,11 +145,11 @@ const PropertyDetailPublic = () => {
     );
   }
 
-  const { property, configurations, amenities, specifications, media } = data;
+  const { property, configurations, amenities, specifications, media, phases, videos } = data;
 
-  const mainPhoto = media.images && media.images.length > 0 
-    ? formatImageUrl(media.images[0].url)
-    : 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=80';
+  const topBanner = media.top_banners && media.top_banners.length > 0 
+    ? formatImageUrl(media.top_banners[0].url)
+    : (media.images && media.images.length > 0 ? formatImageUrl(media.images[0].url) : 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=80');
 
   const statusLabels = {
     new_launch: 'New Launch',
@@ -215,7 +233,7 @@ const PropertyDetailPublic = () => {
         {/* Hero image and title banner */}
         <div className="position-relative rounded-4 overflow-hidden mb-4 animate-fade-in" style={{ 
           height: '380px', 
-          backgroundImage: `linear-gradient(rgba(0,0,0,0.1), ${config.primaryColor}F3), url(${mainPhoto})`, 
+          backgroundImage: `linear-gradient(rgba(0,0,0,0.1), ${config.primaryColor}F3), url(${topBanner})`, 
           backgroundSize: 'cover', 
           backgroundPosition: 'center', 
           border: '1px solid rgba(25, 41, 81, 0.08)',
@@ -227,8 +245,14 @@ const PropertyDetailPublic = () => {
               <h1 className="fw-800 text-white mb-2">{property.project_name}</h1>
               <p className="mb-2 text-light"><i className="bi bi-geo-alt-fill text-warning"></i> {property.location}, {property.address}, {property.city}</p>
               {property.rera_id && (
-                <span className="badge text-white border border-secondary border-opacity-30 rounded px-2.5 py-1.5 small" style={{ backgroundColor: 'rgba(25, 41, 81, 0.8)' }}>
+                <span className="badge text-white border border-secondary border-opacity-30 rounded px-2.5 py-1.5 small me-2" style={{ backgroundColor: 'rgba(25, 41, 81, 0.8)' }}>
                   RERA ID: {property.rera_id}
+                </span>
+              )}
+              {property.created_at && (
+                <span className="badge text-white border border-secondary border-opacity-30 rounded px-2.5 py-1.5 small" style={{ backgroundColor: 'rgba(25, 41, 81, 0.8)' }}>
+                  <i className="bi bi-calendar-check me-1"></i>
+                  Listed: {new Date(property.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                 </span>
               )}
             </div>
@@ -291,6 +315,15 @@ const PropertyDetailPublic = () => {
                     Location Map
                   </button>
                 </li>
+                <li className="nav-item">
+                  <button 
+                    className={`nav-link bg-transparent text-light border-0 py-2 px-3 fw-600 ${activeTab === 'gallery' ? 'active text-warning border-bottom border-warning' : 'text-muted'}`}
+                    style={{ borderBottomWidth: '2px !important' }}
+                    onClick={() => setActiveTab('gallery')}
+                  >
+                    Gallery
+                  </button>
+                </li>
               </ul>
 
               {/* Tab Contents */}
@@ -335,6 +368,30 @@ const PropertyDetailPublic = () => {
                     </div>
                   ) : (
                     <p className="text-muted small">No configurations listed for this project.</p>
+                  )}
+
+                  {phases && phases.length > 0 && (
+                    <div className="mb-4">
+                      <h5 className="fw-800 text-dark mb-3">Project Phases & RERA IDs</h5>
+                      <div className="table-responsive">
+                        <table className="table table-bordered border-light text-dark">
+                          <thead style={{ backgroundColor: '#f8fafc' }}>
+                            <tr className="text-muted small">
+                              <th>Phase Name</th>
+                              <th>RERA ID</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {phases.map((p, idx) => (
+                              <tr key={idx} className="small">
+                                <td className="fw-600 text-dark">{p.phase_name}</td>
+                                <td className="font-monospace text-primary fw-600">{p.rera_id}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
                   )}
 
                   <div className="row g-3">
@@ -420,6 +477,67 @@ const PropertyDetailPublic = () => {
                     </div>
                   ) : (
                     <p className="text-muted small">Location map view not configured or invalid.</p>
+                  )}
+                </div>
+              )}
+
+              {activeTab === 'gallery' && (
+                <div>
+                  <h5 className="fw-800 text-dark mb-4">Property Gallery</h5>
+                  {media.images && media.images.length > 0 ? (
+                    <div className="gallery-slider position-relative">
+                      <button 
+                        className="btn btn-dark position-absolute start-0 top-50 translate-middle-y z-3 rounded-circle shadow"
+                        style={{ width: '40px', height: '40px', marginLeft: '-10px', opacity: 0.8 }}
+                        onClick={() => scrollGallery('left')}
+                      >
+                        <i className="bi bi-chevron-left"></i>
+                      </button>
+                      <div ref={galleryRef} className="d-flex overflow-auto gap-3 pb-3" style={{ scrollSnapType: 'x mandatory', scrollBehavior: 'smooth', WebkitOverflowScrolling: 'touch' }}>
+                        {media.images.map((img, idx) => (
+                          <div key={idx} className="flex-shrink-0" style={{ width: '80%', scrollSnapAlign: 'center' }}>
+                            <div className="ratio ratio-16x9 rounded overflow-hidden shadow-sm" style={{ border: '1px solid var(--border-color)' }}>
+                              <img src={formatImageUrl(img.url)} alt={`Gallery ${idx + 1}`} className="w-100 h-100" style={{ objectFit: 'cover' }} />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <button 
+                        className="btn btn-dark position-absolute end-0 top-50 translate-middle-y z-3 rounded-circle shadow"
+                        style={{ width: '40px', height: '40px', marginRight: '-10px', opacity: 0.8 }}
+                        onClick={() => scrollGallery('right')}
+                      >
+                        <i className="bi bi-chevron-right"></i>
+                      </button>
+                      <div className="text-center mt-2 small text-muted">
+                        <i className="bi bi-arrows-expand me-1"></i> Swipe or use arrows to see more images
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-muted small">No gallery images uploaded for this project.</p>
+                  )}
+
+                  {videos && videos.length > 0 && (
+                    <div className="mt-5">
+                      <h5 className="fw-800 text-dark mb-3">Video Gallery</h5>
+                      <div className="row g-3">
+                        {videos.map((vid, idx) => (
+                          <div key={idx} className="col-12 col-md-6 col-lg-4">
+                            <a href={vid.video_url} target="_blank" rel="noreferrer" className="d-block text-decoration-none">
+                              <div className="position-relative rounded overflow-hidden shadow-sm border border-light" style={{ aspectRatio: '16/9' }}>
+                                <img src={formatImageUrl(vid.thumbnail_url || '/assets/default-video.png')} alt={vid.title} className="w-100 h-100 object-fit-cover" />
+                                <div className="position-absolute top-50 start-50 translate-middle">
+                                  <i className="bi bi-play-circle-fill text-white fs-1 shadow-sm" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}></i>
+                                </div>
+                              </div>
+                              <div className="mt-2 text-center text-truncate small fw-600 text-dark">
+                                {vid.title || 'Video Tour'}
+                              </div>
+                            </a>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   )}
                 </div>
               )}
@@ -586,6 +704,47 @@ const PropertyDetailPublic = () => {
           </div>
         </div>
       </div>
+
+      {/* Auto Recommendations Section */}
+      {recommendations && recommendations.length > 0 && (
+        <div className="container mt-5 mb-5">
+          <h3 className="fw-800 mb-4" style={{ color: 'var(--text-primary)' }}>
+            <i className="bi bi-geo-alt-fill text-primary me-2"></i>Recommended Nearby Properties
+          </h3>
+          <div className="row g-4">
+            {recommendations.map(rec => (
+              <div key={rec.id} className="col-md-3 col-sm-6">
+                <Link to={`/public/detail/${rec.property_slug}`} className="text-decoration-none h-100">
+                  <div className="card h-100 border-0 shadow-sm rounded-4 overflow-hidden" style={{ backgroundColor: 'var(--bg-secondary)', transition: 'transform 0.3s ease' }}>
+                    <div className="position-relative" style={{ height: '180px', backgroundColor: '#e9ecef' }}>
+                      <img 
+                        src={formatImageUrl(rec.thumbnail_url)} 
+                        alt={rec.project_name}
+                        className="w-100 h-100 object-fit-cover"
+                        onError={handleImageError}
+                      />
+                      <span className="badge bg-primary position-absolute top-0 end-0 m-2 px-2 py-1 shadow-sm">
+                        {rec.property_type.replace('_', ' ').toUpperCase()}
+                      </span>
+                    </div>
+                    <div className="card-body p-3">
+                      <h6 className="fw-800 mb-1 text-truncate" style={{ color: 'var(--text-primary)' }}>{rec.project_name}</h6>
+                      <p className="small text-muted mb-2 text-truncate">
+                        <i className="bi bi-geo-alt-fill me-1"></i>{rec.location}, {rec.city}
+                      </p>
+                      {rec.min_price && (
+                        <p className="mb-0 fw-700 text-success small">
+                          Starts from ₹{new Intl.NumberFormat('en-IN', { maximumSignificantDigits: 3 }).format(rec.min_price)}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Dynamic Customizable Footer */}
       <footer className="py-5 mt-auto text-light" style={{ backgroundColor: config.primaryColor }}>

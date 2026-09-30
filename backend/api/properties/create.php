@@ -154,7 +154,7 @@ try {
         mkdir($upload_dir, 0777, true);
     }
 
-    $media_types = ['image', 'floor_plan', 'document', 'brochure'];
+    $media_types = ['image', 'floor_plan', 'document', 'brochure', 'thumbnail', 'top_banner'];
     $media_stmt = $db->prepare("INSERT INTO property_media (property_id, media_type, file_url, file_name) VALUES (:property_id, :media_type, :file_url, :file_name)");
 
     foreach ($media_types as $m_type) {

@@ -2,6 +2,7 @@ import React, { useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { generateClientCatalog } from '../utils/catalogGenerator';
+import { formatImageUrl } from '../utils/imageHelper';
 
 const PropertyCard = ({ property, onStatusSubmit, onDelete, userRole }) => {
   const { user } = useContext(AuthContext);
@@ -40,7 +41,17 @@ const PropertyCard = ({ property, onStatusSubmit, onDelete, userRole }) => {
     <div className="card glass-panel glass-panel-hover h-100 overflow-hidden d-flex flex-column justify-content-between animate-fade-in" style={{ padding: '0px' }}>
       
       {/* Property Head Image/Header */}
-      <div className="p-4 pb-0">
+      <div className="position-relative">
+        <div className="ratio ratio-16x9">
+          <img 
+            src={property.primary_image ? formatImageUrl(property.primary_image) : 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=600&q=80'} 
+            alt={property.project_name} 
+            className="w-100 h-100" style={{ objectFit: 'cover' }}
+            onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=600&q=80'; }}
+          />
+        </div>
+      </div>
+      <div className="p-4 pb-0 pt-3">
         <div className="d-flex justify-content-between align-items-start mb-2">
           <span className="text-muted small fw-600">{property.property_code}</span>
           <span className={`badge-status ${badgeClasses[property.approval_status]}`}>
@@ -48,7 +59,18 @@ const PropertyCard = ({ property, onStatusSubmit, onDelete, userRole }) => {
           </span>
         </div>
         
-        <h5 className="card-title fw-700 mb-1" style={{ color: 'var(--text-primary)' }}>{property.project_name}</h5>
+        <div className="d-flex justify-content-between align-items-start mb-1">
+          <h5 className="card-title fw-700 mb-0" style={{ color: 'var(--text-primary)' }}>{property.project_name}</h5>
+          {property.created_at && (
+            <span className="text-muted text-nowrap mt-1" style={{ fontSize: '0.7rem' }}>
+              <i className="bi bi-clock me-1"></i>
+              {new Date(property.created_at).toLocaleDateString('en-IN', {
+                day: 'numeric', month: 'short', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+              })}
+            </span>
+          )}
+        </div>
         <p className="text-muted mb-3"><i className="bi bi-geo-alt-fill text-primary"></i> {property.location}, {property.branch_name}</p>
         
         {/* Detail specs grid with light fresh styling */}

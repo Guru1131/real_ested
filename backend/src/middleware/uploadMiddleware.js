@@ -35,7 +35,9 @@ const propertyUploads = upload.fields([
   { name: 'images', maxCount: 10 },
   { name: 'floor_plans', maxCount: 3 },
   { name: 'brochures', maxCount: 2 },
-  { name: 'documents', maxCount: 5 }
+  { name: 'documents', maxCount: 5 },
+  { name: 'thumbnails', maxCount: 1 },
+  { name: 'top_banners', maxCount: 1 }
 ]);
 
 module.exports = {

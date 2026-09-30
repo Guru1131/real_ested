@@ -14,6 +14,14 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
   </head>
   <body>
+    <script>
+      window.addEventListener('error', function(e) {
+        document.body.innerHTML += '<div style="color:red; z-index:99999; position:absolute; top:10px; left:10px; background:white; padding:20px; border:2px solid red;"><b>CRASH:</b> ' + e.message + '<br>' + e.filename + ':' + e.lineno + '</div>';
+      });
+      window.addEventListener('unhandledrejection', function(e) {
+        document.body.innerHTML += '<div style="color:red; z-index:99999; position:absolute; top:100px; left:10px; background:white; padding:20px; border:2px solid red;"><b>PROMISE CRASH:</b> ' + e.reason + '</div>';
+      });
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

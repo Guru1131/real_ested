@@ -92,13 +92,21 @@ router.get('/public', async (req, res) => {
 
     const [rows] = await pool.query(query, params);
 
-    // Fetch primary photo for each property
+    // Fetch primary photo for each property (Thumbnail -> Image fallback)
     for (let prop of rows) {
       const [media] = await pool.query(
-        'SELECT file_url FROM property_media WHERE property_id = ? AND media_type = "image" LIMIT 1',
+        'SELECT file_url FROM property_media WHERE property_id = ? AND media_type = "thumbnail" LIMIT 1',
         [prop.id]
       );
-      prop.primary_image = media[0] ? media[0].file_url : null;
+      if (media.length > 0) {
+        prop.primary_image = media[0].file_url;
+      } else {
+        const [imgMedia] = await pool.query(
+          'SELECT file_url FROM property_media WHERE property_id = ? AND media_type = "image" LIMIT 1',
+          [prop.id]
+        );
+        prop.primary_image = imgMedia[0] ? imgMedia[0].file_url : null;
+      }
     }
 
     return res.json(rows);
@@ -149,6 +157,16 @@ router.get('/public/detail/:slug', async (req, res) => {
     );
 
     // 5. Fetch Media Attachments
+    const [phases] = await pool.query(
+      'SELECT phase_name, rera_id FROM property_phases WHERE property_id = ?',
+      [property.id]
+    );
+
+    const [videos] = await pool.query(
+      'SELECT title, video_url, thumbnail_url FROM property_videos WHERE property_id = ?',
+      [property.id]
+    );
+
     const [media] = await pool.query(
       'SELECT id, media_type, file_url, file_name FROM property_media WHERE property_id = ?',
       [property.id]
@@ -167,6 +185,8 @@ router.get('/public/detail/:slug', async (req, res) => {
       configurations: configs,
       amenities: amenitiesList,
       specifications,
+      phases,
+      videos,
       media: mediaGrouped
     });
 
@@ -175,6 +195,46 @@ router.get('/public/detail/:slug', async (req, res) => {
     return res.status(500).json({ error: 'Server error retrieving public details.' });
   }
 });
+
+// GET /api/properties/public/recommendations/:slug
+router.get('/public/recommendations/:slug', async (req, res) => {
+  const { slug } = req.params;
+  const isNumericId = !isNaN(slug) && !isNaN(parseInt(slug));
+
+  try {
+    // First, find the target property's city and ID
+    const [targetProps] = await pool.query(
+      `SELECT id, city FROM properties WHERE (property_slug = ? ${isNumericId ? 'OR id = ?' : ''}) AND is_deleted = 0 LIMIT 1`,
+      isNumericId ? [slug, parseInt(slug)] : [slug]
+    );
+
+    if (!targetProps.length) {
+      return res.status(404).json({ error: 'Property not found' });
+    }
+
+    const targetProperty = targetProps[0];
+
+    // Find up to 4 other approved properties in the same city
+    const [recommendations] = await pool.query(
+      `SELECT p.id, p.property_slug, p.project_name, p.property_type, p.location, p.city, p.builder, 
+              MIN(pc.price) as min_price,
+              (SELECT file_url FROM property_media WHERE property_id = p.id AND media_type = 'thumbnail' LIMIT 1) as thumbnail_url
+       FROM properties p
+       LEFT JOIN property_configurations pc ON p.id = pc.property_id
+       WHERE p.city = ? AND p.id != ? AND p.approval_status = 'approved' AND p.is_deleted = 0
+       GROUP BY p.id
+       ORDER BY p.created_at DESC
+       LIMIT 4`,
+      [targetProperty.city, targetProperty.id]
+    );
+
+    res.json(recommendations);
+  } catch (err) {
+    console.error('Error fetching recommendations:', err);
+    res.status(500).json({ error: 'Server error fetching recommendations' });
+  }
+});
+
 
 // GET /api/properties (Filter and Search Catalog)
 router.get('/', authenticate, async (req, res) => {
@@ -279,13 +339,21 @@ router.get('/', authenticate, async (req, res) => {
 
     const [rows] = await pool.query(query, params);
 
-    // Fetch primary photo for each property
+    // Fetch primary photo for each property (Thumbnail -> Image fallback)
     for (let prop of rows) {
       const [media] = await pool.query(
-        'SELECT file_url FROM property_media WHERE property_id = ? AND media_type = "image" LIMIT 1',
+        'SELECT file_url FROM property_media WHERE property_id = ? AND media_type = "thumbnail" LIMIT 1',
         [prop.id]
       );
-      prop.primary_image = media[0] ? media[0].file_url : null;
+      if (media.length > 0) {
+        prop.primary_image = media[0].file_url;
+      } else {
+        const [imgMedia] = await pool.query(
+          'SELECT file_url FROM property_media WHERE property_id = ? AND media_type = "image" LIMIT 1',
+          [prop.id]
+        );
+        prop.primary_image = imgMedia[0] ? imgMedia[0].file_url : null;
+      }
     }
 
     return res.json(rows);
@@ -297,6 +365,18 @@ router.get('/', authenticate, async (req, res) => {
 });
 
 // GET /api/properties/detail/:slug (Retrieve dynamic property content by Slug URL or numeric ID)
+// GET /api/properties/amenities/distinct (Fetch all distinct custom amenities)
+router.get('/amenities/distinct', async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT DISTINCT amenity_name FROM property_amenities');
+    const amenities = rows.map(r => r.amenity_name);
+    return res.json(amenities);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Server error retrieving distinct amenities.' });
+  }
+});
+
 // GET /api/properties/check-rera (Check RERA ID Uniqueness)
 router.get('/check-rera', async (req, res) => {
   const { rera_id, exclude_id } = req.query;
@@ -394,6 +474,16 @@ router.get('/detail/:slug', authenticate, async (req, res) => {
     );
 
     // 6. Fetch Media Attachments
+    const [phases] = await pool.query(
+      'SELECT phase_name, rera_id FROM property_phases WHERE property_id = ?',
+      [property.id]
+    );
+
+    const [videos] = await pool.query(
+      'SELECT title, video_url, thumbnail_url FROM property_videos WHERE property_id = ?',
+      [property.id]
+    );
+
     const [media] = await pool.query(
       'SELECT id, media_type, file_url, file_name FROM property_media WHERE property_id = ?',
       [property.id]
@@ -412,6 +502,8 @@ router.get('/detail/:slug', authenticate, async (req, res) => {
       configurations: configs,
       amenities: amenitiesList,
       specifications,
+      phases,
+      videos,
       media: mediaGrouped
     });
 
@@ -427,13 +519,16 @@ router.post('/', authenticate, requireRole(['super_admin', 'assistant_admin', 'b
   const {
     project_name, property_type, location, city, address, survey_number,
     builder, rera_id, completion_date, project_status, highlights,
-    map_embed_url, virtual_tour_url, developer_legacy, availability_status, action
+    map_embed_url, virtual_tour_url, developer_legacy, availability_status, action,
+    total_units, available_units
   } = req.body;
 
   // JSON strings to parse
   const configurationsRaw = req.body.configurations || '[]';
   const amenitiesRaw = req.body.amenities || '[]';
   const specificationsRaw = req.body.specifications || '[]';
+  const phasesRaw = req.body.phases || '[]';
+  const videosRaw = req.body.videos || '[]';
 
   if (!project_name || !location || !city || !address || !builder) {
     return res.status(400).json({ error: 'Required fields: project_name, location, city, address, builder.' });
@@ -473,13 +568,15 @@ router.post('/', authenticate, requireRole(['super_admin', 'assistant_admin', 'b
     // Insert main properties record
     const [propResult] = await dbConnection.query(
       `INSERT INTO properties 
-       (property_code, property_slug, project_name, property_type, branch_id, location, address, survey_number, city, builder, rera_id, completion_date, project_status, highlights, map_embed_url, virtual_tour_url, developer_legacy, availability_status, approval_status, created_by)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       (property_code, property_slug, project_name, property_type, branch_id, location, address, survey_number, city, builder, rera_id, completion_date, project_status, highlights, map_embed_url, virtual_tour_url, developer_legacy, availability_status, approval_status, created_by, total_units, available_units)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         property_code, property_slug, project_name, property_type, branchId, location, address, survey_number || null,
         city, builder, rera_id || null, completion_date || null, project_status || 'under_construction',
         highlights || null, map_embed_url || null, virtual_tour_url || null, developer_legacy || null, availability_status || 'available',
-        initialApprovalStatus, req.user.id
+        initialApprovalStatus, req.user.id,
+        total_units !== undefined ? parseInt(total_units) : 0,
+        available_units !== undefined ? parseInt(available_units) : 0
       ]
     );
 
@@ -518,8 +615,34 @@ router.post('/', authenticate, requireRole(['super_admin', 'assistant_admin', 'b
       }
     }
 
-    // Handle Uploaded Files
-    const mediaTypes = ['image', 'floor_plan', 'document', 'brochure'];
+    // Insert Phases
+    const phases = JSON.parse(phasesRaw);
+    if (Array.isArray(phases)) {
+      for (let phase of phases) {
+        if (phase.phase_name && phase.rera_id) {
+          await dbConnection.query(
+            'INSERT INTO property_phases (property_id, phase_name, rera_id) VALUES (?, ?, ?)',
+            [propertyId, phase.phase_name, phase.rera_id]
+          );
+        }
+      }
+    }
+
+    // Insert Videos
+    const videos = JSON.parse(videosRaw);
+    if (Array.isArray(videos)) {
+      for (let vid of videos) {
+        if (vid.video_url) {
+          await dbConnection.query(
+            'INSERT INTO property_videos (property_id, video_url, thumbnail_url, title) VALUES (?, ?, ?, ?)',
+            [propertyId, vid.video_url, vid.thumbnail_url || null, vid.title || null]
+          );
+        }
+      }
+    }
+
+    // Handle Uploaded Files (Legacy multer support)
+    const mediaTypes = ['image', 'floor_plan', 'document', 'brochure', 'thumbnail', 'top_banner'];
     for (let mType of mediaTypes) {
       const fieldname = mType + 's';
       if (req.files && req.files[fieldname]) {
@@ -529,6 +652,32 @@ router.post('/', authenticate, requireRole(['super_admin', 'assistant_admin', 'b
             'INSERT INTO property_media (property_id, media_type, file_url, file_name) VALUES (?, ?, ?, ?)',
             [propertyId, mType, relativeUrl, file.originalname]
           );
+        }
+      }
+    }
+
+    // Handle Media Library Items from Payload
+    const libraryFields = {
+      media_library_images: 'image',
+      media_library_thumbnails: 'thumbnail',
+      media_library_top_banners: 'top_banner',
+      media_library_floor_plans: 'floor_plan',
+      media_library_brochures: 'brochure'
+    };
+    for (const [field, mType] of Object.entries(libraryFields)) {
+      if (req.body[field]) {
+        try {
+          const items = JSON.parse(req.body[field]);
+          if (Array.isArray(items)) {
+            for (let item of items) {
+              await dbConnection.query(
+                'INSERT INTO property_media (property_id, media_type, file_url, file_name) VALUES (?, ?, ?, ?)',
+                [propertyId, mType, item.file_url, item.file_name]
+              );
+            }
+          }
+        } catch (e) {
+          console.error(`Error parsing ${field}`, e);
         }
       }
     }
@@ -605,6 +754,8 @@ router.get('/detail-by-id/:id', authenticate, async (req, res) => {
     const [amenities] = await pool.query('SELECT amenity_name FROM property_amenities WHERE property_id = ?', [id]);
     const amenitiesList = amenities.map(a => a.amenity_name);
     const [specifications] = await pool.query('SELECT title, details FROM property_specifications WHERE property_id = ?', [id]);
+    const [phases] = await pool.query('SELECT phase_name, rera_id FROM property_phases WHERE property_id = ?', [id]);
+    const [videos] = await pool.query('SELECT title, video_url, thumbnail_url FROM property_videos WHERE property_id = ?', [id]);
     const [media] = await pool.query('SELECT id, media_type, file_url, file_name FROM property_media WHERE property_id = ?', [id]);
 
     const mediaGrouped = { images: [], floor_plans: [], documents: [], brochures: [] };
@@ -620,6 +771,8 @@ router.get('/detail-by-id/:id', authenticate, async (req, res) => {
       configurations: configs,
       amenities: amenitiesList,
       specifications,
+      phases,
+      videos,
       media: mediaGrouped
     });
 
@@ -635,7 +788,8 @@ router.put('/:id', authenticate, requireRole(['branch_admin', 'super_admin', 'as
   const {
     project_name, property_type, location, city, address, survey_number,
     builder, rera_id, completion_date, project_status, highlights,
-    map_embed_url, virtual_tour_url, developer_legacy, availability_status, action
+    map_embed_url, virtual_tour_url, developer_legacy, availability_status, action,
+    total_units, available_units
   } = req.body;
 
   const dbConnection = await pool.getConnection();
@@ -687,7 +841,7 @@ router.put('/:id', authenticate, requireRole(['branch_admin', 'super_admin', 'as
        project_name = ?, property_type = ?, location = ?, address = ?, survey_number = ?, 
        city = ?, builder = ?, rera_id = ?, completion_date = ?, project_status = ?, 
        highlights = ?, map_embed_url = ?, virtual_tour_url = ?, developer_legacy = ?, availability_status = ?, 
-       approval_status = ? 
+       approval_status = ?, total_units = ?, available_units = ? 
        WHERE id = ?`,
       [
         project_name || existingProperty.project_name,
@@ -706,6 +860,8 @@ router.put('/:id', authenticate, requireRole(['branch_admin', 'super_admin', 'as
         developer_legacy !== undefined ? developer_legacy : existingProperty.developer_legacy,
         availability_status || existingProperty.availability_status,
         targetApprovalStatus,
+        total_units !== undefined ? total_units : existingProperty.total_units,
+        available_units !== undefined ? available_units : existingProperty.available_units,
         id
       ]
     );
@@ -752,8 +908,40 @@ router.put('/:id', authenticate, requireRole(['branch_admin', 'super_admin', 'as
       }
     }
 
-    // Handle Uploaded Files
-    const mediaTypes = ['image', 'floor_plan', 'document', 'brochure'];
+    // Replace phases if provided
+    if (req.body.phases) {
+      const phases = JSON.parse(req.body.phases);
+      if (Array.isArray(phases)) {
+        await dbConnection.query('DELETE FROM property_phases WHERE property_id = ?', [id]);
+        for (let phase of phases) {
+          if (phase.phase_name && phase.rera_id) {
+            await dbConnection.query(
+              'INSERT INTO property_phases (property_id, phase_name, rera_id) VALUES (?, ?, ?)',
+              [id, phase.phase_name, phase.rera_id]
+            );
+          }
+        }
+      }
+    }
+
+    // Replace videos if provided
+    if (req.body.videos) {
+      const videos = JSON.parse(req.body.videos);
+      if (Array.isArray(videos)) {
+        await dbConnection.query('DELETE FROM property_videos WHERE property_id = ?', [id]);
+        for (let vid of videos) {
+          if (vid.video_url) {
+            await dbConnection.query(
+              'INSERT INTO property_videos (property_id, video_url, thumbnail_url, title) VALUES (?, ?, ?, ?)',
+              [id, vid.video_url, vid.thumbnail_url || null, vid.title || null]
+            );
+          }
+        }
+      }
+    }
+
+    // Handle Uploaded Files (Legacy multer support)
+    const mediaTypes = ['image', 'floor_plan', 'document', 'brochure', 'thumbnail', 'top_banner'];
     for (let mType of mediaTypes) {
       const fieldname = mType + 's';
       if (req.files && req.files[fieldname]) {
@@ -763,6 +951,32 @@ router.put('/:id', authenticate, requireRole(['branch_admin', 'super_admin', 'as
             'INSERT INTO property_media (property_id, media_type, file_url, file_name) VALUES (?, ?, ?, ?)',
             [id, mType, relativeUrl, file.originalname]
           );
+        }
+      }
+    }
+
+    // Handle Media Library Items from Payload
+    const libraryFields = {
+      media_library_images: 'image',
+      media_library_thumbnails: 'thumbnail',
+      media_library_top_banners: 'top_banner',
+      media_library_floor_plans: 'floor_plan',
+      media_library_brochures: 'brochure'
+    };
+    for (const [field, mType] of Object.entries(libraryFields)) {
+      if (req.body[field]) {
+        try {
+          const items = JSON.parse(req.body[field]);
+          if (Array.isArray(items)) {
+            for (let item of items) {
+              await dbConnection.query(
+                'INSERT INTO property_media (property_id, media_type, file_url, file_name) VALUES (?, ?, ?, ?)',
+                [id, mType, item.file_url, item.file_name]
+              );
+            }
+          }
+        } catch (e) {
+          console.error(`Error parsing ${field}`, e);
         }
       }
     }

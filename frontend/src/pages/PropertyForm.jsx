@@ -4,6 +4,7 @@ import { AuthContext } from '../context/AuthContext';
 import api from '../services/api';
 import { extractMapUrl } from '../utils/mapHelper';
 import { getAmenityIcon } from '../utils/amenityIcons';
+import MediaLibraryModal from '../components/MediaLibraryModal';
 
 const PropertyForm = () => {
   const { id } = useParams();
@@ -30,7 +31,9 @@ const PropertyForm = () => {
     virtual_tour_url: '',
     developer_legacy: '',
     availability_status: 'available',
-    branch_id: ''
+    branch_id: '',
+    total_units: 0,
+    available_units: 0
   });
 
   useEffect(() => {
@@ -39,10 +42,19 @@ const PropertyForm = () => {
         .then(res => setBranches(res.data || []))
         .catch(err => console.error('Error fetching branches list', err));
     }
+    api.get('/api/properties/amenities/distinct')
+      .then(res => setDbCustomAmenities(res.data || []))
+      .catch(err => console.error('Error fetching custom amenities', err));
   }, [user]);
 
   // Dynamic lists states
   const [configurations, setConfigurations] = useState([]);
+  const [phases, setPhases] = useState([]);
+  const [videos, setVideos] = useState([]);
+  const [tempPhase, setTempPhase] = useState({ phase_name: '', rera_id: '' });
+  const [tempVideo, setTempVideo] = useState({ title: '', video_url: '', thumbnail_url: '' });
+  const [mediaModalOpen, setMediaModalOpen] = useState(false);
+  const [mediaModalTarget, setMediaModalTarget] = useState(null); // 'config', 'video', 'amenity'
   const [specifications, setSpecifications] = useState([]);
   const [selectedAmenities, setSelectedAmenities] = useState([]);
   const [customAmenityInput, setCustomAmenityInput] = useState('');
@@ -51,11 +63,23 @@ const PropertyForm = () => {
   const [tempConfig, setTempConfig] = useState({ bhk_type: '', carpet_area: '', price: '', estimated_emi: '', floor_plan_url: '' });
   const [tempSpec, setTempSpec] = useState({ title: '', details: '' });
 
-  // File upload state bindings
+  // File upload state bindings (from Media Library)
   const [images, setImages] = useState([]);
+  const [thumbnails, setThumbnails] = useState([]);
+  const [topBanners, setTopBanners] = useState([]);
   const [floorPlans, setFloorPlans] = useState([]);
   const [brochures, setBrochures] = useState([]);
+
+  // File upload state bindings (Direct File Uploads)
+  const [rawImages, setRawImages] = useState([]);
+  const [rawThumbnails, setRawThumbnails] = useState([]);
+  const [rawTopBanners, setRawTopBanners] = useState([]);
+  const [rawFloorPlans, setRawFloorPlans] = useState([]);
+  const [rawBrochures, setRawBrochures] = useState([]);
   const [existingMedia, setExistingMedia] = useState(null);
+  
+  // Custom amenities from DB
+  const [dbCustomAmenities, setDbCustomAmenities] = useState([]);
 
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(isEditMode);
@@ -119,7 +143,7 @@ const PropertyForm = () => {
           }
         }
 
-        const { property, configurations: fetchedConfigs, amenities: fetchedAmenities, specifications: fetchedSpecs, media: fetchedMedia } = res.data || {};
+        const { property, configurations: fetchedConfigs, amenities: fetchedAmenities, specifications: fetchedSpecs, phases: fetchedPhases, videos: fetchedVideos, media: fetchedMedia } = res.data || {};
 
         if (!property) {
           setNotFoundError(true);
@@ -146,10 +170,14 @@ const PropertyForm = () => {
           virtual_tour_url: property.virtual_tour_url || '',
           developer_legacy: property.developer_legacy || '',
           availability_status: property.availability_status || 'available',
-          branch_id: property.branch_id || ''
+          branch_id: property.branch_id || '',
+          total_units: property.total_units || 0,
+          available_units: property.available_units || 0
         });
 
         setConfigurations(fetchedConfigs || []);
+        setPhases(fetchedPhases || []);
+        setVideos(fetchedVideos || []);
         setSpecifications(fetchedSpecs || []);
         
         let normalizedAmenities = [];
@@ -186,6 +214,7 @@ const PropertyForm = () => {
     "Intercom", "Private Garden", "Solar Water System", "Home Automation",
     "EV Charging Station", "Multi-purpose Hall", "Badminton Court", "Fire Fighting System"
   ];
+  const allAmenitiesList = Array.from(new Set([...defaultAmenitiesList, ...dbCustomAmenities]));
 
   // Popular Maharashtra & Indian Real Estate Hub Cities
   const quickCityList = [
@@ -253,6 +282,40 @@ const PropertyForm = () => {
     setSpecifications(specifications.filter((_, i) => i !== index));
   };
 
+  const addPhase = () => {
+    if (!tempPhase.phase_name || !tempPhase.rera_id) return alert('Phase Name and RERA ID are required');
+    setPhases([...phases, tempPhase]);
+    setTempPhase({ phase_name: '', rera_id: '' });
+  };
+  const removePhase = (index) => setPhases(phases.filter((_, i) => i !== index));
+
+  const addVideo = () => {
+    if (!tempVideo.video_url) return alert('Video URL is required');
+    setVideos([...videos, tempVideo]);
+    setTempVideo({ title: '', video_url: '', thumbnail_url: '' });
+  };
+  const removeVideo = (index) => setVideos(videos.filter((_, i) => i !== index));
+
+  const handleMediaSelect = (mediaItem) => {
+    if (mediaModalTarget === 'config_floor_plan') {
+      setTempConfig({ ...tempConfig, floor_plan_url: mediaItem.file_url });
+    } else if (mediaModalTarget === 'video_thumbnail') {
+      setTempVideo({ ...tempVideo, thumbnail_url: mediaItem.file_url });
+    } else if (mediaModalTarget === 'thumbnail') {
+      setThumbnails([mediaItem]);
+    } else if (mediaModalTarget === 'top_banner') {
+      setTopBanners([mediaItem]);
+    } else if (mediaModalTarget === 'gallery') {
+      setImages([...images, mediaItem]);
+    } else if (mediaModalTarget === 'floor_plans') {
+      setFloorPlans([...floorPlans, mediaItem]);
+    } else if (mediaModalTarget === 'brochures') {
+      setBrochures([...brochures, mediaItem]);
+    }
+    setMediaModalOpen(false);
+    setMediaModalTarget(null);
+  };
+
   const handleSubmit = async (e, submitForApproval = true) => {
     if (e) e.preventDefault();
     setError('');
@@ -296,24 +359,39 @@ const PropertyForm = () => {
       }
 
       payload.append('configurations', JSON.stringify(configurations));
+      
+      if (phases.length > 0) {
+        payload.append('phases', JSON.stringify(phases));
+      }
+      if (videos.length > 0) {
+        payload.append('videos', JSON.stringify(videos));
+      }
+      
       payload.append('amenities', JSON.stringify(selectedAmenities));
       payload.append('specifications', JSON.stringify(specifications));
 
       if (images.length > 0) {
-        for (let i = 0; i < images.length; i++) {
-          payload.append('images', images[i]);
-        }
+        payload.append('media_library_images', JSON.stringify(images));
+      }
+      if (thumbnails.length > 0) {
+        payload.append('media_library_thumbnails', JSON.stringify(thumbnails));
+      }
+      if (topBanners.length > 0) {
+        payload.append('media_library_top_banners', JSON.stringify(topBanners));
       }
       if (floorPlans.length > 0) {
-        for (let i = 0; i < floorPlans.length; i++) {
-          payload.append('floor_plans', floorPlans[i]);
-        }
+        payload.append('media_library_floor_plans', JSON.stringify(floorPlans));
       }
       if (brochures.length > 0) {
-        for (let i = 0; i < brochures.length; i++) {
-          payload.append('brochures', brochures[i]);
-        }
+        payload.append('media_library_brochures', JSON.stringify(brochures));
       }
+
+      // Direct file uploads
+      for (let file of rawImages) { payload.append('images', file); }
+      for (let file of rawThumbnails) { payload.append('thumbnails', file); }
+      for (let file of rawTopBanners) { payload.append('top_banners', file); }
+      for (let file of rawFloorPlans) { payload.append('floor_plans', file); }
+      for (let file of rawBrochures) { payload.append('brochures', file); }
 
       if (isEditMode) {
         let res;
@@ -696,6 +774,38 @@ const PropertyForm = () => {
             </div>
           </div>
 
+          <div className="row g-3 mb-3 p-3 rounded" style={{ backgroundColor: 'rgba(59, 130, 246, 0.05)', border: '1px solid rgba(59, 130, 246, 0.1)' }}>
+            <div className="col-12 mb-1">
+              <label className="form-label small fw-800 mb-0" style={{ color: 'var(--text-primary)' }}>
+                <i className="bi bi-box-seam text-primary me-1"></i> PROJECT INVENTORY TRACKING
+              </label>
+            </div>
+            <div className="col-md-6">
+              <label className="form-label small fw-700 text-muted">TOTAL UNITS IN PROJECT</label>
+              <input 
+                type="number" 
+                name="total_units"
+                value={formData.total_units}
+                onChange={handleTextChange}
+                className="form-control form-premium-control" 
+                placeholder="e.g. 150"
+                min="0"
+              />
+            </div>
+            <div className="col-md-6">
+              <label className="form-label small fw-700 text-muted">AVAILABLE INVENTORY LEFT</label>
+              <input 
+                type="number" 
+                name="available_units"
+                value={formData.available_units}
+                onChange={handleTextChange}
+                className="form-control form-premium-control" 
+                placeholder="e.g. 45"
+                min="0"
+              />
+            </div>
+          </div>
+
           <div className="mb-3">
             <label className="form-label small fw-700" style={{ color: 'var(--text-primary)' }}>OFFICE / SITE STREET ADDRESS *</label>
             <input 
@@ -770,6 +880,140 @@ const PropertyForm = () => {
             />
           </div>
 
+          {/* Phases Configs */}
+          <h6 className="fw-800 mb-3 mt-4 border-bottom pb-2" style={{ color: 'var(--text-primary)', borderColor: 'var(--border-color)' }}>
+            <i className="bi bi-clock-history text-primary me-1"></i>Project Phases & RERA IDs
+          </h6>
+          <div className="row g-2 mb-3 align-items-end p-3 rounded border" style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)' }}>
+            <div className="col-12 col-md-5">
+              <label className="form-label small fw-700" style={{ color: 'var(--text-primary)' }}>PHASE NAME</label>
+              <input 
+                type="text" 
+                placeholder="e.g. Phase 1 / Tower A"
+                value={tempPhase.phase_name} 
+                onChange={(e) => setTempPhase({ ...tempPhase, phase_name: e.target.value })}
+                className="form-control form-premium-control"
+              />
+            </div>
+            <div className="col-12 col-md-5">
+              <label className="form-label small fw-700" style={{ color: 'var(--text-primary)' }}>RERA ID</label>
+              <input 
+                type="text" 
+                placeholder="e.g. P521000..."
+                value={tempPhase.rera_id} 
+                onChange={(e) => setTempPhase({ ...tempPhase, rera_id: e.target.value })}
+                className="form-control form-premium-control"
+              />
+            </div>
+            <div className="col-12 col-md-2 mt-2 mt-md-0">
+              <button type="button" onClick={addPhase} className="btn btn-premium w-100 py-2">Add Phase</button>
+            </div>
+          </div>
+          {phases.length > 0 && (
+            <div className="mb-4">
+              <div className="table-responsive rounded border border-secondary shadow-sm" style={{ backgroundColor: 'var(--bg-secondary)' }}>
+                <table className="table table-hover table-borderless mb-0 align-middle">
+                  <thead style={{ backgroundColor: 'rgba(0,0,0,0.05)' }}>
+                    <tr>
+                      <th className="small fw-700 text-muted">Phase Name</th>
+                      <th className="small fw-700 text-muted">RERA ID</th>
+                      <th className="small fw-700 text-muted text-end">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {phases.map((p, i) => (
+                      <tr key={i}>
+                        <td className="fw-600">{p.phase_name}</td>
+                        <td>{p.rera_id}</td>
+                        <td className="text-end">
+                          <button type="button" onClick={() => removePhase(i)} className="btn btn-sm btn-outline-danger py-1 px-2 rounded-3"><i className="bi bi-trash"></i></button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Video Gallery Configs */}
+          <h6 className="fw-800 mb-3 mt-4 border-bottom pb-2" style={{ color: 'var(--text-primary)', borderColor: 'var(--border-color)' }}>
+            <i className="bi bi-play-btn-fill text-primary me-1"></i>Video Gallery
+          </h6>
+          <div className="row g-2 mb-3 align-items-end p-3 rounded border" style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)' }}>
+            <div className="col-12 col-md-3">
+              <label className="form-label small fw-700" style={{ color: 'var(--text-primary)' }}>VIDEO TITLE</label>
+              <input 
+                type="text" 
+                placeholder="e.g. Walkthrough"
+                value={tempVideo.title} 
+                onChange={(e) => setTempVideo({ ...tempVideo, title: e.target.value })}
+                className="form-control form-premium-control"
+              />
+            </div>
+            <div className="col-12 col-md-4">
+              <label className="form-label small fw-700" style={{ color: 'var(--text-primary)' }}>VIDEO URL (YOUTUBE/VIMEO)</label>
+              <input 
+                type="url" 
+                placeholder="e.g. https://youtube.com/watch?v=..."
+                value={tempVideo.video_url} 
+                onChange={(e) => setTempVideo({ ...tempVideo, video_url: e.target.value })}
+                className="form-control form-premium-control"
+              />
+            </div>
+            <div className="col-12 col-md-4">
+              <label className="form-label small fw-700" style={{ color: 'var(--text-primary)' }}>CUSTOM THUMBNAIL</label>
+              <div className="input-group">
+                <input 
+                  type="text" 
+                  placeholder="Select from Media Library..."
+                  value={tempVideo.thumbnail_url} 
+                  onChange={(e) => setTempVideo({ ...tempVideo, thumbnail_url: e.target.value })}
+                  className="form-control form-premium-control"
+                />
+                <button 
+                  type="button" 
+                  className="btn btn-outline-secondary" 
+                  onClick={() => {
+                    setMediaModalTarget('video_thumbnail');
+                    setMediaModalOpen(true);
+                  }}
+                >
+                  <i className="bi bi-folder2-open"></i>
+                </button>
+              </div>
+            </div>
+            <div className="col-12 col-md-1 mt-2 mt-md-0">
+              <button type="button" onClick={addVideo} className="btn btn-premium w-100 py-2">Add</button>
+            </div>
+          </div>
+          {videos.length > 0 && (
+            <div className="mb-4">
+              <div className="table-responsive rounded border border-secondary shadow-sm" style={{ backgroundColor: 'var(--bg-secondary)' }}>
+                <table className="table table-hover table-borderless mb-0 align-middle">
+                  <thead style={{ backgroundColor: 'rgba(0,0,0,0.05)' }}>
+                    <tr>
+                      <th className="small fw-700 text-muted">Title</th>
+                      <th className="small fw-700 text-muted">URL</th>
+                      <th className="small fw-700 text-muted text-end">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {videos.map((v, i) => (
+                      <tr key={i}>
+                        <td className="fw-600">{v.title}</td>
+                        <td><a href={v.video_url} target="_blank" rel="noreferrer" className="text-truncate d-inline-block" style={{ maxWidth: '200px' }}>{v.video_url}</a></td>
+                        <td className="text-end">
+                          <button type="button" onClick={() => removeVideo(i)} className="btn btn-sm btn-outline-danger py-1 px-2 rounded-3"><i className="bi bi-trash"></i></button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
           {/* Dynamic BHK Layouts Configs */}
           <h6 className="fw-800 mb-3 mt-4 border-bottom pb-2" style={{ color: 'var(--text-primary)', borderColor: 'var(--border-color)' }}>
             <i className="bi bi-grid-3x3-gap text-primary me-1"></i>BHK Configurations & Pricing *
@@ -818,13 +1062,25 @@ const PropertyForm = () => {
             </div>
             <div className="col-12 col-sm-6 col-md-3">
               <label className="form-label small fw-700" style={{ color: 'var(--text-primary)' }}>FLOOR PLAN IMAGE / LINK</label>
-              <input 
-                type="text" 
-                placeholder="e.g. https://... or /uploads/fp1.jpg"
-                value={tempConfig.floor_plan_url || ''} 
-                onChange={(e) => setTempConfig({ ...tempConfig, floor_plan_url: e.target.value })}
-                className="form-control form-premium-control"
-              />
+              <div className="input-group">
+                <input 
+                  type="text" 
+                  placeholder="e.g. /uploads/fp1.jpg"
+                  value={tempConfig.floor_plan_url || ''} 
+                  onChange={(e) => setTempConfig({ ...tempConfig, floor_plan_url: e.target.value })}
+                  className="form-control form-premium-control"
+                />
+                <button 
+                  type="button" 
+                  className="btn btn-outline-secondary" 
+                  onClick={() => {
+                    setMediaModalTarget('config_floor_plan');
+                    setMediaModalOpen(true);
+                  }}
+                >
+                  <i className="bi bi-folder2-open"></i>
+                </button>
+              </div>
             </div>
             <div className="col-12 col-md-1 mt-2 mt-md-0">
               <button type="button" onClick={addConfiguration} className="btn btn-premium w-100 py-2">Add</button>
@@ -924,7 +1180,7 @@ const PropertyForm = () => {
 
             {/* Checkbox Preset Grid */}
             <div className="row g-2 p-3 rounded border mb-3" style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)' }}>
-              {defaultAmenitiesList.map(a => {
+              {allAmenitiesList.map(a => {
                 const iconInfo = getAmenityIcon(a);
                 return (
                   <div key={a} className="col-md-3 col-sm-4 col-6">
@@ -1007,36 +1263,133 @@ const PropertyForm = () => {
 
           <div className="row g-3 mb-4">
             <div className="col-md-4">
+              <label className="form-label small fw-700" style={{ color: 'var(--text-primary)' }}>PROPERTY THUMBNAIL</label>
+              <div className="d-flex gap-2 mb-2">
+                <button type="button" className="btn btn-outline-primary text-start flex-shrink-0" onClick={() => { setMediaModalTarget('thumbnail'); setMediaModalOpen(true); }} style={{ width: '130px' }}>
+                  <i className="bi bi-collection-play me-1"></i>Library
+                </button>
+                <input 
+                  type="file" 
+                  accept="image/*"
+                  onChange={(e) => setRawThumbnails([...e.target.files])}
+                  className="form-control form-premium-control" 
+                />
+              </div>
+              {thumbnails.length > 0 && (
+                <div className="mt-2">
+                  {thumbnails.map((item, idx) => (
+                    <span key={idx} className="badge bg-primary d-inline-block text-truncate" style={{maxWidth: '100%'}}>
+                      {item.file_name}
+                      <i className="bi bi-x-circle ms-2 cursor-pointer" onClick={() => setThumbnails(thumbnails.filter((_, i) => i !== idx))}></i>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="col-md-4">
+              <label className="form-label small fw-700" style={{ color: 'var(--text-primary)' }}>TOP PROPERTY BANNER</label>
+              <div className="d-flex gap-2 mb-2">
+                <button type="button" className="btn btn-outline-primary text-start flex-shrink-0" onClick={() => { setMediaModalTarget('top_banner'); setMediaModalOpen(true); }} style={{ width: '130px' }}>
+                  <i className="bi bi-collection-play me-1"></i>Library
+                </button>
+                <input 
+                  type="file" 
+                  accept="image/*"
+                  onChange={(e) => setRawTopBanners([...e.target.files])}
+                  className="form-control form-premium-control" 
+                />
+              </div>
+              {topBanners.length > 0 && (
+                <div className="mt-2">
+                  {topBanners.map((item, idx) => (
+                    <span key={idx} className="badge bg-primary d-inline-block text-truncate" style={{maxWidth: '100%'}}>
+                      {item.file_name}
+                      <i className="bi bi-x-circle ms-2 cursor-pointer" onClick={() => setTopBanners(topBanners.filter((_, i) => i !== idx))}></i>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <div className="row g-3 mb-4">
+            <div className="col-md-4">
               <label className="form-label small fw-700" style={{ color: 'var(--text-primary)' }}>PROJECT GALLERY IMAGES</label>
-              <input 
-                type="file" 
-                multiple
-                accept="image/*"
-                onChange={(e) => setImages(e.target.files)}
-                className="form-control form-premium-control" 
-              />
+              <div className="d-flex gap-2 mb-2">
+                <button type="button" className="btn btn-outline-primary text-start flex-shrink-0" onClick={() => { setMediaModalTarget('gallery'); setMediaModalOpen(true); }} style={{ width: '130px' }}>
+                  <i className="bi bi-collection-play me-1"></i>Library
+                </button>
+                <input 
+                  type="file" 
+                  multiple
+                  accept="image/*"
+                  onChange={(e) => setRawImages([...e.target.files])}
+                  className="form-control form-premium-control" 
+                />
+              </div>
+              {images.length > 0 && (
+                <div className="mt-2 d-flex flex-wrap gap-1">
+                  {images.map((item, idx) => (
+                    <span key={idx} className="badge bg-secondary d-inline-flex align-items-center">
+                      <span className="d-inline-block text-truncate" style={{maxWidth: '120px'}}>{item.file_name}</span>
+                      <i className="bi bi-x-circle ms-1 cursor-pointer" onClick={() => setImages(images.filter((_, i) => i !== idx))}></i>
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="col-md-4">
               <label className="form-label small fw-700" style={{ color: 'var(--text-primary)' }}>FLOOR PLAN BLUEPRINTS</label>
-              <input 
-                type="file" 
-                multiple
-                accept="image/*,.pdf"
-                onChange={(e) => setFloorPlans(e.target.files)}
-                className="form-control form-premium-control" 
-              />
+              <div className="d-flex gap-2 mb-2">
+                <button type="button" className="btn btn-outline-primary text-start flex-shrink-0" onClick={() => { setMediaModalTarget('floor_plans'); setMediaModalOpen(true); }} style={{ width: '130px' }}>
+                  <i className="bi bi-collection-play me-1"></i>Library
+                </button>
+                <input 
+                  type="file" 
+                  multiple
+                  accept="image/*"
+                  onChange={(e) => setRawFloorPlans([...e.target.files])}
+                  className="form-control form-premium-control" 
+                />
+              </div>
+              {floorPlans.length > 0 && (
+                <div className="mt-2 d-flex flex-wrap gap-1">
+                  {floorPlans.map((item, idx) => (
+                    <span key={idx} className="badge bg-secondary d-inline-flex align-items-center">
+                      <span className="d-inline-block text-truncate" style={{maxWidth: '120px'}}>{item.file_name}</span>
+                      <i className="bi bi-x-circle ms-1 cursor-pointer" onClick={() => setFloorPlans(floorPlans.filter((_, i) => i !== idx))}></i>
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="col-md-4">
               <label className="form-label small fw-700" style={{ color: 'var(--text-primary)' }}>PDF BROCHURES</label>
-              <input 
-                type="file" 
-                multiple
-                accept=".pdf,.doc,.docx"
-                onChange={(e) => setBrochures(e.target.files)}
-                className="form-control form-premium-control" 
-              />
+              <div className="d-flex gap-2 mb-2">
+                <button type="button" className="btn btn-outline-primary text-start flex-shrink-0" onClick={() => { setMediaModalTarget('brochures'); setMediaModalOpen(true); }} style={{ width: '130px' }}>
+                  <i className="bi bi-collection-play me-1"></i>Library
+                </button>
+                <input 
+                  type="file" 
+                  multiple
+                  accept=".pdf,.doc,.docx"
+                  onChange={(e) => setRawBrochures([...e.target.files])}
+                  className="form-control form-premium-control" 
+                />
+              </div>
+              {brochures.length > 0 && (
+                <div className="mt-2 d-flex flex-wrap gap-1">
+                  {brochures.map((item, idx) => (
+                    <span key={idx} className="badge bg-secondary d-inline-flex align-items-center">
+                      <span className="d-inline-block text-truncate" style={{maxWidth: '120px'}}>{item.file_name}</span>
+                      <i className="bi bi-x-circle ms-1 cursor-pointer" onClick={() => setBrochures(brochures.filter((_, i) => i !== idx))}></i>
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
@@ -1081,6 +1434,11 @@ const PropertyForm = () => {
         </form>
       </div>
 
+      <MediaLibraryModal 
+        show={mediaModalOpen} 
+        onClose={() => { setMediaModalOpen(false); setMediaModalTarget(null); }}
+        onSelect={handleMediaSelect}
+      />
     </div>
   );
 };
