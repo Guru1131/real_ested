@@ -495,7 +495,7 @@ const Dashboard = () => {
                 </div>
               ) : (
                 <div className="table-responsive">
-                  <table className="table table-borderless table-hover align-middle text-light mb-0">
+                  <table className="table table-borderless table-hover align-middle mb-0" style={{ '--bs-table-bg': 'transparent', color: 'var(--text-primary)' }}>
                     <thead style={{ borderBottom: '1px solid var(--border-color)' }}>
                       <tr className="small text-muted">
                         <th>Property</th>
@@ -551,7 +551,7 @@ const Dashboard = () => {
                 </div>
               ) : (
                 <div className="table-responsive">
-                  <table className="table table-borderless table-hover align-middle text-light mb-0">
+                  <table className="table table-borderless table-hover align-middle mb-0" style={{ '--bs-table-bg': 'transparent', color: 'var(--text-primary)' }}>
                     <thead style={{ borderBottom: '1px solid var(--border-color)' }}>
                       <tr className="small text-muted">
                         <th>Client</th>

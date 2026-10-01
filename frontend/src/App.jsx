@@ -25,6 +25,7 @@ import Landing from './pages/Landing';
 import PropertyDetailPublic from './pages/PropertyDetailPublic';
 import BrokerStaffManagement from './pages/BrokerStaffManagement';
 import DataManagement from './pages/DataManagement';
+import InventoryManagement from './pages/InventoryManagement';
 
 // Global Hidden Customization Modal Wrapper (Super Admin Only)
 const GlobalHiddenModalContainer = () => {
@@ -142,6 +143,16 @@ const App = () => {
                 element={
                   <ProtectedRoute allowedRoles={['super_admin', 'assistant_admin', 'branch_admin']}>
                     <UserManagement />
+                  </ProtectedRoute>
+                } 
+              />
+
+              {/* Inventory Management */}
+              <Route 
+                path="/inventory" 
+                element={
+                  <ProtectedRoute allowedRoles={['super_admin', 'assistant_admin', 'branch_admin']}>
+                    <InventoryManagement />
                   </ProtectedRoute>
                 } 
               />

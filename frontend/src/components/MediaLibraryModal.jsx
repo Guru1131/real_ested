@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import api from '../services/api';
-import { formatImageUrl } from '../utils/imageHelper';
+import { formatImageUrl, handleImageError } from '../utils/imageHelper';
 
 const MediaLibraryModal = ({ show, onClose, onSelect, accept = 'image/*' }) => {
   const [mediaList, setMediaList] = useState([]);
@@ -140,7 +140,12 @@ const MediaLibraryModal = ({ show, onClose, onSelect, accept = 'image/*' }) => {
                               title="Click to select this asset"
                             >
                               {item.file_type.includes('image') ? (
-                                <img src={formatImageUrl(item.file_url)} className="w-100 h-100 object-fit-cover hover-scale" alt={item.file_name} />
+                                <img 
+                                  src={formatImageUrl(item.file_url)} 
+                                  onError={handleImageError} 
+                                  className="w-100 h-100 object-fit-cover hover-scale" 
+                                  alt={item.file_name} 
+                                />
                               ) : (
                                 <div className="d-flex align-items-center justify-content-center h-100 w-100">
                                   <i className="bi bi-file-earmark-text-fill display-4 text-muted"></i>

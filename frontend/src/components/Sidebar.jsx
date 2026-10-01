@@ -97,6 +97,17 @@ const Sidebar = ({ isOpen, onClose }) => {
             </NavLink>
           )}
 
+          {/* Admin roles: Inventory Management */}
+          {['super_admin', 'assistant_admin', 'branch_admin'].includes(user.role) && (
+            <NavLink 
+              to="/inventory" 
+              className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+              onClick={handleLinkClick}
+            >
+              <i className="bi bi-box-seam"></i> Inventory Management
+            </NavLink>
+          )}
+
           {/* Admin roles: Broker Control */}
           {['super_admin', 'assistant_admin', 'branch_admin'].includes(user.role) && (
             <NavLink 

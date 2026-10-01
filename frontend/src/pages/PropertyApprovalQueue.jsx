@@ -85,12 +85,12 @@ const PropertyApprovalQueue = () => {
             <table className="table-premium">
               <thead>
                 <tr>
-                  <th>CODE</th>
-                  <th>PROJECT NAME</th>
-                  <th>BRANCH AFFILIATION</th>
-                  <th>SUBURB</th>
-                  <th>EST PRICE</th>
-                  <th>PROT ACTION</th>
+                  <th style={{ width: '15%' }}>CODE</th>
+                  <th style={{ width: '25%' }}>PROJECT / PROPERTY NAME</th>
+                  <th style={{ width: '20%' }}>BRANCH AFFILIATION</th>
+                  <th style={{ width: '15%' }}>SUBURB</th>
+                  <th style={{ width: '10%' }}>EST PRICE</th>
+                  <th style={{ width: '15%' }}>PROT ACTION</th>
                 </tr>
               </thead>
               <tbody>
@@ -98,8 +98,15 @@ const PropertyApprovalQueue = () => {
                   <tr key={item.id}>
                     <td className="fw-600 text-primary">{item.property_code}</td>
                     <td>
-                      <div className="fw-600 text-white">{item.project_name}</div>
+                      <div className="fw-700" style={{ color: 'var(--text-primary)' }}>{item.project_name}</div>
                       <div className="text-muted small text-capitalize">{item.property_type} | {item.builder}</div>
+                      <div className="text-muted small mt-1">
+                        <i className="bi bi-clock me-1"></i>
+                        {new Date(item.created_at || item.updated_at || Date.now()).toLocaleString('en-IN', {
+                          day: '2-digit', month: 'short', year: 'numeric',
+                          hour: '2-digit', minute: '2-digit', hour12: true
+                        })}
+                      </div>
                     </td>
                     <td className="small">{item.branch_name}</td>
                     <td className="small">{item.location}</td>

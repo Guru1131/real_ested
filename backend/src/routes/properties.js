@@ -20,6 +20,7 @@ router.get('/public', async (req, res) => {
       SELECT p.id, p.property_code, p.property_slug, p.project_name, p.property_type, 
              p.branch_id, p.location, p.city, p.builder, p.rera_id, p.completion_date, 
              p.project_status, p.availability_status, p.approval_status, p.created_at, 
+             p.total_units, p.available_units,
              b.name as branch_name, MIN(pc.price) as min_price, MIN(pc.carpet_area) as min_area
       FROM properties p
       JOIN branches b ON p.branch_id = b.id
@@ -248,6 +249,7 @@ router.get('/', authenticate, async (req, res) => {
       SELECT p.id, p.property_code, p.property_slug, p.project_name, p.property_type, 
              p.branch_id, p.location, p.city, p.builder, p.rera_id, p.completion_date, 
              p.project_status, p.availability_status, p.approval_status, p.created_at, 
+             p.total_units, p.available_units,
              b.name as branch_name, MIN(pc.price) as min_price, MIN(pc.carpet_area) as min_area
       FROM properties p
       JOIN branches b ON p.branch_id = b.id
@@ -715,6 +717,55 @@ router.post('/:id/submit', authenticate, requireRole(['branch_admin', 'super_adm
     return res.status(500).json({ error: 'Server error submitting property.' });
   }
 });
+
+// POST /api/properties/update_inventory.php & POST /api/properties/inventory
+const handleUpdateInventoryRoute = async (req, res) => {
+  const { id, total_units, available_units } = req.body;
+  const propId = id || req.params.id;
+
+  if (!propId) {
+    return res.status(400).json({ error: 'Property ID is required.' });
+  }
+
+  try {
+    try {
+      await pool.query('SELECT total_units FROM properties LIMIT 1');
+    } catch (e) {
+      try { await pool.query('ALTER TABLE properties ADD COLUMN total_units INT DEFAULT 0'); } catch(e2){}
+    }
+
+    try {
+      await pool.query('SELECT available_units FROM properties LIMIT 1');
+    } catch (e) {
+      try { await pool.query('ALTER TABLE properties ADD COLUMN available_units INT DEFAULT 0'); } catch(e2){}
+    }
+
+    const [rows] = await pool.query('SELECT id, branch_id FROM properties WHERE id = ? AND is_deleted = 0 LIMIT 1', [propId]);
+    const property = rows[0];
+
+    if (!property) {
+      return res.status(404).json({ error: 'Property not found.' });
+    }
+
+    if (['branch_admin', 'branch_executive'].includes(req.user.role)) {
+      if (!enforceBranchIsolation(req, res, property.branch_id)) return;
+    }
+
+    const tu = parseInt(total_units) || 0;
+    const au = parseInt(available_units) || 0;
+
+    await pool.query('UPDATE properties SET total_units = ?, available_units = ? WHERE id = ?', [tu, au, propId]);
+
+    return res.json({ message: 'Inventory updated successfully', id: propId, total_units: tu, available_units: au });
+  } catch (err) {
+    console.error('Error updating inventory:', err);
+    return res.status(500).json({ error: 'Failed to update inventory.', details: err.message });
+  }
+};
+
+router.post('/update_inventory.php', authenticate, requireRole(['super_admin', 'assistant_admin', 'branch_admin']), handleUpdateInventoryRoute);
+router.post('/inventory', authenticate, requireRole(['super_admin', 'assistant_admin', 'branch_admin']), handleUpdateInventoryRoute);
+router.put('/:id/inventory', authenticate, requireRole(['super_admin', 'assistant_admin', 'branch_admin']), handleUpdateInventoryRoute);
 
 // GET /api/properties/detail-by-id/:id (Fetch property details by numeric ID for Edit Mode)
 router.get('/detail-by-id/:id', authenticate, async (req, res) => {

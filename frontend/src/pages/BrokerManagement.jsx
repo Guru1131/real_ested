@@ -345,19 +345,19 @@ const BrokerManagement = () => {
                 <table className="table-premium">
                   <thead>
                     <tr>
-                      <th>BROKER DETS</th>
-                      <th>PHONE</th>
-                      <th>ALLOWED BRANCHES</th>
-                      <th>STAFF SUB-ACCOUNTS</th>
-                      <th>STATUS</th>
-                      <th className="text-end">ACTIONS</th>
+                      <th style={{ width: '25%' }}>BROKER DETS</th>
+                      <th style={{ width: '15%' }}>PHONE</th>
+                      <th style={{ width: '20%' }}>ALLOWED BRANCHES</th>
+                      <th style={{ width: '15%' }}>STAFF SUB-ACCOUNTS</th>
+                      <th style={{ width: '10%' }}>STATUS</th>
+                      <th style={{ width: '15%' }} className="text-end">ACTIONS</th>
                     </tr>
                   </thead>
                   <tbody>
                     {brokers.map((b) => (
                       <tr key={b.id}>
                         <td>
-                          <div className="fw-600 text-white">{b.username}</div>
+                          <div className="fw-700" style={{ color: 'var(--text-primary)' }}>{b.username}</div>
                           <div className="text-muted small">{b.email}</div>
                         </td>
                         <td className="small">{editingId === b.id ? (
@@ -437,7 +437,7 @@ const BrokerManagement = () => {
                             <option value="inactive">Inactive</option>
                           </select>
                         ) : (
-                          <span className={`badge ${b.status === 'active' ? 'badge-active' : 'badge-inactive'} rounded-pill px-2.5 py-1`}>
+                          <span className={`badge ${b.status === 'active' ? 'bg-success' : 'bg-danger'} text-white rounded-pill px-2.5 py-1`}>
                             {b.status === 'active' ? 'Active' : 'Deactivated'}
                           </span>
                         )}</td>

@@ -92,20 +92,29 @@ const PropertyCard = ({ property, onStatusSubmit, onDelete, userRole }) => {
               {property.min_price ? `${formatPrice(property.min_price)}` : 'On Request'}
             </h5>
           </div>
+
+          <div className="text-center px-2 py-1 rounded" style={{ backgroundColor: 'var(--bg-tertiary)', border: '1px solid var(--border-color)' }}>
+            <span className="text-muted d-block" style={{ fontSize: '0.65rem', fontWeight: '600', letterSpacing: '0.5px' }}>INVENTORY</span>
+            <span className="fw-700" style={{ fontSize: '0.85rem', color: 'var(--text-primary)' }}>
+              {property.available_units ?? 0} / {property.total_units ?? 0} <span style={{ fontSize: '0.7rem', fontWeight: '500' }}>Units</span>
+            </span>
+          </div>
           
-          {property.availability_status === 'available' ? (
-            <span className="badge fw-600 rounded-pill px-2.5 py-1.5" style={{ backgroundColor: 'rgba(5, 150, 105, 0.08)', color: '#059669', border: '1px solid rgba(5, 150, 105, 0.15)', fontSize: '0.75rem' }}>
-              Available
-            </span>
-          ) : property.availability_status === 'booked' ? (
-            <span className="badge fw-600 rounded-pill px-2.5 py-1.5" style={{ backgroundColor: 'rgba(217, 119, 6, 0.08)', color: '#d97706', border: '1px solid rgba(217, 119, 6, 0.15)', fontSize: '0.75rem' }}>
-              Booked
-            </span>
-          ) : (
-            <span className="badge fw-600 rounded-pill px-2.5 py-1.5" style={{ backgroundColor: 'rgba(220, 38, 38, 0.08)', color: '#dc2626', border: '1px solid rgba(220, 38, 38, 0.15)', fontSize: '0.75rem' }}>
-              Sold Out
-            </span>
-          )}
+          <div>
+            {property.availability_status === 'available' ? (
+              <span className="badge fw-600 rounded-pill px-2.5 py-1.5 d-flex align-items-center gap-1" style={{ backgroundColor: 'rgba(5, 150, 105, 0.08)', color: '#059669', border: '1px solid rgba(5, 150, 105, 0.15)', fontSize: '0.75rem' }}>
+                Available
+              </span>
+            ) : property.availability_status === 'booked' ? (
+              <span className="badge fw-600 rounded-pill px-2.5 py-1.5" style={{ backgroundColor: 'rgba(217, 119, 6, 0.08)', color: '#d97706', border: '1px solid rgba(217, 119, 6, 0.15)', fontSize: '0.75rem' }}>
+                Booked
+              </span>
+            ) : (
+              <span className="badge fw-600 rounded-pill px-2.5 py-1.5" style={{ backgroundColor: 'rgba(220, 38, 38, 0.08)', color: '#dc2626', border: '1px solid rgba(220, 38, 38, 0.15)', fontSize: '0.75rem' }}>
+                Sold Out
+              </span>
+            )}
+          </div>
         </div>
       </div>
 

@@ -19,12 +19,14 @@ const PropertyDetailPublic = () => {
   const [error, setError] = useState('');
   
   const [activeTab, setActiveTab] = useState('overview');
+  const [lightboxImageIndex, setLightboxImageIndex] = useState(null);
+  const [zoomLevel, setZoomLevel] = useState(1);
 
   const galleryRef = useRef(null);
 
   const scrollGallery = (direction) => {
     if (galleryRef.current) {
-      const scrollAmount = direction === 'left' ? -300 : 300;
+      const scrollAmount = direction === 'left' ? -galleryRef.current.clientWidth : galleryRef.current.clientWidth;
       galleryRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
     }
   };
@@ -232,7 +234,7 @@ const PropertyDetailPublic = () => {
 
         {/* Hero image and title banner */}
         <div className="position-relative rounded-4 overflow-hidden mb-4 animate-fade-in" style={{ 
-          height: '380px', 
+          height: '450px', 
           backgroundImage: `linear-gradient(rgba(0,0,0,0.1), ${config.primaryColor}F3), url(${topBanner})`, 
           backgroundSize: 'cover', 
           backgroundPosition: 'center', 
@@ -332,6 +334,17 @@ const PropertyDetailPublic = () => {
                   <h5 className="fw-800 text-dark mb-3">Project Summary</h5>
                   <p className="text-muted mb-4">{property.highlights || 'No highlights summary details recorded yet.'}</p>
                   
+                  <div className="bg-primary bg-opacity-10 border border-primary border-opacity-25 rounded p-3 mb-4 d-flex align-items-center justify-content-around text-center flex-wrap gap-2">
+                    <div>
+                      <h6 className="text-muted small fw-700 mb-1">TOTAL INVENTORY</h6>
+                      <h4 className="fw-800 text-primary mb-0">{property.total_units ?? 0}</h4>
+                    </div>
+                    <div>
+                      <h6 className="text-muted small fw-700 mb-1">AVAILABLE UNITS</h6>
+                      <h4 className="fw-800 text-success mb-0">{property.available_units ?? 0}</h4>
+                    </div>
+                  </div>
+
                   <h5 className="fw-800 text-dark mb-3">BHK Configurations & Pricing</h5>
                   {configurations && configurations.length > 0 ? (
                     <div className="table-responsive mb-4">
@@ -354,9 +367,15 @@ const PropertyDetailPublic = () => {
                               <td>{c.estimated_emi ? `₹${parseFloat(c.estimated_emi).toLocaleString('en-IN')}` : 'Price on Request'}</td>
                               <td>
                                 {c.floor_plan_url || c.floor_plan ? (
-                                  <a href={formatImageUrl(c.floor_plan_url || c.floor_plan)} target="_blank" rel="noreferrer" className="btn btn-xs btn-outline-primary py-1 px-2.5 fw-600">
+                                  <button 
+                                    onClick={() => {
+                                      const fpConfigs = configurations.filter(conf => conf.floor_plan_url || conf.floor_plan);
+                                      const fpIndex = fpConfigs.findIndex(conf => conf === c);
+                                      setLightboxImageIndex(fpIndex !== -1 ? fpIndex : 0);
+                                    }}
+                                    className="btn btn-xs btn-outline-primary py-1 px-2.5 fw-600">
                                     <i className="bi bi-image me-1"></i> Floor Plan Link
-                                  </a>
+                                  </button>
                                 ) : (
                                   <span className="text-muted small">N/A</span>
                                 )}
@@ -495,7 +514,7 @@ const PropertyDetailPublic = () => {
                       </button>
                       <div ref={galleryRef} className="d-flex overflow-auto gap-3 pb-3" style={{ scrollSnapType: 'x mandatory', scrollBehavior: 'smooth', WebkitOverflowScrolling: 'touch' }}>
                         {media.images.map((img, idx) => (
-                          <div key={idx} className="flex-shrink-0" style={{ width: '80%', scrollSnapAlign: 'center' }}>
+                          <div key={idx} className="flex-shrink-0" style={{ width: '100%', scrollSnapAlign: 'center' }}>
                             <div className="ratio ratio-16x9 rounded overflow-hidden shadow-sm" style={{ border: '1px solid var(--border-color)' }}>
                               <img src={formatImageUrl(img.url)} alt={`Gallery ${idx + 1}`} className="w-100 h-100" style={{ objectFit: 'cover' }} />
                             </div>
@@ -787,6 +806,95 @@ const PropertyDetailPublic = () => {
           </div>
         </div>
       </footer>
+
+      {/* Floor Plan Lightbox Modal */}
+      {lightboxImageIndex !== null && configurations && configurations.filter(c => c.floor_plan_url || c.floor_plan).length > 0 && (
+        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.9)', zIndex: 1050 }} tabIndex="-1">
+          <div className="modal-dialog modal-fullscreen modal-dialog-centered">
+            <div className="modal-content bg-transparent border-0">
+              <div className="modal-header border-0 pb-0 position-absolute top-0 end-0 z-3">
+                <button type="button" className="btn-close btn-close-white fs-4 m-3" onClick={() => setLightboxImageIndex(null)} aria-label="Close"></button>
+              </div>
+              <div className="modal-body d-flex align-items-center justify-content-center p-0 position-relative">
+                {/* Previous Button */}
+                {configurations.filter(c => c.floor_plan_url || c.floor_plan).length > 1 && (
+                  <button 
+                    className="btn btn-dark position-absolute start-0 top-50 translate-middle-y z-3 rounded-circle shadow ms-3"
+                    style={{ width: '50px', height: '50px', opacity: 0.8 }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const validConfigs = configurations.filter(c => c.floor_plan_url || c.floor_plan);
+                      setLightboxImageIndex((prev) => (prev > 0 ? prev - 1 : validConfigs.length - 1));
+                      setZoomLevel(1);
+                    }}
+                  >
+                    <i className="bi bi-chevron-left fs-4"></i>
+                  </button>
+                )}
+
+                {/* Zoom Controls */}
+                <div className="position-absolute bottom-0 start-50 translate-middle-x z-3 mb-4 d-flex gap-2">
+                  <button className="btn btn-dark opacity-75 rounded-circle shadow" onClick={(e) => { e.stopPropagation(); setZoomLevel(z => Math.max(0.5, z - 0.25)); }}><i className="bi bi-zoom-out"></i></button>
+                  <button className="btn btn-dark opacity-75 shadow" onClick={(e) => { e.stopPropagation(); setZoomLevel(1); }}>Reset</button>
+                  <button className="btn btn-dark opacity-75 rounded-circle shadow" onClick={(e) => { e.stopPropagation(); setZoomLevel(z => Math.min(4, z + 0.25)); }}><i className="bi bi-zoom-in"></i></button>
+                </div>
+
+                {/* Image Wrapper */}
+                <div 
+                  className="w-100 h-100 d-flex" 
+                  onClick={() => setLightboxImageIndex(null)}
+                  style={{ overflow: 'auto' }}
+                >
+                  {(() => {
+                    const validConfigs = configurations.filter(c => c.floor_plan_url || c.floor_plan);
+                    const currentConfig = validConfigs[lightboxImageIndex];
+                    return (
+                      <div 
+                        onClick={(e) => e.stopPropagation()} 
+                        className="text-center p-4 m-auto"
+                      >
+                        <img 
+                          src={formatImageUrl(currentConfig.floor_plan_url || currentConfig.floor_plan)} 
+                          alt={`${currentConfig.bhk_type} Floor Plan`} 
+                          className="rounded bg-white" 
+                          style={{ 
+                            maxHeight: zoomLevel === 1 ? '85vh' : 'none',
+                            maxWidth: zoomLevel === 1 ? '90vw' : 'none',
+                            height: zoomLevel === 1 ? 'auto' : `${zoomLevel * 85}vh`,
+                            transition: 'height 0.2s',
+                            boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+                            objectFit: 'contain'
+                          }} 
+                        />
+                        <div className="text-white mt-3 fw-bold fs-5 text-shadow">
+                          {currentConfig.bhk_type} - {currentConfig.carpet_area} sq.ft.
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                {/* Next Button */}
+                {configurations.filter(c => c.floor_plan_url || c.floor_plan).length > 1 && (
+                  <button 
+                    className="btn btn-dark position-absolute end-0 top-50 translate-middle-y z-3 rounded-circle shadow me-3"
+                    style={{ width: '50px', height: '50px', opacity: 0.8 }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const validConfigs = configurations.filter(c => c.floor_plan_url || c.floor_plan);
+                      setLightboxImageIndex((prev) => (prev < validConfigs.length - 1 ? prev + 1 : 0));
+                      setZoomLevel(1);
+                    }}
+                  >
+                    <i className="bi bi-chevron-right fs-4"></i>
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

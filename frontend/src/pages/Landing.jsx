@@ -528,6 +528,13 @@ const Landing = () => {
                                 </h6>
                               </div>
 
+                              <div className="text-center px-2 py-1 rounded" style={{ backgroundColor: '#f8fafc', border: '1px solid rgba(25, 41, 81, 0.08)' }}>
+                                <span className="text-muted d-block" style={{ fontSize: '0.65rem', fontWeight: '600', letterSpacing: '0.5px' }}>INVENTORY</span>
+                                <span className="fw-700 text-dark" style={{ fontSize: '0.85rem' }}>
+                                  {p.available_units ?? 0} / {p.total_units ?? 0} <span style={{ fontSize: '0.7rem', fontWeight: '500' }}>Units</span>
+                                </span>
+                              </div>
+
                               <span className={`badge rounded-pill px-2.5 py-1.5 small fw-600 text-capitalize`} style={{
                                 backgroundColor: p.availability_status === 'available' ? 'rgba(5, 150, 105, 0.08)' : p.availability_status === 'booked' ? 'rgba(217, 119, 6, 0.08)' : 'rgba(220, 38, 38, 0.08)',
                                 color: p.availability_status === 'available' ? '#059669' : p.availability_status === 'booked' ? '#d97706' : '#dc2626',

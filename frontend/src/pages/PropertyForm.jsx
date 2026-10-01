@@ -65,10 +65,23 @@ const PropertyForm = () => {
   const [specifications, setSpecifications] = useState([]);
   const [selectedAmenities, setSelectedAmenities] = useState([]);
   const [customAmenityInput, setCustomAmenityInput] = useState('');
+  const [customAmenityIconInput, setCustomAmenityIconInput] = useState('');
 
   // Temp states for sub-forms
   const [tempConfig, setTempConfig] = useState({ bhk_type: '', carpet_area: '', price: '', estimated_emi: '', floor_plan_url: '' });
   const [tempSpec, setTempSpec] = useState({ title: '', details: '' });
+  const [customSpecInput, setCustomSpecInput] = useState('');
+
+  const handleAddCustomSpec = () => {
+    if (!customSpecInput.trim()) return;
+    const newSpec = customSpecInput.trim();
+    if (!allSpecTitles.includes(newSpec)) {
+      const updatedList = [...customSpecsList, newSpec];
+      setCustomSpecsList(updatedList);
+      localStorage.setItem('customSpecs', JSON.stringify(updatedList));
+    }
+    setCustomSpecInput('');
+  };
 
   // File upload state bindings (from Media Library)
   const [images, setImages] = useState([]);
@@ -249,14 +262,27 @@ const PropertyForm = () => {
     }
   };
 
-  const handleAddCustomAmenity = (e) => {
+  const handleAddCustomAmenity = async (e) => {
     e.preventDefault();
     if (!customAmenityInput || !customAmenityInput.trim()) return;
     const trimmed = customAmenityInput.trim();
     if (!selectedAmenities.includes(trimmed)) {
       setSelectedAmenities([...selectedAmenities, trimmed]);
     }
+
+    if (customAmenityIconInput && customAmenityIconInput.trim()) {
+      try {
+        await api.post('/api/global-amenities', { 
+          amenity_name: trimmed, 
+          icon_url: customAmenityIconInput.trim() 
+        });
+      } catch (err) {
+        console.error('Failed to save custom amenity icon', err);
+      }
+    }
+
     setCustomAmenityInput('');
+    setCustomAmenityIconInput('');
   };
 
   // Add BHK Configuration item
@@ -744,6 +770,63 @@ const PropertyForm = () => {
             </div>
           </div>
 
+          {/* Phases Configs Moved under RERA ID */}
+          <h6 className="fw-800 mb-3 mt-4 border-bottom pb-2" style={{ color: 'var(--text-primary)', borderColor: 'var(--border-color)' }}>
+            <i className="bi bi-clock-history text-primary me-1"></i>Project Phases & RERA IDs
+          </h6>
+          
+          <div className="row g-2 mb-3 align-items-end p-3 rounded border" style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)' }}>
+            <div className="col-12 col-md-5">
+              <label className="form-label small fw-700" style={{ color: 'var(--text-primary)' }}>PHASE NAME</label>
+              <input 
+                type="text" 
+                placeholder="e.g. Phase 1 / Tower A"
+                value={tempPhase.phase_name} 
+                onChange={(e) => setTempPhase({ ...tempPhase, phase_name: e.target.value })}
+                className="form-control form-premium-control"
+              />
+            </div>
+            <div className="col-12 col-md-5">
+              <label className="form-label small fw-700" style={{ color: 'var(--text-primary)' }}>RERA ID</label>
+              <input 
+                type="text" 
+                placeholder="e.g. P521000..."
+                value={tempPhase.rera_id} 
+                onChange={(e) => setTempPhase({ ...tempPhase, rera_id: e.target.value })}
+                className="form-control form-premium-control"
+              />
+            </div>
+            <div className="col-12 col-md-2 mt-2 mt-md-0">
+              <button type="button" onClick={addPhase} className="btn btn-premium w-100 py-2">Add Phase</button>
+            </div>
+          </div>
+          {phases.length > 0 && (
+            <div className="mb-4">
+              <div className="table-responsive rounded border border-secondary shadow-sm" style={{ backgroundColor: 'var(--bg-secondary)' }}>
+                <table className="table table-hover table-borderless mb-0 align-middle">
+                  <thead style={{ backgroundColor: 'rgba(0,0,0,0.05)' }}>
+                    <tr>
+                      <th className="small fw-700 text-muted">Phase Name</th>
+                      <th className="small fw-700 text-muted">RERA ID</th>
+                      <th className="small fw-700 text-muted text-end">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {phases.map((p, i) => (
+                      <tr key={i}>
+                        <td className="fw-600">{p.phase_name}</td>
+                        <td>{p.rera_id}</td>
+                        <td className="text-end">
+                          <button type="button" onClick={() => removePhase(i)} className="btn btn-sm btn-outline-danger py-1 px-2 rounded-3"><i className="bi bi-trash"></i></button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
           <div className="row g-3 mb-3">
             <div className="col-md-4">
               <label className="form-label small fw-700" style={{ color: 'var(--text-primary)' }}>PROJECT STAGE / STATUS *</label>
@@ -890,87 +973,6 @@ const PropertyForm = () => {
               placeholder="e.g. https://kuula.co/share/collection/7yX... or https://my.matterport.com/show/?m=..."
             />
           </div>
-
-          {/* Phases Configs */}
-          <h6 className="fw-800 mb-3 mt-4 border-bottom pb-2" style={{ color: 'var(--text-primary)', borderColor: 'var(--border-color)' }}>
-            <i className="bi bi-clock-history text-primary me-1"></i>Project Phases & RERA IDs
-          </h6>
-          
-            {/* Quick Spec Presets */}
-            <div className="mb-2">
-              <label className="form-label small fw-700 text-muted mb-2">QUICK SELECT PRESET:</label>
-              <div className="d-flex flex-wrap gap-2">
-                {allSpecTitles.map(spec => (
-                  <button
-                    key={spec}
-                    type="button"
-                    onClick={() => setTempSpec({ ...tempSpec, title: spec })}
-                    className="badge rounded-pill cursor-pointer shadow-sm border-0"
-                    style={{ 
-                      backgroundColor: tempSpec.title === spec ? 'var(--text-primary)' : 'var(--bg-secondary)', 
-                      color: tempSpec.title === spec ? '#fff' : 'var(--text-primary)',
-                      border: '1px solid var(--border-color) !important',
-                      padding: '8px 12px',
-                      fontSize: '0.75rem'
-                    }}
-                  >
-                    {spec}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="row g-2 mb-3 align-items-end p-3 rounded border" style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)' }}>
-            <div className="col-12 col-md-5">
-              <label className="form-label small fw-700" style={{ color: 'var(--text-primary)' }}>PHASE NAME</label>
-              <input 
-                type="text" 
-                placeholder="e.g. Phase 1 / Tower A"
-                value={tempPhase.phase_name} 
-                onChange={(e) => setTempPhase({ ...tempPhase, phase_name: e.target.value })}
-                className="form-control form-premium-control"
-              />
-            </div>
-            <div className="col-12 col-md-5">
-              <label className="form-label small fw-700" style={{ color: 'var(--text-primary)' }}>RERA ID</label>
-              <input 
-                type="text" 
-                placeholder="e.g. P521000..."
-                value={tempPhase.rera_id} 
-                onChange={(e) => setTempPhase({ ...tempPhase, rera_id: e.target.value })}
-                className="form-control form-premium-control"
-              />
-            </div>
-            <div className="col-12 col-md-2 mt-2 mt-md-0">
-              <button type="button" onClick={addPhase} className="btn btn-premium w-100 py-2">Add Phase</button>
-            </div>
-          </div>
-          {phases.length > 0 && (
-            <div className="mb-4">
-              <div className="table-responsive rounded border border-secondary shadow-sm" style={{ backgroundColor: 'var(--bg-secondary)' }}>
-                <table className="table table-hover table-borderless mb-0 align-middle">
-                  <thead style={{ backgroundColor: 'rgba(0,0,0,0.05)' }}>
-                    <tr>
-                      <th className="small fw-700 text-muted">Phase Name</th>
-                      <th className="small fw-700 text-muted">RERA ID</th>
-                      <th className="small fw-700 text-muted text-end">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {phases.map((p, i) => (
-                      <tr key={i}>
-                        <td className="fw-600">{p.phase_name}</td>
-                        <td>{p.rera_id}</td>
-                        <td className="text-end">
-                          <button type="button" onClick={() => removePhase(i)} className="btn btn-sm btn-outline-danger py-1 px-2 rounded-3"><i className="bi bi-trash"></i></button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
 
           {/* Video Gallery Configs */}
           <h6 className="fw-800 mb-3 mt-4 border-bottom pb-2" style={{ color: 'var(--text-primary)', borderColor: 'var(--border-color)' }}>
@@ -1168,16 +1170,62 @@ const PropertyForm = () => {
             <i className="bi bi-sliders text-primary me-1"></i>Technical Specifications
           </h6>
 
+          {/* Quick Spec Presets */}
+          <div className="mb-3">
+            <label className="form-label small fw-700 text-muted mb-2">QUICK SELECT PRESET:</label>
+            <div className="d-flex flex-wrap gap-2 mb-2">
+              {allSpecTitles.map(spec => (
+                <button
+                  key={spec}
+                  type="button"
+                  onClick={() => setTempSpec({ ...tempSpec, title: spec })}
+                  className="badge rounded-pill cursor-pointer shadow-sm border-0"
+                  style={{ 
+                    backgroundColor: tempSpec.title === spec ? 'var(--text-primary)' : 'var(--bg-secondary)', 
+                    color: tempSpec.title === spec ? '#fff' : 'var(--text-primary)',
+                    border: '1px solid var(--border-color) !important',
+                    padding: '8px 12px',
+                    fontSize: '0.75rem'
+                  }}
+                >
+                  {spec}
+                </button>
+              ))}
+            </div>
+            <div className="d-flex gap-2 align-items-center" style={{ maxWidth: '300px' }}>
+              <input 
+                type="text" 
+                className="form-control form-control-sm form-premium-control" 
+                placeholder="Add custom preset..." 
+                value={customSpecInput} 
+                onChange={(e) => setCustomSpecInput(e.target.value)} 
+              />
+              <button 
+                type="button" 
+                className="btn btn-sm btn-outline-primary fw-600"
+                onClick={handleAddCustomSpec}
+              >
+                Add
+              </button>
+            </div>
+          </div>
+
           <div className="row g-2 mb-3 align-items-end p-3 rounded border" style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)' }}>
             <div className="col-12 col-sm-5 col-md-4">
               <label className="form-label small fw-700" style={{ color: 'var(--text-primary)' }}>SPECIFICATION TITLE</label>
               <input 
                 type="text" 
+                list="spec-titles-list"
                 placeholder="e.g. Flooring"
                 value={tempSpec.title} 
                 onChange={(e) => setTempSpec({ ...tempSpec, title: e.target.value })}
                 className="form-control form-premium-control"
               />
+              <datalist id="spec-titles-list">
+                {allSpecTitles.map(spec => (
+                  <option key={spec} value={spec} />
+                ))}
+              </datalist>
             </div>
             <div className="col-12 col-sm-7 col-md-7">
               <label className="form-label small fw-700" style={{ color: 'var(--text-primary)' }}>SPECIFICATION DETAILS</label>
@@ -1250,6 +1298,14 @@ const PropertyForm = () => {
                   placeholder="e.g. Skate Park, Co-Working Lounge, Rooftop Infinity Pool..."
                   value={customAmenityInput}
                   onChange={(e) => setCustomAmenityInput(e.target.value)}
+                />
+                <input 
+                  type="text" 
+                  className="form-control form-premium-control"
+                  style={{ maxWidth: '200px' }}
+                  placeholder="Icon (e.g. bi-star)"
+                  value={customAmenityIconInput}
+                  onChange={(e) => setCustomAmenityIconInput(e.target.value)}
                 />
                 <button 
                   type="button" 

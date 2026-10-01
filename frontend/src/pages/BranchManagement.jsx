@@ -213,18 +213,18 @@ const BranchManagement = () => {
                 <table className="table-premium">
                   <thead>
                     <tr>
-                      <th>CODE</th>
-                      <th>NAME</th>
-                      <th>CITY</th>
-                      <th>ADDRESS</th>
-                      <th className="text-end">ACTIONS</th>
+                      <th style={{ width: '15%' }}>CODE</th>
+                      <th style={{ width: '25%' }}>NAME</th>
+                      <th style={{ width: '15%' }}>CITY</th>
+                      <th style={{ width: '30%' }}>ADDRESS</th>
+                      <th style={{ width: '15%' }} className="text-end">ACTIONS</th>
                     </tr>
                   </thead>
                   <tbody>
                     {branches.map((branch) => (
                       <tr key={branch.id}>
                         <td className="fw-600 text-primary">{branch.code}</td>
-                        <td className="fw-500 text-white">{branch.name}</td>
+                        <td className="fw-600" style={{ color: 'var(--text-primary)' }}>{branch.name}</td>
                         <td>{branch.city}</td>
                         <td className="small text-muted" style={{ maxWidth: '240px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {branch.address || 'N/A'}

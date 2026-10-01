@@ -36,7 +36,8 @@ try {
     // Base query
     $query = "SELECT p.id, p.property_code, p.project_name, p.property_slug, p.property_type, p.branch_id, 
                      p.location, p.city, p.builder, p.area_sqft, p.price, p.min_price, p.min_area, p.availability_status, 
-                     p.approval_status, p.completion_date, p.project_status, p.primary_image, p.virtual_tour_url, p.created_at, b.name as branch_name 
+                     p.approval_status, p.completion_date, p.project_status, p.primary_image, p.virtual_tour_url, p.created_at, 
+                     p.total_units, p.available_units, b.name as branch_name 
               FROM properties p
               JOIN branches b ON p.branch_id = b.id";
               
